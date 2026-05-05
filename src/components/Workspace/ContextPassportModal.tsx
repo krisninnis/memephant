@@ -2,23 +2,56 @@
  * Context Passport Modal
  *
  * Previews the generated Context Passport and lets the user copy it
- * in four formats: generic Markdown, ChatGPT, Claude, and Codex.
+ * in four built-in formats (Markdown, ChatGPT, Claude, Codex) plus any
+ * custom platforms the user has defined.
  *
  * READ-ONLY — never mutates project data.
+ * Custom platforms are persisted to localStorage only (settings data, not project data).
  */
 
 import { useEffect, useRef, useState } from 'react';
 import type { ProjectMemory } from '../../types/memphant-types';
 import {
   generateContextPassport,
+  generateCustomPassportText,
   type PassportFormat,
+  type CustomPlatform,
 } from '../../utils/passportGenerator';
+import { AddPlatformModal } from './AddPlatformModal';
 import './ContextPassportModal.css';
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const CUSTOM_PLATFORMS_KEY = 'memphant_custom_platforms';
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function loadCustomPlatforms(): CustomPlatform[] {
+  try {
+    const stored = localStorage.getItem(CUSTOM_PLATFORMS_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored) as CustomPlatform[];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomPlatforms(platforms: CustomPlatform[]): void {
+  try {
+    localStorage.setItem(CUSTOM_PLATFORMS_KEY, JSON.stringify(platforms));
+  } catch {
+    // localStorage unavailable in some contexts — fail silently
+  }
+}
+
+// ─── Props ──────────────────────────────────────────────────────────────────
 
 interface ContextPassportModalProps {
   project: ProjectMemory;
   onClose: () => void;
 }
+
+// ─── Built-in tab definitions ────────────────────────────────────────────────
 
 const FORMAT_TABS: { id: PassportFormat; label: string; icon: string; description: string }[] = [
   {
@@ -47,23 +80,43 @@ const FORMAT_TABS: { id: PassportFormat; label: string; icon: string; descriptio
   },
 ];
 
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export function ContextPassportModal({ project, onClose }: ContextPassportModalProps) {
-  const [activeFormat, setActiveFormat] = useState<PassportFormat>('chatgpt');
+  const [activeTabKey, setActiveTabKey] = useState<string>('chatgpt');
   const [copied, setCopied] = useState(false);
+  const [showAddPlatform, setShowAddPlatform] = useState(false);
+  const [customPlatforms, setCustomPlatforms] = useState<CustomPlatform[]>(loadCustomPlatforms);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Generate passport once on mount — pure, no side effects
+  // Generate built-in passport once — pure, deterministic
   const passport = generateContextPassport(project);
-  const currentText = passport.formats[activeFormat];
+
+  // Resolve active tab info
+  const builtinTab = FORMAT_TABS.find((t) => t.id === activeTabKey);
+  const customTab = customPlatforms.find((p) => p.id === activeTabKey);
+
+  const currentText: string = builtinTab
+    ? passport.formats[activeTabKey as PassportFormat]
+    : customTab
+    ? generateCustomPassportText(project, customTab)
+    : '';
+
+  const activeTabLabel = builtinTab?.label ?? customTab?.name ?? '';
+  const activeTabDescription =
+    builtinTab?.description ??
+    (customTab
+      ? `Custom format: ${customTab.baseFormat.replace(/-/g, ' ')}`
+      : '');
 
   // Close on Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape' && !showAddPlatform) onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  }, [onClose, showAddPlatform]);
 
   const handleCopy = async () => {
     try {
@@ -71,7 +124,7 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard may not be available (e.g. in some embedded contexts)
+      // Clipboard may not be available in some contexts
     }
   };
 
@@ -79,90 +132,159 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
     if (e.target === overlayRef.current) onClose();
   };
 
-  const activeTab = FORMAT_TABS.find((t) => t.id === activeFormat);
+  const handleSavePlatform = (platform: CustomPlatform) => {
+    const updated = [...customPlatforms, platform];
+    setCustomPlatforms(updated);
+    saveCustomPlatforms(updated);
+    setActiveTabKey(platform.id);
+    setCopied(false);
+    setShowAddPlatform(false);
+  };
+
+  const handleDeletePlatform = (id: string) => {
+    const updated = customPlatforms.filter((p) => p.id !== id);
+    setCustomPlatforms(updated);
+    saveCustomPlatforms(updated);
+    if (activeTabKey === id) {
+      setActiveTabKey('chatgpt');
+      setCopied(false);
+    }
+  };
+
+  const switchTab = (key: string) => {
+    setActiveTabKey(key);
+    setCopied(false);
+  };
 
   return (
-    <div
-      className="passport-overlay"
-      ref={overlayRef}
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Context Passport"
-    >
-      <div className="passport-modal" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="passport-modal__header">
-          <div className="passport-modal__title-row">
-            <span className="passport-modal__emoji">🗺️</span>
-            <div>
-              <h2 className="passport-modal__title">Context Passport</h2>
-              <p className="passport-modal__subtitle">{passport.projectName}</p>
+    <>
+      <div
+        className="passport-overlay"
+        ref={overlayRef}
+        onClick={handleOverlayClick}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Context Passport"
+      >
+        <div className="passport-modal" onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <div className="passport-modal__header">
+            <div className="passport-modal__title-row">
+              <span className="passport-modal__emoji">🗺️</span>
+              <div>
+                <h2 className="passport-modal__title">Context Passport</h2>
+                <p className="passport-modal__subtitle">{passport.projectName}</p>
+              </div>
             </div>
-          </div>
-          <button
-            type="button"
-            className="passport-modal__close"
-            onClick={onClose}
-            aria-label="Close passport preview"
-            title="Close"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Format tabs */}
-        <div className="passport-modal__tabs" role="tablist" aria-label="Passport format">
-          {FORMAT_TABS.map((tab) => (
             <button
-              key={tab.id}
               type="button"
-              role="tab"
-              aria-selected={activeFormat === tab.id}
-              className={`passport-modal__tab${activeFormat === tab.id ? ' passport-modal__tab--active' : ''}`}
-              onClick={() => {
-                setActiveFormat(tab.id);
-                setCopied(false);
-              }}
-              title={tab.description}
+              className="passport-modal__close"
+              onClick={onClose}
+              aria-label="Close passport preview"
+              title="Close"
             >
-              <span className="passport-modal__tab-icon">{tab.icon}</span>
-              <span className="passport-modal__tab-label">{tab.label}</span>
+              ✕
             </button>
-          ))}
-        </div>
+          </div>
 
-        {/* Format description */}
-        {activeTab && (
-          <p className="passport-modal__format-desc">{activeTab.description}</p>
-        )}
+          {/* Format tabs */}
+          <div className="passport-modal__tabs" role="tablist" aria-label="Passport format">
+            {/* Built-in tabs */}
+            {FORMAT_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTabKey === tab.id}
+                className={`passport-modal__tab${activeTabKey === tab.id ? ' passport-modal__tab--active' : ''}`}
+                onClick={() => switchTab(tab.id)}
+                title={tab.description}
+              >
+                <span className="passport-modal__tab-icon">{tab.icon}</span>
+                <span className="passport-modal__tab-label">{tab.label}</span>
+              </button>
+            ))}
 
-        {/* Passport preview */}
-        <textarea
-          className="passport-modal__preview"
-          value={currentText}
-          readOnly
-          spellCheck={false}
-          aria-label={`Context Passport for ${activeTab?.label ?? 'selected format'}`}
-          title="Passport preview — copy using the button below"
-        />
+            {/* Custom platform tabs */}
+            {customPlatforms.map((cp) => (
+              <div key={cp.id} className="passport-modal__tab-wrapper">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTabKey === cp.id}
+                  className={`passport-modal__tab passport-modal__tab--custom${activeTabKey === cp.id ? ' passport-modal__tab--active' : ''}`}
+                  onClick={() => switchTab(cp.id)}
+                  title={`Custom format: ${cp.baseFormat.replace(/-/g, ' ')}`}
+                >
+                  <span className="passport-modal__tab-icon">✨</span>
+                  <span className="passport-modal__tab-label">{cp.name}</span>
+                </button>
+                <button
+                  type="button"
+                  className="passport-modal__tab-delete"
+                  onClick={() => handleDeletePlatform(cp.id)}
+                  title={`Remove ${cp.name}`}
+                  aria-label={`Remove ${cp.name} custom platform`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
 
-        {/* Footer actions */}
-        <div className="passport-modal__footer">
-          <p className="passport-modal__safe-note">
-            🔒 Secrets, API keys, and local paths are excluded.
-          </p>
-          <button
-            type="button"
-            className={`passport-modal__copy-btn${copied ? ' passport-modal__copy-btn--copied' : ''}`}
-            onClick={() => void handleCopy()}
-            title={`Copy ${activeTab?.label ?? ''} passport to clipboard`}
-          >
-            {copied ? `✅ Copied for ${activeTab?.label}!` : `Copy for ${activeTab?.label}`}
-          </button>
+            {/* Add Platform button */}
+            <button
+              type="button"
+              className="passport-modal__tab passport-modal__tab--add"
+              onClick={() => setShowAddPlatform(true)}
+              title="Add a custom AI platform"
+            >
+              <span className="passport-modal__tab-icon">＋</span>
+              <span className="passport-modal__tab-label">Add Platform</span>
+            </button>
+          </div>
+
+          {/* Format description */}
+          {(builtinTab || customTab) && (
+            <p className="passport-modal__format-desc">{activeTabDescription}</p>
+          )}
+
+          {/* Passport preview */}
+          <textarea
+            className="passport-modal__preview"
+            value={currentText}
+            readOnly
+            spellCheck={false}
+            aria-label={`Context Passport for ${activeTabLabel}`}
+            title="Passport preview — copy using the button below"
+          />
+
+          {/* Footer actions */}
+          <div className="passport-modal__footer">
+            <p className="passport-modal__safe-note">
+              🔒 Secrets, API keys, and local paths are excluded.
+            </p>
+            <button
+              type="button"
+              className={`passport-modal__copy-btn${copied ? ' passport-modal__copy-btn--copied' : ''}`}
+              onClick={() => void handleCopy()}
+              title={`Copy ${activeTabLabel} passport to clipboard`}
+            >
+              {copied
+                ? `✅ Copied for ${activeTabLabel}!`
+                : `Copy for ${activeTabLabel}`}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Add Platform sub-modal — rendered outside main modal to stack correctly */}
+      {showAddPlatform && (
+        <AddPlatformModal
+          onSave={handleSavePlatform}
+          onClose={() => setShowAddPlatform(false)}
+        />
+      )}
+    </>
   );
 }
 

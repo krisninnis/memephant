@@ -272,3 +272,219 @@ describe('generateContextPassport — immutability', () => {
     expect(() => generateContextPassport(empty)).not.toThrow();
   });
 });
+// ─── Custom Platform Tests ────────────────────────────────────────────────────
+
+import { generateCustomPassportText, type CustomPlatform } from '../utils/passportGenerator';
+
+/** Reusable custom platform base */
+const GROK_PLATFORM: CustomPlatform = {
+  id: 'custom_111',
+  name: 'Grok',
+  baseFormat: 'markdown',
+  customInstruction: 'Focus on the architecture.',
+  includeFiles: true,
+  includeRecentChanges: true,
+};
+
+describe('generateCustomPassportText — structure', () => {
+  it('produces output for all four base formats', () => {
+    const formats: CustomPlatform['baseFormat'][] = [
+      'markdown', 'xml-like', 'compact', 'developer-brief',
+    ];
+    for (const baseFormat of formats) {
+      const platform = { ...GROK_PLATFORM, baseFormat };
+      const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+      expect(typeof text).toBe('string');
+      expect(text.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('includes the platform name in the output', () => {
+    const text = generateCustomPassportText(CLEAN_PROJECT, GROK_PLATFORM);
+    expect(text).toContain('Grok');
+  });
+
+  it('includes the project name in the output', () => {
+    const text = generateCustomPassportText(CLEAN_PROJECT, GROK_PLATFORM);
+    expect(text).toContain('Clean Project');
+  });
+
+  it('includes the custom instruction in the output', () => {
+    const text = generateCustomPassportText(CLEAN_PROJECT, GROK_PLATFORM);
+    expect(text).toContain('Focus on the architecture.');
+  });
+
+  it('does NOT include custom instruction when it is empty', () => {
+    const platform = { ...GROK_PLATFORM, customInstruction: '' };
+    const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+    // No extra separator or instruction section should be added
+    expect(text).not.toContain('NOTE:');
+  });
+
+  it('omits important files section when includeFiles is false', () => {
+    const projectWithFiles: ProjectMemory = {
+      ...CLEAN_PROJECT,
+      importantAssets: ['src/App.tsx', 'src/main.tsx'],
+    };
+    const platform = { ...GROK_PLATFORM, includeFiles: false };
+    const text = generateCustomPassportText(projectWithFiles, platform);
+    expect(text).not.toContain('src/App.tsx');
+  });
+
+  it('includes important files section when includeFiles is true and assets exist', () => {
+    const projectWithFiles: ProjectMemory = {
+      ...CLEAN_PROJECT,
+      importantAssets: ['src/App.tsx'],
+    };
+    const platform = { ...GROK_PLATFORM, includeFiles: true };
+    const text = generateCustomPassportText(projectWithFiles, platform);
+    expect(text).toContain('src/App.tsx');
+  });
+
+  it('omits recent changes section when includeRecentChanges is false', () => {
+    const projectWithChangelog: ProjectMemory = {
+      ...CLEAN_PROJECT,
+      changelog: [
+        { field: 'goals', action: 'added', summary: 'Added new goal', timestamp: '2026-05-01T10:00:00Z' },
+      ],
+    };
+    const platform = { ...GROK_PLATFORM, includeRecentChanges: false };
+    const text = generateCustomPassportText(projectWithChangelog, platform);
+    expect(text).not.toContain('Added new goal');
+  });
+
+  it('includes recent changes when includeRecentChanges is true and changelog exists', () => {
+    const projectWithChangelog: ProjectMemory = {
+      ...CLEAN_PROJECT,
+      changelog: [
+        { field: 'goals', action: 'added', summary: 'Added new goal', timestamp: '2026-05-01T10:00:00Z' },
+      ],
+    };
+    const platform = { ...GROK_PLATFORM, includeRecentChanges: true };
+    const text = generateCustomPassportText(projectWithChangelog, platform);
+    expect(text).toContain('Added new goal');
+  });
+});
+
+describe('generateCustomPassportText — format variants', () => {
+  it('xml-like format wraps output in context_passport tag', () => {
+    const platform = { ...GROK_PLATFORM, baseFormat: 'xml-like' as const };
+    const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+    expect(text).toContain('<context_passport');
+    expect(text).toContain('</context_passport>');
+  });
+
+  it('xml-like format includes platform name as attribute', () => {
+    const platform = { ...GROK_PLATFORM, baseFormat: 'xml-like' as const };
+    const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+    expect(text).toContain('platform="Grok"');
+  });
+
+  it('compact format uses KEY: VALUE style', () => {
+    const platform = { ...GROK_PLATFORM, baseFormat: 'compact' as const };
+    const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+    expect(text).toContain('PLATFORM:');
+    expect(text).toContain('PROJECT:');
+    expect(text).toContain('STATE:');
+  });
+
+  it('developer-brief format includes status and decisions sections', () => {
+    const platform = { ...GROK_PLATFORM, baseFormat: 'developer-brief' as const };
+    const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+    expect(text).toContain('**Status:**');
+    expect(text).toContain('**Decisions:**');
+  });
+
+  it('markdown format includes section headers', () => {
+    const platform = { ...GROK_PLATFORM, baseFormat: 'markdown' as const };
+    const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+    expect(text).toContain('## Current State');
+    expect(text).toContain('## Goals');
+  });
+});
+
+describe('generateCustomPassportText — safety', () => {
+  it('redacts secrets in all four base formats', () => {
+    const formats: CustomPlatform['baseFormat'][] = [
+      'markdown', 'xml-like', 'compact', 'developer-brief',
+    ];
+    for (const baseFormat of formats) {
+      const platform = { ...GROK_PLATFORM, baseFormat };
+      const text = generateCustomPassportText(SECRET_PROJECT, platform);
+      expect(text).not.toContain(FAKE_OPENAI_KEY);
+      expect(text).not.toContain(FAKE_AWS_KEY);
+      expect(text).not.toContain(FAKE_GITHUB_TOKEN);
+      expect(text).not.toContain(FAKE_SLACK_TOKEN);
+    }
+  });
+
+ it('never includes linkedFolder.path in any base format', () => {
+  const formats: CustomPlatform['baseFormat'][] = [
+    'markdown', 'xml-like', 'compact', 'developer-brief',
+  ];
+  const folderPath = 'C:\\Users\\kris\\repos\\memphant';
+  const forwardSlashPath = 'C:/Users/kris/repos/memphant';
+
+  for (const baseFormat of formats) {
+    const platform = { ...GROK_PLATFORM, baseFormat };
+    const text = generateCustomPassportText(SECRET_PROJECT, platform);
+    expect(text).not.toContain(folderPath);
+    expect(text).not.toContain(forwardSlashPath);
+  }
+});
+
+  it('sanitizes a secret in a custom instruction', () => {
+    const platform: CustomPlatform = {
+      ...GROK_PLATFORM,
+      customInstruction: `Use this key: ${FAKE_OPENAI_KEY}`,
+    };
+    const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+    expect(text).not.toContain(FAKE_OPENAI_KEY);
+    expect(text).toContain('[REDACTED]');
+  });
+
+  it('does not append memphant_update in any format', () => {
+    const formats: CustomPlatform['baseFormat'][] = [
+      'markdown', 'xml-like', 'compact', 'developer-brief',
+    ];
+    for (const baseFormat of formats) {
+      const platform = { ...GROK_PLATFORM, baseFormat };
+      const text = generateCustomPassportText(CLEAN_PROJECT, platform);
+      expect(text).not.toContain('memphant_update');
+      expect(text).not.toContain('RESPONSE_FORMAT');
+    }
+  });
+
+  it('does not mutate the project object', () => {
+    const before = JSON.stringify(SECRET_PROJECT);
+    generateCustomPassportText(SECRET_PROJECT, GROK_PLATFORM);
+    expect(JSON.stringify(SECRET_PROJECT)).toBe(before);
+  });
+
+  it('does not throw on a project with all empty arrays', () => {
+    const empty: ProjectMemory = {
+      id: 'empty2',
+      name: 'Empty2',
+      summary: '',
+      currentState: '',
+      goals: [],
+      rules: [],
+      decisions: [],
+      importantAssets: [],
+      openQuestions: [],
+      nextSteps: [],
+      changelog: [],
+      inProgress: [],
+      schema_version: '1.1.0',
+      checkpoints: [],
+      platformState: {},
+    };
+    const formats: CustomPlatform['baseFormat'][] = [
+      'markdown', 'xml-like', 'compact', 'developer-brief',
+    ];
+    for (const baseFormat of formats) {
+      const platform = { ...GROK_PLATFORM, baseFormat };
+      expect(() => generateCustomPassportText(empty, platform)).not.toThrow();
+    }
+  });
+});

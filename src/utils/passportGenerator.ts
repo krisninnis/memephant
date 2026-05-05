@@ -461,3 +461,326 @@ export function generateContextPassport(project: ProjectMemory): ContextPassport
     },
   };
 }
+
+// ─── Custom Platform Types ─────────────────────────────────────────────────
+
+export type CustomBaseFormat = 'markdown' | 'xml-like' | 'compact' | 'developer-brief';
+
+export interface CustomPlatform {
+  /** Unique id, set to `custom_<timestamp>` on creation. */
+  id: string;
+  name: string;
+  baseFormat: CustomBaseFormat;
+  customInstruction: string;
+  includeFiles: boolean;
+  includeRecentChanges: boolean;
+}
+
+// ─── Custom Format Builders ────────────────────────────────────────────────
+
+function buildCustomMarkdown(project: ProjectMemory, platform: CustomPlatform): string {
+  const lines: string[] = [];
+
+  lines.push(`# Context Passport: ${sanitize(project.name)}`);
+  lines.push(`_For: ${sanitize(platform.name)}_`);
+  lines.push('');
+
+  lines.push(`## What This Project Is About`);
+  lines.push(clean(project.summary || '_(not set)_', project));
+  lines.push('');
+
+  lines.push(`## Current State`);
+  lines.push(clean(project.currentState || '_(not set)_', project));
+  lines.push('');
+
+  if (project.inProgress && project.inProgress.length > 0) {
+    lines.push(`## In Progress`);
+    lines.push(bulletList(project.inProgress, project));
+    lines.push('');
+  }
+
+  lines.push(`## Goals`);
+  lines.push(numberedList(project.goals, project));
+  lines.push('');
+
+  lines.push(`## Key Decisions`);
+  lines.push(formatDecisions(project.decisions, project));
+  lines.push('');
+
+  lines.push(`## Rules`);
+  lines.push(bulletList(project.rules, project));
+  lines.push('');
+
+  if (platform.includeFiles && project.importantAssets.length > 0) {
+    lines.push(`## Important Files & Assets`);
+    lines.push(bulletList(project.importantAssets, project));
+    lines.push('');
+  }
+
+  if (platform.includeRecentChanges) {
+    lines.push(`## Recent Changes`);
+    lines.push(formatChangelog(project.changelog ?? []));
+    lines.push('');
+  }
+
+  lines.push(`## Open Questions`);
+  lines.push(bulletList(project.openQuestions, project));
+  lines.push('');
+
+  if (platform.customInstruction) {
+    lines.push('---');
+    lines.push('');
+    lines.push(sanitize(platform.customInstruction));
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push(SAFE_EXPORT_NOTES);
+
+  return lines.join('\n');
+}
+
+function buildCustomXmlLike(project: ProjectMemory, platform: CustomPlatform): string {
+  const lines: string[] = [];
+
+  lines.push(`<context_passport platform="${sanitize(platform.name)}">`);
+  lines.push(`  <project>${sanitize(project.name)}</project>`);
+  lines.push('');
+
+  lines.push(`  <summary>`);
+  lines.push(`    ${clean(project.summary || '(not set)', project)}`);
+  lines.push(`  </summary>`);
+  lines.push('');
+
+  lines.push(`  <current_state>`);
+  lines.push(`    ${clean(project.currentState || '(not set)', project)}`);
+  lines.push(`  </current_state>`);
+  lines.push('');
+
+  if (project.inProgress && project.inProgress.length > 0) {
+    lines.push(`  <in_progress>`);
+    project.inProgress.forEach((item) => lines.push(`    - ${clean(item, project)}`));
+    lines.push(`  </in_progress>`);
+    lines.push('');
+  }
+
+  lines.push(`  <goals>`);
+  project.goals.forEach((g, i) => lines.push(`    ${i + 1}. ${clean(g, project)}`));
+  if (!project.goals.length) lines.push(`    (none)`);
+  lines.push(`  </goals>`);
+  lines.push('');
+
+  lines.push(`  <rules>`);
+  project.rules.forEach((r) => lines.push(`    - ${clean(r, project)}`));
+  if (!project.rules.length) lines.push(`    (none)`);
+  lines.push(`  </rules>`);
+  lines.push('');
+
+  if (platform.includeFiles && project.importantAssets.length > 0) {
+    lines.push(`  <important_assets>`);
+    project.importantAssets.forEach((a) => lines.push(`    - ${clean(a, project)}`));
+    lines.push(`  </important_assets>`);
+    lines.push('');
+  }
+
+  if (platform.includeRecentChanges) {
+    const recent = (project.changelog ?? []).slice(-8);
+    lines.push(`  <recent_changes>`);
+    if (recent.length > 0) {
+      recent.forEach((e) => {
+        const date = e.timestamp ? e.timestamp.slice(0, 10) : '';
+        lines.push(`    - [${date}] ${e.field} ${e.action}: ${sanitize(e.summary)}`);
+      });
+    } else {
+      lines.push(`    (none recorded)`);
+    }
+    lines.push(`  </recent_changes>`);
+    lines.push('');
+  }
+
+  lines.push(`  <open_questions>`);
+  project.openQuestions.forEach((q) => lines.push(`    - ${clean(q, project)}`));
+  if (!project.openQuestions.length) lines.push(`    (none)`);
+  lines.push(`  </open_questions>`);
+  lines.push('');
+
+  if (platform.customInstruction) {
+    lines.push(`  <custom_instruction>`);
+    lines.push(`    ${sanitize(platform.customInstruction)}`);
+    lines.push(`  </custom_instruction>`);
+    lines.push('');
+  }
+
+  lines.push(`  <safe_export_notes>`);
+  lines.push(`    - Secrets, .env values, and API keys excluded.`);
+  lines.push(`    - Local folder paths excluded.`);
+  lines.push(`    - Review before pasting.`);
+  lines.push(`  </safe_export_notes>`);
+  lines.push('');
+
+  lines.push(`</context_passport>`);
+
+  return lines.join('\n');
+}
+
+function buildCustomCompact(project: ProjectMemory, platform: CustomPlatform): string {
+  const lines: string[] = [];
+
+  lines.push(`PLATFORM: ${sanitize(platform.name)}`);
+  lines.push(`PROJECT: ${sanitize(project.name)}`);
+  lines.push('');
+  lines.push(`STATE: ${clean(project.currentState || '(not set)', project)}`);
+  lines.push('');
+
+  if (project.goals.length > 0) {
+    lines.push(`GOALS: ${project.goals.map((g) => clean(g, project)).join(' | ')}`);
+    lines.push('');
+  }
+
+  if (project.rules.length > 0) {
+    lines.push(`RULES: ${project.rules.map((r) => clean(r, project)).join(' | ')}`);
+    lines.push('');
+  }
+
+  if (project.inProgress && project.inProgress.length > 0) {
+    lines.push(`IN_PROGRESS: ${project.inProgress.map((i) => clean(i, project)).join(' | ')}`);
+    lines.push('');
+  }
+
+  if (platform.includeFiles && project.importantAssets.length > 0) {
+    lines.push(`FILES: ${project.importantAssets.map((a) => clean(a, project)).join(' | ')}`);
+    lines.push('');
+  }
+
+  if (platform.includeRecentChanges && (project.changelog ?? []).length > 0) {
+    const recent = (project.changelog ?? []).slice(-3);
+    lines.push(`RECENT: ${recent.map((e) => sanitize(e.summary)).join(' | ')}`);
+    lines.push('');
+  }
+
+  if (project.openQuestions.length > 0) {
+    lines.push(`QUESTIONS: ${project.openQuestions.map((q) => clean(q, project)).join(' | ')}`);
+    lines.push('');
+  }
+
+  if (platform.customInstruction) {
+    lines.push(`NOTE: ${sanitize(platform.customInstruction)}`);
+    lines.push('');
+  }
+
+  lines.push(`# Safe export: secrets and local paths excluded. Review before use.`);
+
+  return lines.join('\n');
+}
+
+function buildCustomDeveloperBrief(project: ProjectMemory, platform: CustomPlatform): string {
+  const lines: string[] = [];
+
+  lines.push(`## Dev Brief — ${sanitize(project.name)}`);
+  lines.push(`_Platform: ${sanitize(platform.name)}_`);
+  lines.push('');
+
+  if (project.githubRepo) lines.push(`**Repo:** ${project.githubRepo}`);
+  if (project.detectedStack && project.detectedStack.length > 0) {
+    lines.push(`**Stack:** ${sanitize(project.detectedStack.join(', '))}`);
+  }
+  if (project.githubRepo || (project.detectedStack && project.detectedStack.length > 0)) {
+    lines.push('');
+  }
+
+  lines.push(`**Status:** ${clean(project.currentState || '(not set)', project)}`);
+  lines.push('');
+
+  if (project.inProgress && project.inProgress.length > 0) {
+    lines.push(`**In Progress:**`);
+    project.inProgress.forEach((item) => lines.push(`- ${clean(item, project)}`));
+    lines.push('');
+  }
+
+  lines.push(`**Rules:**`);
+  project.rules.forEach((r) => lines.push(`- ${clean(r, project)}`));
+  if (!project.rules.length) lines.push('_(none)_');
+  lines.push('');
+
+  lines.push(`**Decisions:**`);
+  if (project.decisions.length > 0) {
+    project.decisions.forEach((d) => {
+      lines.push(`- ${clean(d.decision, project)}`);
+      if (d.rationale) lines.push(`  ↳ ${clean(d.rationale, project)}`);
+    });
+  } else {
+    lines.push('_(none)_');
+  }
+  lines.push('');
+
+  if (platform.includeFiles && project.importantAssets.length > 0) {
+    lines.push(`**Key Files:**`);
+    project.importantAssets.forEach((a) => lines.push(`- ${clean(a, project)}`));
+    lines.push('');
+  }
+
+  lines.push(`**Next Steps:**`);
+  project.nextSteps.forEach((s) => lines.push(`- ${clean(s, project)}`));
+  if (!project.nextSteps.length) lines.push('_(none)_');
+  lines.push('');
+
+  if (platform.includeRecentChanges) {
+    const recent = (project.changelog ?? []).slice(-5);
+    lines.push(`**Recent Changes:**`);
+    if (recent.length > 0) {
+      recent.forEach((e) => {
+        const date = e.timestamp ? e.timestamp.slice(0, 10) : '';
+        lines.push(`- [${date}] ${e.field}: ${sanitize(e.summary)}`);
+      });
+    } else {
+      lines.push('_(none recorded)_');
+    }
+    lines.push('');
+  }
+
+  if (project.openQuestions.length > 0) {
+    lines.push(`**Open Questions:**`);
+    project.openQuestions.forEach((q) => lines.push(`- ${clean(q, project)}`));
+    lines.push('');
+  }
+
+  if (platform.customInstruction) {
+    lines.push('---');
+    lines.push(`_${sanitize(platform.customInstruction)}_`);
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('_Secrets, .env values, API keys, and local paths excluded. Review before use._');
+
+  return lines.join('\n');
+}
+
+// ─── Public API (custom platforms) ────────────────────────────────────────
+
+/**
+ * Generates a Context Passport text for a user-defined custom platform.
+ *
+ * SAFETY: identical sanitization rules as generateContextPassport.
+ * - Secrets are redacted.
+ * - linkedFolder.path is never included.
+ * - No memphant_update / RESPONSE_FORMAT instructions appended.
+ * - Pure function — does not mutate the project.
+ */
+export function generateCustomPassportText(
+  project: ProjectMemory,
+  platform: CustomPlatform,
+): string {
+  switch (platform.baseFormat) {
+    case 'xml-like':
+      return buildCustomXmlLike(project, platform);
+    case 'compact':
+      return buildCustomCompact(project, platform);
+    case 'developer-brief':
+      return buildCustomDeveloperBrief(project, platform);
+    case 'markdown':
+    default:
+      return buildCustomMarkdown(project, platform);
+  }
+}

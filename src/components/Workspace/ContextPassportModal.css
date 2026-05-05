@@ -232,3 +232,278 @@
     text-align: center;
   }
 }
+
+/* ─── Custom Platform Tabs ───────────────────────────────────────────────── */
+
+.passport-modal__tab-wrapper {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+}
+
+.passport-modal__tab--custom {
+  padding-right: 8px;
+}
+
+.passport-modal__tab-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  padding: 0 0 2px 0;
+  margin-left: -2px;
+  border-radius: 0 8px 0 0;
+  border: 1px solid transparent;
+  border-left: none;
+  background: transparent;
+  color: #4a5568;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 0;
+  height: 100%;
+}
+
+.passport-modal__tab-delete:hover {
+  background: #3a1a1a;
+  color: #f87171;
+}
+
+/* ─── Add Platform tab button ────────────────────────────────────────────── */
+
+.passport-modal__tab--add {
+  color: #3b82f6;
+  font-style: normal;
+  border: 1px dashed #1e3a5f;
+  margin-left: 4px;
+}
+
+.passport-modal__tab--add:hover {
+  background: #0f2040;
+  color: #60a5fa;
+  border-color: #2a4e80;
+}
+
+/* ─── Add Platform Overlay & Modal ──────────────────────────────────────── */
+
+.add-platform-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.add-platform-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 480px);
+  max-height: 90vh;
+  background: #111827;
+  border: 1px solid #1e2d47;
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.add-platform-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid #1e2d47;
+  flex-shrink: 0;
+}
+
+.add-platform-modal__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.add-platform-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.add-platform-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.add-platform-modal__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.add-platform-modal__optional {
+  font-weight: 400;
+  color: #4a6080;
+}
+
+.add-platform-modal__input,
+.add-platform-modal__select,
+.add-platform-modal__textarea {
+  background: #090f1d;
+  border: 1px solid #1e2d47;
+  border-radius: 8px;
+  color: #c9d8f0;
+  font-size: 0.87rem;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.add-platform-modal__input:focus,
+.add-platform-modal__select:focus,
+.add-platform-modal__textarea:focus {
+  border-color: #3b82f6;
+}
+
+.add-platform-modal__input::placeholder,
+.add-platform-modal__textarea::placeholder {
+  color: #344563;
+}
+
+.add-platform-modal__input--error {
+  border-color: #f87171;
+}
+
+.add-platform-modal__error {
+  font-size: 0.76rem;
+  color: #f87171;
+}
+
+.add-platform-modal__select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.add-platform-modal__textarea {
+  resize: vertical;
+  min-height: 70px;
+  line-height: 1.5;
+}
+
+.add-platform-modal__toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-platform-modal__toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.add-platform-modal__toggle-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.add-platform-modal__safety-note {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 0.76rem;
+  color: #4a6080;
+  background: #090f1d;
+  border-radius: 8px;
+  border: 1px solid #1a2a3a;
+}
+
+.add-platform-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px 14px;
+  border-top: 1px solid #1e2d47;
+  background: #0f1524;
+  flex-shrink: 0;
+}
+
+.add-platform-modal__cancel-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid #1e2d47;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.add-platform-modal__cancel-btn:hover {
+  background: #1a2540;
+  color: #94a3b8;
+}
+
+.add-platform-modal__save-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #1e3a5f;
+  color: #e2e8f0;
+  font-size: 0.87rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.add-platform-modal__save-btn:hover {
+  background: #255080;
+}
+
+.add-platform-modal__save-btn:active {
+  transform: scale(0.97);
+}
+
+/* ─── Responsive (Add Platform) ──────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .add-platform-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .add-platform-modal {
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .add-platform-modal__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .add-platform-modal__save-btn,
+  .add-platform-modal__cancel-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
