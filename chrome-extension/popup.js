@@ -249,11 +249,79 @@ function isSupportedAiPage(tabUrl) {
   }
 }
 
+
+// ─── Prompt Tools (Compress / Split / Paste Part 2) ──────────────────────────
+
+/**
+ * Send a message to the content script running in the active tab.
+ * Returns false if the tab is not a supported AI page.
+ */
+async function sendToActiveTab(type) {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) return false;
+
+  try {
+    await chrome.tabs.sendMessage(tab.id, { type });
+    return true;
+  } catch {
+    // Content script not running on this tab (e.g. new tab, non-AI page)
+    return false;
+  }
+}
+
+/**
+ * Show/hide the "Paste Part 2" button based on whether a pending
+ * Part 2 is stored in chrome.storage.local.
+ */
+async function refreshPastePart2Button() {
+  const btn = document.getElementById('paste-part2-btn');
+  if (!btn) return;
+
+  try {
+    const items = await storageGet({ memephantPendingSplitPart2: '' });
+    btn.hidden = !items.memephantPendingSplitPart2;
+  } catch {
+    btn.hidden = true;
+  }
+}
+
+async function initPromptTools() {
+  await refreshPastePart2Button();
+
+  document.getElementById('compress-btn')?.addEventListener('click', async () => {
+    const sent = await sendToActiveTab('COMPRESS_COMPOSER');
+    if (!sent) {
+      showConfirmation('⚠️ Open a supported AI page first.');
+    }
+  });
+
+  document.getElementById('split-btn')?.addEventListener('click', async () => {
+    const sent = await sendToActiveTab('SPLIT_COMPOSER');
+    if (!sent) {
+      showConfirmation('⚠️ Open a supported AI page first.');
+    } else {
+      // After split, a Part 2 may now be stored — refresh the button
+      setTimeout(refreshPastePart2Button, 500);
+    }
+  });
+
+  document.getElementById('paste-part2-btn')?.addEventListener('click', async () => {
+    const sent = await sendToActiveTab('PASTE_PART_2');
+    if (!sent) {
+      showConfirmation('⚠️ Open a supported AI page first.');
+    } else {
+      // Part 2 consumed — hide the button
+      setTimeout(refreshPastePart2Button, 500);
+    }
+  });
+}
+
 // Init
 
 async function init() {
   await initMemoryModeToggle();
   await initPromptGuardSettings();
+  await initPromptTools();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const isSupported = isSupportedAiPage(tab?.url);

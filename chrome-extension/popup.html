@@ -37,6 +37,35 @@
         </p>
       </section>
 
+
+      <!-- Prompt Tools — Compress/Split the current AI composer text -->
+      <section class="settings-panel" aria-labelledby="prompt-tools-title">
+        <div class="settings-panel__header">
+          <div>
+            <h2 class="settings-panel__title" id="prompt-tools-title">Prompt Tools</h2>
+            <p class="settings-panel__subtitle">Edit your draft in the AI composer.</p>
+          </div>
+        </div>
+        <div class="prompt-tools__btns">
+          <button class="btn btn--tool" id="compress-btn"
+            title="Strip filler words and shorten the prompt in the AI composer">
+            ✂️ Compress
+          </button>
+          <button class="btn btn--tool" id="split-btn"
+            title="Split into Part 1 (in composer) and Part 2 (copied to clipboard)">
+            ✂️ Split
+          </button>
+        </div>
+        <button class="btn btn--tool btn--paste-part2" id="paste-part2-btn" hidden
+          title="Paste the saved Part 2 into the AI composer">
+          📋 Paste Part 2
+        </button>
+        <p class="privacy-note" id="prompt-tools-note">
+          Compress removes filler words. Split divides long prompts into two messages.
+          Text is updated in place — nothing is sent automatically.
+        </p>
+      </section>
+
       <!-- Prompt Guard settings -->
       <section class="settings-panel" aria-labelledby="prompt-guard-title">
         <div class="settings-panel__header">
