@@ -3,11 +3,10 @@
  *
  * Runs on ChatGPT, Claude, Grok, Perplexity, and Gemini pages.
  *
- * Two jobs:
- *  1. DETECT — Watch AI responses for memphant_update JSON blocks,
- *              show a floating "Apply to Memephant" button when manual mode is active.
- *  2. INJECT — Add a small "🐘 Copy for Memephant" button to every AI
- *              message so users can grab the full response easily.
+ * Jobs:
+ *  1. DETECT — Watch AI responses for memphant_update JSON blocks.
+ *  2. INJECT — Add manual "🐘 Copy for Memphant" buttons when Manual mode is active.
+ *  3. PROMPT TOOLS — Compress, Split, Paste Part 2, and Undo directly in the AI composer.
  */
 
 'use strict';
@@ -37,15 +36,12 @@ const PLATFORM_LABEL = {
 
 const DEFAULT_SETTINGS = {
   /**
-   * auto (default):
-   *   Hide the "Copy for Memephant" inject buttons and the floater.
-   *   Automatic Memory Bridge handles updates silently.
+   * auto:
+   *   Hide the bottom-right update floater and manual injected buttons.
    *
    * manual:
    *   Show the bottom-right "Memphant update detected" floater and
-   *   inject "Copy for Memephant" buttons on AI responses.
-   *   Only active when the user has explicitly selected Manual mode
-   *   in the extension popup.
+   *   inject "🐘 Copy for Memphant" buttons on AI responses.
    */
   memephantMemoryMode: 'auto',
 };
@@ -62,20 +58,11 @@ function canUseChromeStorage() {
 
 function isAutomaticMemoryMode() {
   return (
-    extensionSettings.memephantMemoryMode === 'automatic' ||
     extensionSettings.memephantMemoryMode === 'auto' ||
+    extensionSettings.memephantMemoryMode === 'automatic' ||
     extensionSettings.memephantAutomaticMode === true ||
-    extensionSettings.memoryBridgeMode === 'automatic' ||
-    extensionSettings.memoryBridgeMode === 'auto'
+    extensionSettings.memoryBridgeMode === 'automatic'
   );
-}
-
-/** Remove all previously injected "Copy for Memephant" buttons from the page. */
-function removeAllInjectedButtons() {
-  document.querySelectorAll('.mph-inject-btn').forEach((btn) => btn.remove());
-  document.querySelectorAll('[data-mph-injected]').forEach((node) => {
-    delete node.dataset.mphInjected;
-  });
 }
 
 function loadSettings() {
@@ -137,6 +124,8 @@ function listenForSettingsChanges() {
     if (isAutomaticMemoryMode()) {
       dismissFloater();
       removeAllInjectedButtons();
+    } else {
+      injectAllButtons();
     }
 
     console.log('Memephant: extension settings updated', extensionSettings);
@@ -212,6 +201,44 @@ const RESPONSE_SELECTORS = {
   unknown: 'article, main',
 };
 
+const COMPOSER_SELECTORS = {
+  chatgpt: [
+    '#prompt-textarea',
+    '[data-testid="prompt-textarea"]',
+    'textarea[data-testid="prompt-textarea"]',
+    'div[contenteditable="true"][data-testid="prompt-textarea"]',
+    'div[contenteditable="true"]',
+    '.ProseMirror',
+    'textarea',
+  ],
+  claude: [
+    'div[contenteditable="true"]',
+    '.ProseMirror',
+    'textarea',
+  ],
+  grok: [
+    'textarea',
+    'div[contenteditable="true"]',
+    '.ProseMirror',
+  ],
+  perplexity: [
+    'textarea',
+    'div[contenteditable="true"]',
+    '.ProseMirror',
+  ],
+  gemini: [
+    'rich-textarea div[contenteditable="true"]',
+    'div[contenteditable="true"]',
+    'textarea',
+  ],
+  unknown: [
+    'textarea',
+    'input[type="text"]',
+    'div[contenteditable="true"]',
+    '.ProseMirror',
+  ],
+};
+
 function getPageText() {
   const seen = new Set();
   let combined = '';
@@ -231,7 +258,7 @@ function getPageText() {
   return combined;
 }
 
-// ─── Floating banner ──────────────────────────────────────────────────────────
+// ─── Floating banner / status ─────────────────────────────────────────────────
 
 function getOrCreateFloater() {
   let el = document.getElementById('mph-floater');
@@ -309,6 +336,39 @@ function showToast(message, isError = false) {
   toastTimeout = setTimeout(dismissFloater, 3000);
 }
 
+function showSmallStatus(message, isError = false) {
+  const id = 'mph-small-status';
+  let el = document.getElementById(id);
+
+  if (!el) {
+    el = document.createElement('div');
+    el.id = id;
+    el.style.position = 'fixed';
+    el.style.right = '16px';
+    el.style.bottom = '16px';
+    el.style.zIndex = '2147483647';
+    el.style.maxWidth = '340px';
+    el.style.padding = '10px 12px';
+    el.style.borderRadius = '10px';
+    el.style.fontFamily = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    el.style.fontSize = '13px';
+    el.style.lineHeight = '1.35';
+    el.style.boxShadow = '0 10px 24px rgba(0,0,0,0.3)';
+    document.body.appendChild(el);
+  }
+
+  el.textContent = message;
+  el.style.background = isError ? '#3a1515' : '#102a1c';
+  el.style.border = isError ? '1px solid #7f1d1d' : '1px solid #166534';
+  el.style.color = isError ? '#fecaca' : '#bbf7d0';
+  el.hidden = false;
+
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    el.hidden = true;
+  }, 3000);
+}
+
 async function handleCopy() {
   if (!lastDetectedJson) return;
 
@@ -330,8 +390,11 @@ function isComposerElement(target) {
 
   return Boolean(
     target.closest('#prompt-textarea') ||
+      target.closest('[data-testid="prompt-textarea"]') ||
       target.closest('textarea') ||
-      target.closest('div[contenteditable="true"]'),
+      target.closest('input[type="text"]') ||
+      target.closest('div[contenteditable="true"]') ||
+      target.closest('.ProseMirror'),
   );
 }
 
@@ -418,7 +481,27 @@ function injectCopyButton(node) {
   anchor.appendChild(btn);
 }
 
+function removeAllInjectedButtons() {
+  document.querySelectorAll('.mph-inject-btn').forEach((btn) => {
+    const parent = btn.parentElement;
+    btn.remove();
+
+    if (parent?.dataset?.mphInjected) {
+      delete parent.dataset.mphInjected;
+    }
+  });
+
+  document.querySelectorAll('[data-mph-injected="true"], [data-mphInjected="true"]').forEach((node) => {
+    delete node.dataset.mphInjected;
+  });
+}
+
 function injectAllButtons() {
+  if (isAutomaticMemoryMode()) {
+    removeAllInjectedButtons();
+    return;
+  }
+
   const selectorMap = {
     chatgpt: '[data-message-author-role="assistant"]',
     claude: '[data-testid="assistant-message"]',
@@ -432,6 +515,636 @@ function injectAllButtons() {
   if (selector) {
     document.querySelectorAll(selector).forEach(injectCopyButton);
   }
+}
+
+// ─── Prompt Tools: composer helpers ───────────────────────────────────────────
+
+function isElementVisible(el) {
+  if (!el || !(el instanceof Element)) return false;
+
+  const rect = el.getBoundingClientRect();
+  const style = window.getComputedStyle(el);
+
+  return (
+    rect.width > 0 &&
+    rect.height > 0 &&
+    style.visibility !== 'hidden' &&
+    style.display !== 'none'
+  );
+}
+
+function getActiveComposer() {
+  const active = document.activeElement;
+
+  if (
+    active &&
+    isComposerElement(active) &&
+    isElementVisible(active) &&
+    !active.disabled &&
+    !active.readOnly
+  ) {
+    return active.closest('#prompt-textarea, [data-testid="prompt-textarea"], textarea, input[type="text"], div[contenteditable="true"], .ProseMirror') || active;
+  }
+
+  const selectors = COMPOSER_SELECTORS[PLATFORM] || COMPOSER_SELECTORS.unknown;
+
+  for (const selector of selectors) {
+    const candidates = Array.from(document.querySelectorAll(selector));
+
+    for (const candidate of candidates) {
+      if (!isElementVisible(candidate)) continue;
+      if (candidate.disabled || candidate.readOnly) continue;
+
+      const ariaHidden = candidate.getAttribute('aria-hidden');
+      if (ariaHidden === 'true') continue;
+
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function readComposerText(el) {
+  if (!el) return '';
+
+  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
+    return el.value || '';
+  }
+
+  if (el.isContentEditable || el.getAttribute('contenteditable') === 'true') {
+    return el.innerText || el.textContent || '';
+  }
+
+  const nestedTextarea = el.querySelector?.('textarea, input[type="text"]');
+  if (nestedTextarea) {
+    return readComposerText(nestedTextarea);
+  }
+
+  const nestedEditable = el.querySelector?.('div[contenteditable="true"], .ProseMirror');
+  if (nestedEditable) {
+    return readComposerText(nestedEditable);
+  }
+
+  return el.innerText || el.textContent || '';
+}
+
+function dispatchComposerInputEvents(el, text) {
+  try {
+    el.dispatchEvent(new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'insertText',
+      data: text,
+    }));
+  } catch {
+    // Some pages/browsers do not allow constructing InputEvent here.
+  }
+
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+
+  try {
+    el.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'insertText',
+      data: text,
+    }));
+  } catch {
+    // Synthetic Event fallback above is enough for textarea/input.
+  }
+}
+
+function setNativeValue(el, value) {
+  const proto =
+    el instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : el instanceof HTMLInputElement
+        ? HTMLInputElement.prototype
+        : null;
+
+  const descriptor = proto
+    ? Object.getOwnPropertyDescriptor(proto, 'value')
+    : null;
+
+  if (descriptor?.set) {
+    descriptor.set.call(el, value);
+  } else {
+    el.value = value;
+  }
+}
+
+function writeComposerText(el, text) {
+  if (!el) return false;
+
+  const nestedTextarea = !(el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement)
+    ? el.querySelector?.('textarea, input[type="text"]')
+    : null;
+
+  if (nestedTextarea) {
+    return writeComposerText(nestedTextarea, text);
+  }
+
+  const nestedEditable = !el.isContentEditable && el.getAttribute('contenteditable') !== 'true'
+    ? el.querySelector?.('div[contenteditable="true"], .ProseMirror')
+    : null;
+
+  if (nestedEditable) {
+    return writeComposerText(nestedEditable, text);
+  }
+
+  el.focus();
+
+  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
+    setNativeValue(el, text);
+    dispatchComposerInputEvents(el, text);
+    el.focus();
+    return readComposerText(el).trim() === text.trim();
+  }
+
+  if (el.isContentEditable || el.getAttribute('contenteditable') === 'true' || el.classList.contains('ProseMirror')) {
+    try {
+      const selection = window.getSelection();
+      const range = document.createRange();
+
+      range.selectNodeContents(el);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      const inserted = document.execCommand('insertText', false, text);
+      dispatchComposerInputEvents(el, text);
+      el.focus();
+
+      if (inserted && readComposerText(el).trim() === text.trim()) {
+        return true;
+      }
+    } catch {
+      // Fall back below.
+    }
+
+    el.textContent = text;
+    dispatchComposerInputEvents(el, text);
+    el.focus();
+    return readComposerText(el).trim() === text.trim();
+  }
+
+  el.textContent = text;
+  dispatchComposerInputEvents(el, text);
+  el.focus();
+  return readComposerText(el).trim() === text.trim();
+}
+
+function redactBridgeText(value) {
+  return String(value || '')
+    .replace(/\bsk-ant-[A-Za-z0-9_-]{20,}\b/g, '[REDACTED]')
+    .replace(/\bsk-[A-Za-z0-9_-]{20,}\b/g, '[REDACTED]')
+    .replace(/\bgh[pousr]_[A-Za-z0-9_]{20,}\b/g, '[REDACTED]')
+    .replace(/\b(?:api[_-]?key|secret|token|password)\s*[:=]\s*["']?[^"'\s]+/gi, '[REDACTED]')
+    .replace(/\b[A-Z]:[\\/][^\s"'<>]+/g, '[local-path]')
+    .replace(/(^|\s)\/Users\/[^\s"'<>]+/g, '$1[local-path]')
+    .replace(/(^|\s)\/home\/[^\s"'<>]+/g, '$1[local-path]');
+}
+
+function hasBlockedUpdatePayload(value) {
+  return /\bmemphant_update\b/i.test(String(value || ''));
+}
+
+function storageSetLocal(values) {
+  return new Promise((resolve, reject) => {
+    if (!canUseChromeStorage()) {
+      resolve();
+      return;
+    }
+
+    chrome.storage.local.set(values, () => {
+      const error = chrome.runtime?.lastError;
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function storageRemoveLocal(keys) {
+  return new Promise((resolve, reject) => {
+    if (!canUseChromeStorage()) {
+      resolve();
+      return;
+    }
+
+    chrome.storage.local.remove(keys, () => {
+      const error = chrome.runtime?.lastError;
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function mphCompressPrompt(input) {
+  let text = String(input || '').trim();
+
+  if (!text) return text;
+
+  const replacements = [
+    [/\bcould you please\b/gi, ''],
+    [/\bcan you please\b/gi, ''],
+    [/\bplease\b/gi, ''],
+    [/\bhelp me to\b/gi, ''],
+    [/\bhelp me\b/gi, ''],
+    [/\bso that it becomes\b/gi, 'to be'],
+    [/\bin order to\b/gi, 'to'],
+    [/\balso adds?\b/gi, 'add'],
+    [/\band also\b/gi, 'and'],
+    [/\bjust\b/gi, ''],
+    [/\breally\b/gi, ''],
+    [/\bbasically\b/gi, ''],
+    [/\bi would like you to\b/gi, ''],
+    [/\bi want you to\b/gi, ''],
+  ];
+
+  for (const [pattern, replacement] of replacements) {
+    text = text.replace(pattern, replacement);
+  }
+
+  text = text
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+
+  if (text.length > 0) {
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  return text;
+}
+
+function mphSplitPrompt(input) {
+  const text = String(input || '').trim();
+
+  if (text.length < 180) {
+    return [text, ''];
+  }
+
+  const midpoint = Math.floor(text.length / 2);
+  const searchWindow = text.slice(
+    Math.max(0, midpoint - 120),
+    Math.min(text.length, midpoint + 120),
+  );
+
+  const breakMatches = Array.from(searchWindow.matchAll(/[.!?]\s+|\n\n|\n/g));
+  let splitIndex = -1;
+
+  if (breakMatches.length > 0) {
+    const best = breakMatches.reduce((closest, match) => {
+      const absoluteIndex = Math.max(0, midpoint - 120) + match.index + match[0].length;
+      const distance = Math.abs(absoluteIndex - midpoint);
+
+      if (!closest || distance < closest.distance) {
+        return { absoluteIndex, distance };
+      }
+
+      return closest;
+    }, null);
+
+    splitIndex = best.absoluteIndex;
+  }
+
+  if (splitIndex < 0) {
+    const before = text.lastIndexOf(' ', midpoint);
+    const after = text.indexOf(' ', midpoint);
+    splitIndex = before > 80 ? before : after;
+  }
+
+  if (splitIndex <= 0 || splitIndex >= text.length - 1) {
+    return [text, ''];
+  }
+
+  const part1 = text.slice(0, splitIndex).trim();
+  const part2 = text.slice(splitIndex).trim();
+
+  if (!part1 || !part2) {
+    return [text, ''];
+  }
+
+  return [part1, part2];
+}
+
+// ─── Prompt Tools: handlers ───────────────────────────────────────────────────
+
+async function handleCompressComposer() {
+  const el = getActiveComposer();
+
+  if (!el) {
+    showSmallStatus('No text input found on this page.', true);
+    return { success: false, message: 'No text input found.' };
+  }
+
+  const original = readComposerText(el);
+
+  if (!original.trim()) {
+    showSmallStatus('Nothing to compress — the composer is empty.');
+    return { success: false, message: 'Composer is empty.' };
+  }
+
+  const compressed = redactBridgeText(mphCompressPrompt(original));
+
+  if (compressed === original.trim()) {
+    showSmallStatus('Nothing to compress.');
+    return { success: false, message: 'Nothing to compress.' };
+  }
+
+  if (hasBlockedUpdatePayload(compressed)) {
+    showSmallStatus('Composer draft contains a blocked update payload.', true);
+    return { success: false, message: 'Composer draft contains a blocked update payload.' };
+  }
+
+  const wrote = writeComposerText(el, compressed);
+
+  if (!wrote) {
+    showSmallStatus('Could not write compressed prompt.', true);
+    return { success: false, message: 'Could not write compressed prompt.' };
+  }
+
+  await storageSetLocal({
+    memephantPromptToolUndo: {
+      action: 'compress',
+      originalText: original,
+      replacementText: compressed,
+      createdAt: new Date().toISOString(),
+      platform: PLATFORM,
+    },
+  });
+
+  try {
+    await navigator.clipboard.writeText(compressed);
+  } catch {
+    // Clipboard is a backup only. The composer has already been updated.
+  }
+
+  showSmallStatus('Prompt compressed. Undo available.');
+  return { success: true, action: 'compress' };
+}
+
+async function handleSplitComposer() {
+  const el = getActiveComposer();
+
+  if (!el) {
+    showSmallStatus('No text input found on this page.', true);
+    return { success: false, message: 'No text input found.' };
+  }
+
+  const original = readComposerText(el);
+
+  if (!original.trim()) {
+    showSmallStatus('Nothing to split — the composer is empty.');
+    return { success: false, message: 'Composer is empty.' };
+  }
+
+  const [rawPart1, rawPart2] = mphSplitPrompt(original);
+  const part1 = redactBridgeText(rawPart1);
+  const part2 = redactBridgeText(rawPart2);
+
+  if (!part2) {
+    showSmallStatus('Prompt is too short to split.');
+    return { success: false, message: 'Prompt is too short to split.' };
+  }
+
+  if (hasBlockedUpdatePayload(part1) || hasBlockedUpdatePayload(part2)) {
+    showSmallStatus('Composer draft contains a blocked update payload.', true);
+    return { success: false, message: 'Composer draft contains a blocked update payload.' };
+  }
+
+  const wrote = writeComposerText(el, part1);
+
+  if (!wrote) {
+    showSmallStatus('Could not write split prompt.', true);
+    return { success: false, message: 'Could not write split prompt.' };
+  }
+
+  await storageSetLocal({
+    memephantPromptToolUndo: {
+      action: 'split',
+      originalText: original,
+      replacementText: part1,
+      createdAt: new Date().toISOString(),
+      platform: PLATFORM,
+    },
+    memephantPendingSplitPart2: part2,
+  });
+
+  try {
+    await navigator.clipboard.writeText(part2);
+    showSmallStatus('Part 1 inserted. Part 2 copied. Undo available.');
+  } catch {
+    showSmallStatus('Part 1 inserted. Part 2 saved. Undo available.');
+  }
+
+  return { success: true, action: 'split' };
+}
+
+function handlePastePart2Composer() {
+  return new Promise((resolve) => {
+    if (!canUseChromeStorage()) {
+      showSmallStatus('Storage unavailable.', true);
+      resolve({ success: false, message: 'Storage unavailable.' });
+      return;
+    }
+
+    chrome.storage.local.get({ memephantPendingSplitPart2: '' }, async (items) => {
+      void chrome.runtime?.lastError;
+
+      const part2 = items.memephantPendingSplitPart2;
+
+      if (!part2) {
+        showSmallStatus('No pending Part 2 found.');
+        resolve({ success: false, message: 'No pending Part 2 found.' });
+        return;
+      }
+
+      const el = getActiveComposer();
+
+      if (!el) {
+        showSmallStatus('No text input found on this page.', true);
+        resolve({ success: false, message: 'No text input found.' });
+        return;
+      }
+
+      const wrote = writeComposerText(el, part2);
+
+      if (!wrote) {
+        showSmallStatus('Could not paste Part 2.', true);
+        resolve({ success: false, message: 'Could not paste Part 2.' });
+        return;
+      }
+
+      try {
+        await storageRemoveLocal('memephantPendingSplitPart2');
+      } catch {
+        showSmallStatus('Part 2 pasted, but could not clear pending Part 2.', true);
+      }
+
+      try {
+        await navigator.clipboard.writeText(part2);
+      } catch {
+        // Composer update succeeded; clipboard is only a backup.
+      }
+
+      showSmallStatus('Part 2 pasted into composer.');
+      resolve({ success: true, action: 'paste_part2' });
+    });
+  });
+}
+
+function handleUndoComposer() {
+  return new Promise((resolve) => {
+    if (!canUseChromeStorage()) {
+      showSmallStatus('Nothing to undo.', true);
+      resolve({ success: false, message: 'Nothing to undo.' });
+      return;
+    }
+
+    chrome.storage.local.get({ memephantPromptToolUndo: null }, (items) => {
+      void chrome.runtime?.lastError;
+
+      const undoEntry = items.memephantPromptToolUndo;
+
+      if (!undoEntry || typeof undoEntry.originalText !== 'string') {
+        showSmallStatus('Nothing to undo.');
+        resolve({ success: false, message: 'Nothing to undo.' });
+        return;
+      }
+
+      const el = getActiveComposer();
+
+      if (!el) {
+        showSmallStatus('Could not restore prompt.', true);
+        resolve({ success: false, message: 'Could not restore prompt.' });
+        return;
+      }
+
+      const wrote = writeComposerText(el, undoEntry.originalText);
+
+      if (!wrote) {
+        showSmallStatus('Could not restore prompt.', true);
+        resolve({ success: false, message: 'Could not restore prompt.' });
+        return;
+      }
+
+      const keysToRemove = ['memephantPromptToolUndo'];
+      if (undoEntry.action === 'split' || undoEntry.pendingPart2 === true) {
+        keysToRemove.push('memephantPendingSplitPart2');
+      }
+
+      chrome.storage.local.remove(keysToRemove, () => {
+        void chrome.runtime?.lastError;
+      });
+
+      showSmallStatus('Original prompt restored.');
+      resolve({ success: true, action: 'undo', undoAction: undoEntry.action });
+    });
+  });
+}
+
+function handleInsertPendingDraft() {
+  return new Promise((resolve) => {
+    if (!canUseChromeStorage()) {
+      showSmallStatus('Storage unavailable.', true);
+      resolve({ success: false, message: 'Storage unavailable.' });
+      return;
+    }
+
+    chrome.storage.local.get({ memephantPendingComposerDraft: null }, async (items) => {
+      void chrome.runtime?.lastError;
+
+      const pendingDraft = items.memephantPendingComposerDraft;
+
+      if (
+        !pendingDraft ||
+        pendingDraft.source !== 'memephant-app' ||
+        typeof pendingDraft.text !== 'string' ||
+        !pendingDraft.text.trim()
+      ) {
+        showSmallStatus('No pending draft found.');
+        resolve({ success: false, message: 'No pending draft found.' });
+        return;
+      }
+
+      const el = getActiveComposer();
+
+      if (!el) {
+        showSmallStatus('No text input found on this page.', true);
+        resolve({ success: false, message: 'No text input found.' });
+        return;
+      }
+
+      const original = readComposerText(el);
+      if (pendingDraft.mode !== 'compress' && pendingDraft.mode !== 'split') {
+        showSmallStatus('Pending draft has an invalid mode.', true);
+        resolve({ success: false, message: 'Pending draft has an invalid mode.' });
+        return;
+      }
+
+      if (hasBlockedUpdatePayload(pendingDraft.text) || hasBlockedUpdatePayload(pendingDraft.part2)) {
+        showSmallStatus('Pending draft contains a blocked update payload.', true);
+        resolve({ success: false, message: 'Pending draft contains a blocked update payload.' });
+        return;
+      }
+
+      const replacement = redactBridgeText(pendingDraft.text).trim();
+      const part2 =
+        pendingDraft.mode === 'split' && typeof pendingDraft.part2 === 'string'
+          ? redactBridgeText(pendingDraft.part2).trim()
+          : '';
+
+      if (!replacement) {
+        showSmallStatus('Pending draft is empty after sanitising.', true);
+        resolve({ success: false, message: 'Pending draft is empty after sanitising.' });
+        return;
+      }
+
+      const wrote = writeComposerText(el, replacement);
+
+      if (!wrote) {
+        showSmallStatus('Could not insert pending draft.', true);
+        resolve({ success: false, message: 'Could not insert pending draft.' });
+        return;
+      }
+
+      const values = {
+        memephantPromptToolUndo: {
+          action: 'insert_pending_draft',
+          originalText: original,
+          replacementText: replacement,
+          createdAt: new Date().toISOString(),
+          platform: PLATFORM,
+          pendingPart2: Boolean(part2),
+        },
+      };
+
+      if (part2) {
+        values.memephantPendingSplitPart2 = part2;
+      }
+
+      try {
+        await storageSetLocal(values);
+        await storageRemoveLocal('memephantPendingComposerDraft');
+      } catch {
+        showSmallStatus('Draft inserted, but extension storage could not be updated.', true);
+        resolve({ success: false, message: 'Draft inserted, but extension storage could not be updated.' });
+        return;
+      }
+
+      showSmallStatus('Pending draft inserted. Nothing was sent.');
+      resolve({ success: true, action: 'insert_pending_draft' });
+    });
+  });
 }
 
 // ─── Observer ─────────────────────────────────────────────────────────────────
@@ -476,9 +1189,7 @@ function scheduleScan() {
       }
     }
 
-    if (!isAutomaticMemoryMode()) {
-      injectAllButtons();
-    }
+    injectAllButtons();
   }, 700);
 }
 
@@ -517,326 +1228,60 @@ if (document.readyState === 'loading') {
   });
 }
 
+// ─── Runtime messages ─────────────────────────────────────────────────────────
 
-// ─── Prompt Compress/Split — Composer interaction ──────────────────────────────
-//
-// mphCompressPrompt and mphSplitPrompt are pure-JS copies of the logic in
-// src/utils/promptUtils.ts.  Extension content scripts cannot import ES-module
-// TypeScript files, so the functions are intentionally duplicated here with a
-// "mph" prefix to avoid global-scope collisions.
-
-const _MPH_LEADING_FILLERS = [
-  /^please\s+/i, /^can you\s+/i, /^could you\s+/i, /^would you\s+/i,
-  /^i want you to\s+/i, /^i need you to\s+/i, /^i'd like you to\s+/i,
-  /^i would like you to\s+/i, /^help me\s+/i,
-  /^can you please\s+/i, /^could you please\s+/i,
-];
-const _MPH_TRAILING_FILLERS = [
-  /[,\s]+please\.?$/i, /[,\s]+thanks\.?$/i, /[,\s]+thank you\.?$/i,
-];
-
-function mphCompressPrompt(text) {
-  if (!text.trim()) return text;
-  let out = text.trim();
-  let prevOut;
-  do {
-    prevOut = out;
-    for (const p of _MPH_LEADING_FILLERS) { out = out.replace(p, '').trimStart(); }
-  } while (out !== prevOut);
-  for (const p of _MPH_TRAILING_FILLERS) { out = out.replace(p, '').trimEnd(); }
-  out = out.replace(/\s{2,}/g, ' ').trim();
-  const changed = out !== text.trim();
-  if (changed && out.length > 0) out = out.charAt(0).toUpperCase() + out.slice(1);
-  return out.length > 0 ? out : text.trim();
-}
-
-function mphSplitPrompt(text) {
-  if (!text.trim()) return [text, ''];
-  const trimmed = text.trim();
-  if (trimmed.split(/\s+/).length < 4) return [trimmed, ''];
-  const midpoint = Math.floor(trimmed.length / 2);
-  { const re = /[.!?]\s+/g; let best = -1, m;
-    while ((m = re.exec(trimmed)) !== null) {
-      const end = m.index + m[0].length;
-      if (end - 1 <= midpoint + 20) best = end; else break;
-    }
-    if (best > 0 && best < trimmed.length)
-      return [trimmed.slice(0, best).trim(), trimmed.slice(best).trim()]; }
-  { const re = /[,;]\s+/g; let best = -1, m;
-    while ((m = re.exec(trimmed)) !== null) {
-      const end = m.index + m[0].length;
-      if (end - 1 <= midpoint + 20) best = end; else break;
-    }
-    if (best > 0 && best < trimmed.length)
-      return [trimmed.slice(0, best).trim(), trimmed.slice(best).trim()]; }
-  { const words = trimmed.split(' ');
-    let chars = 0, splitAt = Math.ceil(words.length / 2);
-    for (let i = 0; i < words.length; i++) {
-      chars += words[i].length + 1;
-      if (chars > midpoint) { splitAt = i + 1; break; }
-    }
-    const p1 = words.slice(0, splitAt).join(' ').trim();
-    const p2 = words.slice(splitAt).join(' ').trim();
-    return p2 ? [p1, p2] : [p1, '']; }
-}
-
-// ─── Composer selectors (tried in order, first match wins) ────────────────────
-
-const COMPOSER_SELECTORS = {
-  chatgpt: [
-    '#prompt-textarea',
-    'textarea[data-id="root"]',
-    'textarea[placeholder]',
-  ],
-  claude: [
-    '.ProseMirror[contenteditable="true"]',
-    'div[contenteditable="true"][data-placeholder]',
-    'div[contenteditable="true"]',
-  ],
-  perplexity: [
-    'textarea[placeholder]',
-    'div[contenteditable="true"]',
-  ],
-  gemini: [
-    '.ql-editor[contenteditable="true"]',
-    'rich-textarea div[contenteditable="true"]',
-    'div[contenteditable="true"]',
-  ],
-  grok: [
-    'textarea[placeholder]',
-    'div[contenteditable="true"]',
-  ],
-  unknown: ['textarea', 'div[contenteditable="true"]'],
-};
-
-function getActiveComposer() {
-  const selectors = COMPOSER_SELECTORS[PLATFORM] || COMPOSER_SELECTORS.unknown;
-  for (const sel of selectors) {
-    try {
-      const el = document.querySelector(sel);
-      if (el) return el;
-    } catch {
-      // ignore invalid selectors on unexpected page shapes
-    }
-  }
-  return null;
-}
-
-function readComposerText(el) {
-  if (!el) return '';
-  if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') return el.value || '';
-  return el.innerText || el.textContent || '';
-}
-
-function dispatchComposerInputEvents(el) {
-  el.dispatchEvent(new Event('input', { bubbles: true }));
-  el.dispatchEvent(new Event('change', { bubbles: true }));
-  // Synthetic InputEvent so React controlled inputs pick up the value change
-  el.dispatchEvent(new InputEvent('input', { bubbles: true, data: null, inputType: 'insertText' }));
-}
-
-/**
- * Write text into a composer element, handling both textarea and
- * contenteditable (ProseMirror / Quill) styles, and firing the events
- * that React/Vue-managed inputs need to track state correctly.
- * Never submits — only updates the text field.
- */
-function writeComposerText(el, text) {
-  el.focus();
-
-  if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-    // React wraps the native setter; calling it directly bypasses the controlled-
-    // input guard so the synthetic 'input' event updates React's state correctly.
-    const nativeSetter =
-      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set ??
-      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
-    if (nativeSetter) {
-      nativeSetter.call(el, text);
-    } else {
-      el.value = text;
-    }
-    dispatchComposerInputEvents(el);
-
-  } else if (el.isContentEditable) {
-    // ProseMirror (ChatGPT, Claude) and Quill (Gemini):
-    // selectAll + insertText is the most reliable trigger for editor state updates.
-    el.focus();
-    const selected = document.execCommand('selectAll', false, undefined);
-    const inserted = selected && document.execCommand('insertText', false, text);
-
-    if (!inserted || (el.textContent || '').trim() !== text.trim()) {
-      // execCommand unavailable or silently failed — fall back to direct DOM write
-      el.textContent = text;
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      const sel = window.getSelection();
-      if (sel) { sel.removeAllRanges(); sel.addRange(range); }
-      dispatchComposerInputEvents(el);
-    }
-  }
-
-  el.focus();
-}
-
-/**
- * Show a small status notice in the floater.
- * Always shows regardless of memory mode (unlike showToast which is
- * suppressed in Automatic mode for the update-detection flow).
- */
-let _mphStatusTimeout = null;
-
-function showSmallStatus(message, isError = false) {
-  const floater = getOrCreateFloater();
-  floater.innerHTML = `
-    <div class="mph-floater__inner mph-floater__inner--toast${isError ? ' mph-floater__inner--error' : ''}">
-      <span class="mph-floater__icon">${isError ? '⚠️' : '✅'}</span>
-      <span class="mph-floater__toast-msg">${message}</span>
-    </div>`;
-  floater.classList.add('mph-floater--visible');
-  clearTimeout(_mphStatusTimeout);
-  _mphStatusTimeout = setTimeout(() => {
-    floater.classList.remove('mph-floater--visible');
-  }, 3500);
-}
-
-// ─── Compress handler ─────────────────────────────────────────────────────────
-
-async function handleCompressComposer() {
-  const el = getActiveComposer();
-
-  if (!el) {
-    showSmallStatus('No text input found on this page.', true);
-    return;
-  }
-
-  const original = readComposerText(el);
-
-  if (!original.trim()) {
-    showSmallStatus('Nothing to compress — the composer is empty.');
-    return;
-  }
-
-  const compressed = mphCompressPrompt(original);
-
-  if (compressed === original.trim()) {
-    showSmallStatus('Nothing to compress.');
-    return;
-  }
-
-  writeComposerText(el, compressed);
-
-  try {
-    await navigator.clipboard.writeText(compressed);
-    showSmallStatus('Prompt compressed. Clipboard updated as backup.');
-  } catch {
-    showSmallStatus('Prompt compressed. (Clipboard unavailable — text updated in composer.)');
-  }
-}
-
-// ─── Split handler ────────────────────────────────────────────────────────────
-
-async function handleSplitComposer() {
-  const el = getActiveComposer();
-
-  if (!el) {
-    showSmallStatus('No text input found on this page.', true);
-    return;
-  }
-
-  const original = readComposerText(el);
-
-  if (!original.trim()) {
-    showSmallStatus('Nothing to split — the composer is empty.');
-    return;
-  }
-
-  const [part1, part2] = mphSplitPrompt(original);
-
-  if (!part2) {
-    showSmallStatus('Prompt is too short to split.');
-    return;
-  }
-
-  writeComposerText(el, part1);
-
-  // Persist Part 2 as backup — survives clipboard permission errors
-  if (canUseChromeStorage()) {
-    chrome.storage.local.set({ memephantPendingSplitPart2: part2 }, () => {
-      void chrome.runtime?.lastError;
-    });
-  }
-
-  try {
-    await navigator.clipboard.writeText(part2);
-    showSmallStatus('Part 1 is ready. Part 2 copied to clipboard.');
-  } catch {
-    showSmallStatus('Part 1 is ready. Part 2 saved — use "Paste Part 2" in the popup.', true);
-  }
-}
-
-// ─── Paste Part 2 handler ─────────────────────────────────────────────────────
-
-async function handlePastePart2Composer() {
-  if (!canUseChromeStorage()) {
-    showSmallStatus('Storage unavailable.', true);
-    return;
-  }
-
-  chrome.storage.local.get({ memephantPendingSplitPart2: '' }, async (items) => {
-    void chrome.runtime?.lastError;
-    const part2 = items.memephantPendingSplitPart2;
-
-    if (!part2) {
-      showSmallStatus('No pending Part 2 found.');
-      return;
-    }
-
-    const el = getActiveComposer();
-    if (!el) {
-      showSmallStatus('No text input found on this page.', true);
-      return;
-    }
-
-    writeComposerText(el, part2);
-
-    // Clear the stored Part 2 after a successful paste
-    chrome.storage.local.remove('memephantPendingSplitPart2', () => {
-      void chrome.runtime?.lastError;
-    });
-
-    try {
-      await navigator.clipboard.writeText(part2);
-    } catch {
-      // Text is already in the composer — clipboard is a bonus
-    }
-
-    showSmallStatus('Part 2 pasted into composer.');
-  });
-}
-
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === 'GET_CURRENT_UPDATE') {
-    return Promise.resolve({ update: lastDetectedJson });
+    sendResponse({ update: lastDetectedJson });
+    return false;
   }
 
   if (msg.type === 'COPY_UPDATE') {
     void handleCopy();
+    sendResponse({ success: true });
+    return false;
   }
 
   if (msg.type === 'HIDE_MEMEPHANT_FLOATER') {
     dismissFloater();
+    sendResponse({ success: true });
+    return false;
   }
 
   if (msg.type === 'COMPRESS_COMPOSER') {
-    void handleCompressComposer();
+    handleCompressComposer()
+      .then(sendResponse)
+      .catch(() => sendResponse({ success: false, message: 'Could not compress prompt.' }));
+    return true;
   }
 
   if (msg.type === 'SPLIT_COMPOSER') {
-    void handleSplitComposer();
+    handleSplitComposer()
+      .then(sendResponse)
+      .catch(() => sendResponse({ success: false, message: 'Could not split prompt.' }));
+    return true;
   }
 
   if (msg.type === 'PASTE_PART_2') {
-    void handlePastePart2Composer();
+    handlePastePart2Composer()
+      .then(sendResponse)
+      .catch(() => sendResponse({ success: false, message: 'Could not paste Part 2.' }));
+    return true;
   }
+
+  if (msg.type === 'UNDO_COMPOSER') {
+    handleUndoComposer()
+      .then(sendResponse)
+      .catch(() => sendResponse({ success: false, message: 'Could not restore prompt.' }));
+    return true;
+  }
+
+  if (msg.type === 'INSERT_PENDING_DRAFT') {
+    handleInsertPendingDraft()
+      .then(sendResponse)
+      .catch(() => sendResponse({ success: false, message: 'Could not insert pending draft.' }));
+    return true;
+  }
+
+  return false;
 });

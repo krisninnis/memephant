@@ -219,7 +219,8 @@ async function initMemoryModeToggle() {
     } catch (err) {
       console.error('[Memephant] Could not save memory mode:', err);
       showConfirmation('⚠️ Could not save memory mode setting.');
-      // Revert visual state on failure
+
+      // Revert visual state on failure.
       toggle.checked = !toggle.checked;
       if (subtitle) {
         subtitle.textContent = toggle.checked
@@ -249,23 +250,20 @@ function isSupportedAiPage(tabUrl) {
   }
 }
 
-
-// ─── Prompt Tools (Compress / Split / Paste Part 2) ──────────────────────────
-
 /**
  * Send a message to the content script running in the active tab.
- * Returns false if the tab is not a supported AI page.
+ * Returns null if the content script is not reachable.
+ * Returns the content script's response object on success.
  */
 async function sendToActiveTab(type) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) return false;
+  if (!tab?.id) return null;
 
   try {
-    await chrome.tabs.sendMessage(tab.id, { type });
-    return true;
+    const response = await chrome.tabs.sendMessage(tab.id, { type });
+    return response ?? { success: true };
   } catch {
-    // Content script not running on this tab (e.g. new tab, non-AI page)
-    return false;
+    return null;
   }
 }
 
@@ -285,33 +283,140 @@ async function refreshPastePart2Button() {
   }
 }
 
+async function refreshPendingDraftButton() {
+  const btn = document.getElementById('insert-pending-draft-btn');
+  if (!btn) return;
+
+  try {
+    const items = await storageGet({ memephantPendingComposerDraft: null });
+    const pendingDraft = items.memephantPendingComposerDraft;
+    btn.hidden = !(
+      pendingDraft?.source === 'memephant-app' &&
+      typeof pendingDraft.text === 'string' &&
+      pendingDraft.text.trim()
+    );
+  } catch {
+    btn.hidden = true;
+  }
+}
+
+/**
+ * Show/hide the Undo button based on whether a prompt-tool undo entry exists.
+ * The button label reflects the action that can be undone.
+ */
+async function refreshUndoButton() {
+  const btn = document.getElementById('undo-btn');
+  if (!btn) return;
+
+  try {
+    const items = await storageGet({ memephantPromptToolUndo: null });
+    const undoEntry = items.memephantPromptToolUndo;
+
+    if (undoEntry && typeof undoEntry.originalText === 'string') {
+      const actionLabel =
+        undoEntry.action === 'compress'
+          ? 'Compress'
+          : undoEntry.action === 'split'
+            ? 'Split'
+            : 'Insert draft';
+      btn.textContent = `↩️ Undo ${actionLabel}`;
+      btn.hidden = false;
+    } else {
+      btn.hidden = true;
+    }
+  } catch {
+    btn.hidden = true;
+  }
+}
+
 async function initPromptTools() {
+  await refreshPendingDraftButton();
   await refreshPastePart2Button();
+  await refreshUndoButton();
 
   document.getElementById('compress-btn')?.addEventListener('click', async () => {
-    const sent = await sendToActiveTab('COMPRESS_COMPOSER');
-    if (!sent) {
+    const result = await sendToActiveTab('COMPRESS_COMPOSER');
+    if (!result) {
       showConfirmation('⚠️ Open a supported AI page first.');
+      return;
+    }
+
+    if (result.success) {
+      showConfirmation('✅ Prompt compressed. Undo available.');
+      setTimeout(refreshUndoButton, 500);
+    } else {
+      showConfirmation('⚠️ ' + (result.message || 'Could not compress prompt.'));
     }
   });
 
   document.getElementById('split-btn')?.addEventListener('click', async () => {
-    const sent = await sendToActiveTab('SPLIT_COMPOSER');
-    if (!sent) {
+    const result = await sendToActiveTab('SPLIT_COMPOSER');
+    if (!result) {
       showConfirmation('⚠️ Open a supported AI page first.');
+      return;
+    }
+
+    if (result.success) {
+      showConfirmation('✅ Part 1 inserted. Part 2 copied. Undo available.');
+      setTimeout(() => {
+        refreshPastePart2Button();
+        refreshUndoButton();
+      }, 500);
     } else {
-      // After split, a Part 2 may now be stored — refresh the button
-      setTimeout(refreshPastePart2Button, 500);
+      showConfirmation('⚠️ ' + (result.message || 'Could not split prompt.'));
     }
   });
 
   document.getElementById('paste-part2-btn')?.addEventListener('click', async () => {
-    const sent = await sendToActiveTab('PASTE_PART_2');
-    if (!sent) {
+    const result = await sendToActiveTab('PASTE_PART_2');
+    if (!result) {
       showConfirmation('⚠️ Open a supported AI page first.');
-    } else {
-      // Part 2 consumed — hide the button
+      return;
+    }
+
+    if (result.success) {
+      showConfirmation('✅ Part 2 pasted.');
       setTimeout(refreshPastePart2Button, 500);
+    } else {
+      showConfirmation('⚠️ ' + (result.message || 'Could not paste Part 2.'));
+    }
+  });
+
+  document.getElementById('insert-pending-draft-btn')?.addEventListener('click', async () => {
+    const result = await sendToActiveTab('INSERT_PENDING_DRAFT');
+    if (!result) {
+      showConfirmation('⚠️ Open a supported AI page first.');
+      return;
+    }
+
+    if (result.success) {
+      showConfirmation('✅ Pending draft inserted. Nothing was sent.');
+      setTimeout(() => {
+        refreshPendingDraftButton();
+        refreshUndoButton();
+        refreshPastePart2Button();
+      }, 500);
+    } else {
+      showConfirmation('⚠️ ' + (result.message || 'Could not insert pending draft.'));
+    }
+  });
+
+  document.getElementById('undo-btn')?.addEventListener('click', async () => {
+    const result = await sendToActiveTab('UNDO_COMPOSER');
+    if (!result) {
+      showConfirmation('⚠️ Open a supported AI page first.');
+      return;
+    }
+
+    if (result.success) {
+      showConfirmation('✅ Original prompt restored.');
+      setTimeout(() => {
+        refreshUndoButton();
+        refreshPastePart2Button();
+        refreshPendingDraftButton();
+      }, 500);
+    } else {
+      showConfirmation('⚠️ ' + (result.message || 'Nothing to undo.'));
     }
   });
 }

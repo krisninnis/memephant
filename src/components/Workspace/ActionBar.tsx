@@ -36,6 +36,28 @@ Only include fields that changed. Keep the JSON valid.
 currentState and lastSessionSummary are always required.`;
 
 type GitSyncState = 'idle' | 'syncing' | 'found' | 'up_to_date';
+type PromptPreview = {
+  mode: 'compress' | 'split';
+  text: string;
+  part2?: string;
+};
+
+const PROMPT_BRIDGE_EVENT = 'MEMEPHANT_QUEUE_COMPOSER_DRAFT';
+
+function sanitizeBridgePrompt(text: string): string {
+  return text
+    .replace(/\bsk-ant-[A-Za-z0-9_-]{20,}\b/g, '[REDACTED]')
+    .replace(/\bsk-[A-Za-z0-9_-]{20,}\b/g, '[REDACTED]')
+    .replace(/\bgh[pousr]_[A-Za-z0-9_]{20,}\b/g, '[REDACTED]')
+    .replace(/\b(?:api[_-]?key|secret|token|password)\s*[:=]\s*["']?[^"'\s]+/gi, '[REDACTED]')
+    .replace(/\b[A-Z]:[\\/][^\s"'<>]+/g, '[local-path]')
+    .replace(/(^|\s)\/Users\/[^\s"'<>]+/g, '$1[local-path]')
+    .replace(/(^|\s)\/home\/[^\s"'<>]+/g, '$1[local-path]');
+}
+
+function hasBlockedUpdatePayload(text: string): boolean {
+  return /\bmemphant_update\b/i.test(text);
+}
 
 export function ActionBar() {
   const activeProject = useActiveProject();
@@ -45,7 +67,6 @@ export function ActionBar() {
   const updateProject = useProjectStore((s) => s.updateProject);
   const showToast = useProjectStore((s) => s.showToast);
   const currentTask = useProjectStore((s) => s.currentTask);
-  const setCurrentTask = useProjectStore((s) => s.setCurrentTask);
 
   const [activationCopied, setActivationCopied] = useState(false);
   const [gitSyncState, setGitSyncState] = useState<GitSyncState>('idle');
@@ -53,6 +74,7 @@ export function ActionBar() {
   const [manifestPreview, setManifestPreview] = useState<StateManifestPreview | null>(null);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [manifestLoading, setManifestLoading] = useState(false);
+  const [promptPreview, setPromptPreview] = useState<PromptPreview | null>(null);
 
   const desktopApp = isDesktopApp();
 
@@ -163,34 +185,84 @@ export function ActionBar() {
 
   const handleCompress = async () => {
     if (!currentTask.trim()) return;
+    if (hasBlockedUpdatePayload(currentTask)) {
+      showToast('Composer drafts cannot include memphant_update blocks.', 'error');
+      return;
+    }
+
     const compressed = compressPrompt(currentTask);
     if (compressed === currentTask.trim()) {
       showToast('Nothing to compress', 'info');
       return;
     }
-    setCurrentTask(compressed);
+    setPromptPreview({ mode: 'compress', text: sanitizeBridgePrompt(compressed) });
+    showToast('Compressed draft ready to preview.', 'info');
+  };
+
+  const handleCopyPromptPreview = async () => {
+    if (!promptPreview) return;
+
+    const text = promptPreview.part2
+      ? `${promptPreview.text}\n\n--- Part 2 ---\n\n${promptPreview.part2}`
+      : promptPreview.text;
+
     try {
-      await navigator.clipboard.writeText(compressed);
-      showToast('Prompt compressed and copied to clipboard');
+      await navigator.clipboard.writeText(text);
+      showToast('Preview copied to clipboard');
     } catch {
-      showToast('Prompt compressed');
+      showToast('Could not copy preview', 'error');
     }
   };
 
   const handleSplit = async () => {
     if (!currentTask.trim()) return;
+    if (hasBlockedUpdatePayload(currentTask)) {
+      showToast('Composer drafts cannot include memphant_update blocks.', 'error');
+      return;
+    }
+
     const [part1, part2] = splitPrompt(currentTask);
     if (!part2) {
       showToast('Prompt is too short to split', 'info');
       return;
     }
-    setCurrentTask(part1);
-    try {
-      await navigator.clipboard.writeText(part2);
-      showToast('Part 1 is ready. Part 2 copied to clipboard for the next message.');
-    } catch {
-      showToast('Part 1 is ready. Paste Part 2 manually: ' + part2, 'info');
+    setPromptPreview({
+      mode: 'split',
+      text: sanitizeBridgePrompt(part1),
+      part2: sanitizeBridgePrompt(part2),
+    });
+    showToast('Split draft ready to preview.', 'info');
+  };
+
+  const handleSendPromptPreviewToComposer = () => {
+    if (!promptPreview) return;
+
+    const hasUpdateBlock =
+      hasBlockedUpdatePayload(promptPreview.text) ||
+      hasBlockedUpdatePayload(promptPreview.part2 ?? '');
+
+    if (hasUpdateBlock) {
+      showToast('Composer drafts cannot include memphant_update blocks.', 'error');
+      return;
     }
+
+    window.dispatchEvent(new CustomEvent(PROMPT_BRIDGE_EVENT, {
+      detail: {
+        source: 'memephant-app',
+        type: PROMPT_BRIDGE_EVENT,
+        payload: {
+          mode: promptPreview.mode,
+          text: promptPreview.text,
+          part2: promptPreview.part2,
+          createdAt: new Date().toISOString(),
+        },
+      },
+    }));
+
+    showToast(
+      'Draft queued. Open the Memephant extension on your AI page and click Insert pending draft.',
+      'info',
+    );
   };
 
   useEffect(() => {
@@ -198,6 +270,7 @@ export function ActionBar() {
     setGitSyncCount(0);
     setManifestPreview(null);
     setManifestError(null);
+    setPromptPreview(null);
   }, [activeProject?.id]);
 
   if (!activeProject) {
@@ -246,6 +319,68 @@ export function ActionBar() {
               >
                 ✂️ Split
               </button>
+            </div>
+          )}
+
+          {promptPreview && (
+            <div className="prompt-preview">
+              <div className="prompt-preview__header">
+                <div>
+                  <div className="prompt-preview__title">
+                    {promptPreview.mode === 'compress' ? 'Compressed draft' : 'Split preview'}
+                  </div>
+                  <div className="prompt-preview__subtitle">
+                    Preview only. Nothing is sent to an AI automatically.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="state-manifest-preview__close"
+                  onClick={() => setPromptPreview(null)}
+                  title="Close prompt preview"
+                >
+                  Close
+                </button>
+              </div>
+
+              <label className="prompt-preview__label">
+                {promptPreview.mode === 'split' ? 'Part 1' : 'Draft'}
+              </label>
+              <textarea
+                className="prompt-preview__text"
+                value={promptPreview.text}
+                readOnly
+                spellCheck={false}
+              />
+
+              {promptPreview.part2 && (
+                <>
+                  <label className="prompt-preview__label">Part 2</label>
+                  <textarea
+                    className="prompt-preview__text"
+                    value={promptPreview.part2}
+                    readOnly
+                    spellCheck={false}
+                  />
+                </>
+              )}
+
+              <div className="prompt-preview__actions">
+                <button
+                  type="button"
+                  className="action-bar__btn"
+                  onClick={() => void handleCopyPromptPreview()}
+                >
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  className="action-bar__btn"
+                  onClick={handleSendPromptPreviewToComposer}
+                >
+                  Send to AI composer
+                </button>
+              </div>
             </div>
           )}
 

@@ -19,7 +19,11 @@
     "https://x.com/*",
     "https://grok.com/*",
     "https://www.perplexity.ai/*",
-    "https://gemini.google.com/*"
+    "https://gemini.google.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://memephant.com/*",
+    "https://www.memephant.com/*"
   ],
 
   "content_security_policy": {
@@ -52,6 +56,16 @@
       ],
       "js": ["content.js"],
       "css": ["content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://memephant.com/*",
+        "https://www.memephant.com/*"
+      ],
+      "js": ["app-bridge.js"],
       "run_at": "document_idle"
     }
   ],

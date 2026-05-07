@@ -444,6 +444,59 @@ select {
   padding: 12px;
 }
 
+.prompt-preview {
+  background: #0f1524;
+  border: 1px solid #24314f;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prompt-preview__header,
+.prompt-preview__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.prompt-preview__actions {
+  justify-content: flex-start;
+}
+
+.prompt-preview__title {
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.prompt-preview__subtitle,
+.prompt-preview__label {
+  color: #8ca2c7;
+  font-size: 12px;
+}
+
+.prompt-preview__label {
+  font-weight: 700;
+}
+
+.prompt-preview__text {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  background: #090f1d;
+  border: 1px solid #24314f;
+  border-radius: 10px;
+  color: #d8e2f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 12px;
+}
+
 .export-buttons {
   display: flex;
   gap: 8px;
