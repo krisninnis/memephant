@@ -11,6 +11,7 @@ import {
   pendingCount,
 } from '../../services/cloudSync';
 import type { ProjectMemory } from '../../types/memphant-types';
+import { replaceCloudHydrationAutosaveSkipIds } from '../../utils/cloudHydrationAutosave';
 
 type AppEnv = {
   VITE_APP_URL?: string;
@@ -314,6 +315,7 @@ export function SettingsSync() {
         // Always replace the visible project list with this account's cloud view,
         // regardless of whether anything "changed" — local projects must not persist.
         console.warn(`[SettingsSync] CLOUD PROJECTS LOADED: ${merged.length} projects`);
+        replaceCloudHydrationAutosaveSkipIds(merged.map((project) => project.id));
         st.setProjects(merged);
         st.setActiveProject(merged.length > 0 ? merged[0].id : null);
         st.setLastSyncedAt(new Date().toISOString());

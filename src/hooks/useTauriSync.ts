@@ -4,6 +4,11 @@ import { loadAllFromDisk, saveToDisk } from '../services/tauriActions';
 import { fetchSubscription, runCloudSyncCycle } from '../services/cloudSync';
 import { supabase, cloudAvailable } from '../services/supabaseClient';
 import type { ProjectMemory } from '../types/memphant-types';
+import {
+  clearCloudHydrationAutosaveSkipIds,
+  consumeCloudHydrationAutosaveSkip,
+  replaceCloudHydrationAutosaveSkipIds,
+} from '../utils/cloudHydrationAutosave';
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -37,6 +42,7 @@ function withUiTimeout<T>(
           }
           return;
         }
+
         settled = true;
         window.clearTimeout(timeoutId);
         resolve(value);
@@ -48,6 +54,7 @@ function withUiTimeout<T>(
           }
           return;
         }
+
         settled = true;
         window.clearTimeout(timeoutId);
         console.error('[useTauriSync] ui_timeout_rejected', { label, timeoutMs, error });
@@ -118,6 +125,7 @@ export function useTauriSync() {
 
             if (event === 'SIGNED_OUT') {
               console.warn('[CloudSync] ACCOUNT LOGOUT — clearing visible workspace');
+              clearCloudHydrationAutosaveSkipIds();
               store.setProjects([]);
               store.resetCloudState();
               return;
@@ -126,7 +134,9 @@ export function useTauriSync() {
             if (event === 'TOKEN_REFRESHED') return;
 
             const sessionUser = session?.user;
+
             if (!sessionUser?.email) {
+              clearCloudHydrationAutosaveSkipIds();
               store.setProjects([]);
               store.resetCloudState();
               return;
@@ -146,6 +156,7 @@ export function useTauriSync() {
             store.setIsAdmin(role === 'admin');
 
             if (!cloudSyncEnabled) {
+              clearCloudHydrationAutosaveSkipIds();
               store.setCloudDisconnecting(false);
               store.setSyncStatus('saved_local');
               return;
@@ -173,6 +184,7 @@ export function useTauriSync() {
             // over. Immediately clear the previous user's projects from the store
             // so they are never visible to the incoming user, even briefly.
             console.warn('[useTauriSync] ACCOUNT SWITCH DETECTED — clearing visible workspace');
+            clearCloudHydrationAutosaveSkipIds();
             store.setProjects([]);
 
             store.setSyncStatus('syncing');
@@ -185,15 +197,24 @@ export function useTauriSync() {
 
               const applyCloudResult = (merged: ProjectMemory[], conflicts: string[]) => {
                 const st = useProjectStore.getState();
+
                 console.warn(`[useTauriSync] CLOUD PROJECTS LOADED: ${merged.length} projects`);
+
+                // These projects came from cloud hydration, not a user edit.
+                // Skip the first autosave for each hydrated project so startup/login
+                // does not immediately generate an autosave push.
+                replaceCloudHydrationAutosaveSkipIds(merged.map((project) => project.id));
+
                 st.setProjects(merged);
                 st.setActiveProject(merged[0]?.id ?? null);
+
                 if (conflicts.length > 0) {
                   st.showToast(
                     `Cloud updated ${conflicts.length} project${conflicts.length === 1 ? '' : 's'} from a newer cloud version.`,
                     'info',
                   );
                 }
+
                 st.setLastSyncedAt(new Date().toISOString());
                 st.setSyncStatus('synced');
               };
@@ -222,6 +243,7 @@ export function useTauriSync() {
         } else {
           // No cloud auth available at all: local-only mode is allowed to
           // show device-local projects immediately.
+          clearCloudHydrationAutosaveSkipIds();
           setProjects(loaded);
         }
 
@@ -248,6 +270,7 @@ export function useTauriSync() {
       unsubscribeAuth?.();
     };
   }, [setActiveProject, setLoading, setProjects, showToast]);
+
   useEffect(() => {
     if (!activeProjectId) return;
 
@@ -256,6 +279,14 @@ export function useTauriSync() {
       .projects.find((p) => p.id === activeProjectId);
 
     if (!project) return;
+
+    if (consumeCloudHydrationAutosaveSkip(project.id)) {
+      console.warn('[useTauriSync] AUTOSAVE SKIPPED — cloud hydration', {
+        projectId: project.id,
+      });
+
+      return;
+    }
 
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
@@ -267,7 +298,9 @@ export function useTauriSync() {
       } catch (err) {
         console.error('Auto-save failed:', err);
         useProjectStore.getState().setSyncStatus('error');
-        useProjectStore.getState().showToast('Auto-save failed. Your changes may not be saved.', 'error');
+        useProjectStore
+          .getState()
+          .showToast('Auto-save failed. Your changes may not be saved.', 'error');
       }
     }, 500);
 
@@ -278,4 +311,3 @@ export function useTauriSync() {
     };
   }, [projects, activeProjectId]);
 }
-// test again 2
