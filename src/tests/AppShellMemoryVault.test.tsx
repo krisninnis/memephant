@@ -108,5 +108,7 @@ describe('AppShell Memory Vault navigation', () => {
     expect(
       screen.getByText(/Not included in project exports or Context Passports/),
     ).toBeInTheDocument();
+    expect(screen.getByText('Your data rights layer')).toBeInTheDocument();
+    expect(screen.getByText('Consent and licensing preview')).toBeInTheDocument();
   });
 });

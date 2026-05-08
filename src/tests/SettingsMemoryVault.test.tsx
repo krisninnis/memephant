@@ -67,12 +67,44 @@ describe('SettingsMemoryVault', () => {
   it('starts local, private, and licensing-disabled by default', () => {
     render(<SettingsMemoryVault />);
 
+    expect(screen.getByText('Private by default')).toBeInTheDocument();
     expect(screen.getByText('Local only')).toBeInTheDocument();
     expect(screen.getByText('Off by default')).toBeInTheDocument();
     expect(screen.getAllByText('Disabled').length).toBeGreaterThan(0);
     expect(
       screen.getByText(/Not included in project exports or Context Passports/),
     ).toBeInTheDocument();
+  });
+
+  it('shows a stronger empty state for the first private memory', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.getByLabelText('Memory Vault empty state')).toBeInTheDocument();
+    expect(screen.getByText('Start with one private memory')).toBeInTheDocument();
+    expect(
+      screen.getByText(/It stays local and does not enter project handoffs/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add your first memory' })).toBeInTheDocument();
+  });
+
+  it('renders the data rights and consent preview as informational safeguards', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.getByText('Your data rights layer')).toBeInTheDocument();
+    expect(screen.getByText('Own first. Share later, only by choice.')).toBeInTheDocument();
+    expect(screen.getByText(/Nothing here is shared without explicit action/)).toBeInTheDocument();
+    expect(screen.getByText(/This is not legal advice and does not guarantee enforcement/)).toBeInTheDocument();
+
+    expect(
+      screen.getByLabelText('Future consent and licensing safeguards'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sharing permissions' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'AI training permission' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Commercial licensing' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Data export receipt' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Consent ledger' })).toBeInTheDocument();
+    expect(screen.getAllByText('Informational only - not active')).toHaveLength(3);
+    expect(screen.getAllByText('Planned safeguard')).toHaveLength(2);
   });
 
   it('creates a private memory entry locally', () => {

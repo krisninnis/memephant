@@ -290,6 +290,141 @@
   margin-top: 8px;
 }
 
+.memory-vault-hero {
+  align-items: flex-start;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.memory-vault-eyebrow {
+  color: #d97706;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.memory-vault-hero__status {
+  background: #12121f;
+  border: 1px solid #2a2a40;
+  border-radius: 12px;
+  display: grid;
+  flex: 0 0 170px;
+  gap: 4px;
+  padding: 14px;
+  text-align: right;
+}
+
+.memory-vault-hero__status span,
+.memory-vault-hero__status small {
+  color: #7a9bbf;
+  font-size: 11px;
+}
+
+.memory-vault-hero__status strong {
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.memory-vault-empty-state,
+.memory-vault-rights-panel {
+  background: #0f1a2e;
+  border: 1px solid #1e3a5f;
+  border-radius: 12px;
+  color: #9fb9d8;
+  margin-bottom: 28px;
+  padding: 18px;
+}
+
+.memory-vault-empty-state {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.memory-vault-empty-state h3,
+.memory-vault-rights-panel h3 {
+  color: #e6f0ff;
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.memory-vault-empty-state p,
+.memory-vault-rights-panel p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.memory-vault-empty-state__link {
+  background: #d97706;
+  border-radius: 8px;
+  color: #fff;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  text-decoration: none;
+}
+
+.memory-vault-empty-state__link:hover {
+  background: #b45309;
+}
+
+.memory-vault-rights-panel__note {
+  color: #7c8ca7;
+  margin-top: 10px !important;
+}
+
+.memory-vault-future-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.memory-vault-future-card {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.memory-vault-future-card--disabled {
+  opacity: 0.9;
+}
+
+.memory-vault-future-card__header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.memory-vault-future-card h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0;
+}
+
+.memory-vault-future-card p {
+  color: #777894;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0 0 10px;
+}
+
+.memory-vault-future-card small {
+  color: #7a9bbf;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .memory-vault-status-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -660,8 +795,24 @@
   }
 
   .memory-vault-status-grid,
-  .memory-vault-grid {
+  .memory-vault-grid,
+  .memory-vault-future-grid {
     grid-template-columns: 1fr;
+  }
+
+  .memory-vault-hero,
+  .memory-vault-empty-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .memory-vault-hero__status {
+    flex: 1 1 auto;
+    text-align: left;
+  }
+
+  .memory-vault-empty-state__link {
+    text-align: center;
   }
 
   .memory-vault-entry-header {

@@ -21,6 +21,13 @@ type VaultSection = {
   status?: string;
 };
 
+type FutureControl = {
+  label: string;
+  value: string;
+  detail: string;
+  disabled?: boolean;
+};
+
 const CATEGORY_OPTIONS: Array<{ value: PersonalMemoryEntryCategory; label: string }> = [
   { value: 'owner_profile', label: 'Owner Profile' },
   { value: 'preference', label: 'Preference' },
@@ -29,6 +36,37 @@ const CATEGORY_OPTIONS: Array<{ value: PersonalMemoryEntryCategory; label: strin
   { value: 'boundary', label: 'Boundary' },
   { value: 'never_share', label: 'Never Share' },
   { value: 'custom', label: 'Custom' },
+];
+
+const FUTURE_CONTROLS: FutureControl[] = [
+  {
+    label: 'Sharing permissions',
+    value: 'Off',
+    detail: 'No personal memory is shared with AI platforms from this vault today.',
+    disabled: true,
+  },
+  {
+    label: 'AI training permission',
+    value: 'Off',
+    detail: 'There is no permission flow that allows training use in this version.',
+    disabled: true,
+  },
+  {
+    label: 'Commercial licensing',
+    value: 'Disabled',
+    detail: 'Future licensing controls may help you choose whether data can be used commercially.',
+    disabled: true,
+  },
+  {
+    label: 'Data export receipt',
+    value: 'Planned',
+    detail: 'A future safeguard could show exactly what personal memory was exported.',
+  },
+  {
+    label: 'Consent ledger',
+    value: 'Planned',
+    detail: 'A future safeguard could record approved sharing or licensing actions.',
+  },
 ];
 
 function hasOwnerProfile(vault: PersonalMemoryVault): boolean {
@@ -278,20 +316,48 @@ export function SettingsMemoryVault() {
 
   return (
     <div>
-      <h2 className="settings-section-title">Personal Memory Vault</h2>
-      <p className="settings-section-subtitle">
-        A private, local-only shell for personal context you may later choose to carry across AI tools.
-      </p>
+      <div className="memory-vault-hero">
+        <div>
+          <p className="memory-vault-eyebrow">User-owned memory</p>
+          <h2 className="settings-section-title">Personal Memory Vault</h2>
+          <p className="settings-section-subtitle">
+            A local-first place for personal preferences, goals, boundaries, and never-share rules
+            you want to own, inspect, edit, and carry on your terms.
+          </p>
+        </div>
+        <div className="memory-vault-hero__status">
+          <span>Private by default</span>
+          <strong>{entries.length}</strong>
+          <small>{entries.length === 1 ? 'saved memory' : 'saved memories'}</small>
+        </div>
+      </div>
 
       <div className="settings-trust-box">
-        <div>Your Personal Memory Vault is separate from Project Memory.</div>
+        <div>Your Personal Memory Vault is separate from project-specific memory.</div>
         <div className="settings-trust-list">
           <div>- Stored locally in this browser/app only</div>
           <div>- Not synced to cloud</div>
           <div>- Not included in project exports or Context Passports</div>
+          <div>- Not included in project handoffs unless you explicitly choose that in a future feature</div>
           <div>- Not sent to any AI unless a future permission flow asks you first</div>
         </div>
       </div>
+
+      {entries.length === 0 && (
+        <section className="memory-vault-empty-state" aria-label="Memory Vault empty state">
+          <div>
+            <h3>Start with one private memory</h3>
+            <p>
+              Add something durable about how you work with AI: a writing preference, a personal
+              boundary, a long-term goal, or something that should never be shared. It stays local
+              and does not enter project handoffs.
+            </p>
+          </div>
+          <a className="memory-vault-empty-state__link" href="#memory-vault-add-private-memory">
+            Add your first memory
+          </a>
+        </section>
+      )}
 
       <div className="memory-vault-status-grid">
         <div className="memory-vault-status-card">
@@ -307,6 +373,42 @@ export function SettingsMemoryVault() {
           <div className="memory-vault-status-value">
             {licensingDisabled ? 'Disabled' : 'Enabled'}
           </div>
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Your data rights layer</div>
+        <section className="memory-vault-rights-panel">
+          <h3>Own first. Share later, only by choice.</h3>
+          <p>
+            This vault is designed as a user-controlled personal data layer. Nothing here is shared
+            without explicit action. Future permission controls could let you decide which AI
+            platforms may see specific categories, and future licensing controls could help you
+            decide whether any personal data may be used commercially.
+          </p>
+          <p className="memory-vault-rights-panel__note">
+            This is not legal advice and does not guarantee enforcement. These controls are product
+            safeguards being prepared around consent, auditability, and portability.
+          </p>
+        </section>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Consent and licensing preview</div>
+        <div className="memory-vault-future-grid" aria-label="Future consent and licensing safeguards">
+          {FUTURE_CONTROLS.map((control) => (
+            <section
+              className={`memory-vault-future-card${control.disabled ? ' memory-vault-future-card--disabled' : ''}`}
+              key={control.label}
+            >
+              <div className="memory-vault-future-card__header">
+                <h3>{control.label}</h3>
+                <span className="setting-badge">{control.value}</span>
+              </div>
+              <p>{control.detail}</p>
+              <small>{control.disabled ? 'Informational only - not active' : 'Planned safeguard'}</small>
+            </section>
+          ))}
         </div>
       </div>
 
@@ -328,7 +430,9 @@ export function SettingsMemoryVault() {
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Add private memory</div>
+        <div className="settings-group-title" id="memory-vault-add-private-memory">
+          Add private memory
+        </div>
         <div className="memory-vault-form">
           <p className="memory-vault-form-note">
             Private by default. Not included in project exports or AI handoffs.
