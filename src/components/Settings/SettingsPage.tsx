@@ -2,52 +2,61 @@ import { useEffect, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import SettingsGeneral from './SettingsGeneral';
 import SettingsPrivacy from './SettingsPrivacy';
+import SettingsMemoryVault from './SettingsMemoryVault';
 import SettingsProjects from './SettingsProjects';
 import SettingsPlatforms from './SettingsPlatforms';
 import SettingsAbout from './SettingsAbout';
 import { SettingsSync } from './SettingsSync';
 import './SettingsPage.css';
 
-type SettingsTab = 'general' | 'privacy' | 'projects' | 'platforms' | 'sync' | 'about';
+type SettingsTab =
+  | 'general'
+  | 'privacy'
+  | 'memory-vault'
+  | 'projects'
+  | 'platforms'
+  | 'sync'
+  | 'about';
 
 const TABS: { id: SettingsTab; label: string; icon: string }[] = [
-  { id: 'general',   label: 'General',    icon: '⚙️' },
-  { id: 'privacy',   label: 'Privacy & Security', icon: '🔒' },
-  { id: 'projects',  label: 'Projects',   icon: '🗂️' },
-  { id: 'platforms', label: 'AI Platforms', icon: '🤖' },
-  { id: 'sync',      label: 'Cloud Backup', icon: '☁️' },
-  { id: 'about',     label: 'About',      icon: 'ℹ️' },
+  { id: 'general', label: 'General', icon: 'G' },
+  { id: 'privacy', label: 'Privacy & Security', icon: 'P' },
+  { id: 'memory-vault', label: 'Memory Vault', icon: 'V' },
+  { id: 'projects', label: 'Projects', icon: 'F' },
+  { id: 'platforms', label: 'AI Platforms', icon: 'A' },
+  { id: 'sync', label: 'Cloud Backup', icon: 'C' },
+  { id: 'about', label: 'About', icon: 'i' },
 ];
 
 export function SettingsPage() {
-  const settingsTab     = useProjectStore((s) => s.settingsTab);
-  const setSettingsTab  = useProjectStore((s) => s.setSettingsTab);
-  const [activeTab, setActiveTab] = useState<SettingsTab>((settingsTab as SettingsTab) || 'general');
-  const setCurrentView  = useProjectStore((s) => s.setCurrentView);
+  const settingsTab = useProjectStore((s) => s.settingsTab);
+  const setSettingsTab = useProjectStore((s) => s.setSettingsTab);
+  const [activeTab, setActiveTab] = useState<SettingsTab>(
+    (settingsTab as SettingsTab) || 'general',
+  );
+  const setCurrentView = useProjectStore((s) => s.setCurrentView);
   const activeTabMeta = TABS.find((tab) => tab.id === activeTab) ?? TABS[0];
 
-  // If the store says to open a specific tab (e.g. free-tier redirect), honour it
+  // If the store says to open a specific tab (e.g. free-tier redirect), honour it.
   useEffect(() => {
     if (settingsTab && settingsTab !== activeTab) {
       setActiveTab(settingsTab as SettingsTab);
-      setSettingsTab('general'); // reset so it doesn't re-trigger
+      setSettingsTab('general');
     }
   }, [settingsTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="settings-page">
-      {/* Mobile back button shown above the tab strip */}
       <div className="settings-back-mobile">
         <button className="settings-back-btn" onClick={() => setCurrentView('projects')}>
-          ← Back to projects
+          Back to projects
         </button>
       </div>
 
       <div className="settings-nav">
-        {/* Desktop: sidebar header */}
         <div className="settings-nav-header">
           <button className="settings-back-btn" onClick={() => setCurrentView('projects')}>
-            ← Back
+            Back
           </button>
           <span className="settings-nav-title">Settings</span>
         </div>
@@ -85,12 +94,13 @@ export function SettingsPage() {
           </p>
         </div>
 
-        {activeTab === 'general'   && <SettingsGeneral />}
-        {activeTab === 'privacy'   && <SettingsPrivacy />}
-        {activeTab === 'projects'  && <SettingsProjects />}
+        {activeTab === 'general' && <SettingsGeneral />}
+        {activeTab === 'privacy' && <SettingsPrivacy />}
+        {activeTab === 'memory-vault' && <SettingsMemoryVault />}
+        {activeTab === 'projects' && <SettingsProjects />}
         {activeTab === 'platforms' && <SettingsPlatforms />}
-        {activeTab === 'sync'      && <SettingsSync />}
-        {activeTab === 'about'     && <SettingsAbout />}
+        {activeTab === 'sync' && <SettingsSync />}
+        {activeTab === 'about' && <SettingsAbout />}
       </div>
     </div>
   );

@@ -290,6 +290,69 @@
   margin-top: 8px;
 }
 
+.memory-vault-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.memory-vault-status-card {
+  background: #12121f;
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.memory-vault-status-label {
+  color: #6c6c8a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.memory-vault-status-value {
+  color: #e0e0f0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.memory-vault-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.memory-vault-card {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.memory-vault-card-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.memory-vault-card h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0;
+}
+
+.memory-vault-card p {
+  color: #777894;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .settings-audit-list {
   display: grid;
   gap: 10px;
@@ -488,6 +551,11 @@
 
   .settings-platform-actions {
     width: 100%;
+  }
+
+  .memory-vault-status-grid,
+  .memory-vault-grid {
+    grid-template-columns: 1fr;
   }
 }
 
