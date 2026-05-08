@@ -5,6 +5,7 @@ import {
   PERSONAL_MEMORY_VAULT_SCHEMA_VERSION,
 } from '../types/personalMemoryVault';
 import { generateContextPassport } from '../utils/passportGenerator';
+import { buildMemoryBridgeBlock } from '../utils/memoryBridge';
 import { formatForPlatform } from '../utils/exportFormatters';
 import type { ProjectMemory } from '../types/memphant-types';
 import { SCHEMA_VERSION } from '../types/memphant-types';
@@ -139,6 +140,15 @@ describe('Personal Memory Vault export guard', () => {
     for (const output of Object.values(passport.formats)) {
       expectNoPersonalVaultSentinels(output);
     }
+  });
+
+  it('does not include personal vault data in Memory Bridge exports', () => {
+    const project = makeProject();
+    const vault = makeVaultWithSentinels();
+    expect(vault.ownerProfile.bio).toBe('PersonalVaultSentinelBio');
+
+    const output = buildMemoryBridgeBlock(project, 'chatgpt');
+    expectNoPersonalVaultSentinels(output);
   });
 });
 

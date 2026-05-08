@@ -11,6 +11,7 @@ import TrustFooter from './TrustFooter';
 import Toast from './Toast';
 import WelcomeScreen from './WelcomeScreen';
 import SettingsPage from '../Settings/SettingsPage';
+import SettingsMemoryVault from '../Settings/SettingsMemoryVault';
 import TourOverlay from '../Tour/TourOverlay';
 import { CommandPalette } from '../CommandPalette/CommandPalette';
 import { PWAInstallButton } from '../PWAInstallButton';
@@ -71,6 +72,13 @@ export function AppShell() {
 
         {currentView === 'settings' ? (
           <SettingsPage />
+        ) : currentView === 'memory-vault' ? (
+          <div className="workspace-scroll workspace-scroll--memory-vault">
+            <div className="workspace-main workspace-main--memory-vault">
+              <SettingsMemoryVault />
+            </div>
+            <TrustFooter />
+          </div>
         ) : showWelcome ? (
           <WelcomeScreen />
         ) : (
@@ -122,6 +130,20 @@ export function AppShell() {
 
         <button
           type="button"
+          className={`mobile-bottom-bar__btn${currentView === 'memory-vault' ? ' mobile-bottom-bar__btn--active' : ''}`}
+          onClick={() => {
+            setCurrentView('memory-vault');
+            closeMobileDrawer();
+          }}
+        >
+          <span className="mobile-bottom-bar__icon" aria-hidden="true">
+            V
+          </span>
+          <span className="mobile-bottom-bar__label">Vault</span>
+        </button>
+
+        <button
+          type="button"
           className={`mobile-bottom-bar__btn${currentView === 'projects' && !mobileDrawerOpen ? ' mobile-bottom-bar__btn--active' : ''}`}
           onClick={() => {
             setCurrentView('projects');
@@ -135,7 +157,7 @@ export function AppShell() {
         </button>
       </div>
 
-      {currentView === 'settings' && (
+      {(currentView === 'settings' || currentView === 'memory-vault') && (
         <button
           type="button"
           className="mobile-projects-fab"

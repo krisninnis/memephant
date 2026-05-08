@@ -90,6 +90,13 @@ export function CommandPalette() {
       run: () => { close(); setSettingsTab('sync'); setCurrentView('settings'); },
     },
     {
+      id: 'goto-memory-vault',
+      label: 'Open Memory Vault',
+      group: 'Actions',
+      icon: 'V',
+      run: () => { close(); setCurrentView('memory-vault'); },
+    },
+    {
       id: 'goto-settings-privacy',
       label: 'Settings → Privacy',
       group: 'Actions',

@@ -427,6 +427,14 @@
   margin-bottom: 10px;
 }
 
+.memory-vault-entry-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .memory-vault-entry h3 {
   color: #e0e0f0;
   font-size: 14px;
@@ -444,6 +452,11 @@
   line-height: 1.5;
   margin: 0;
   white-space: pre-wrap;
+}
+
+.memory-vault-edit-form {
+  display: grid;
+  gap: 12px;
 }
 
 .settings-audit-list {
@@ -654,6 +667,14 @@
   .memory-vault-entry-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .memory-vault-entry-actions {
+    justify-content: stretch;
+  }
+
+  .memory-vault-entry-actions .setting-btn {
+    flex: 1;
   }
 }
 

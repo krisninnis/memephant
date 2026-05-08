@@ -8,6 +8,7 @@ import { ensureProjectStableIds } from '../utils/stableItemIds';
 export type SyncStatus = 'saved_local' | 'pending' | 'syncing' | 'synced' | 'error';
 export type SubscriptionTier = 'free' | 'pro' | 'team';
 export type SubscriptionStatus = 'none' | 'active' | 'trialing' | 'past_due' | 'canceled';
+export type AppView = 'projects' | 'settings' | 'memory-vault';
 
 const SETTINGS_STORAGE_KEY = 'mph_settings_v1';
 
@@ -85,7 +86,7 @@ interface ProjectStore {
   toastMessage: string | null;
   toastType: 'success' | 'error' | 'info';
   settings: AppSettings;
-  currentView: 'projects' | 'settings';
+  currentView: AppView;
   memoryBridgeMode: 'auto' | 'manual';
 
   // Rollback state -- stores the project snapshot before last AI merge
@@ -120,7 +121,7 @@ interface ProjectStore {
   setLoading: (loading: boolean) => void;
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   clearToast: () => void;
-  setCurrentView: (view: 'projects' | 'settings') => void;
+  setCurrentView: (view: AppView) => void;
   setMemoryBridgeMode: (mode: 'auto' | 'manual') => void;
   updateSettings: (updates: Partial<AppSettings>) => void;
 

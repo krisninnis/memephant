@@ -113,6 +113,51 @@ select {
   gap: 10px;
 }
 
+.sidebar-primary-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-nav-card {
+  width: 100%;
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid #2a3a5a;
+  border-radius: 12px;
+  background: #10192f;
+  color: #d8e2f5;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+
+.sidebar-nav-card:hover,
+.sidebar-nav-card--active {
+  background: #162642;
+  border-color: #d97706;
+}
+
+.sidebar-nav-card:active {
+  transform: scale(0.99);
+}
+
+.sidebar-nav-card__label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.sidebar-nav-card__hint {
+  color: #8ca2c7;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .sidebar-action-btn {
   width: 100%;
   min-height: 42px;

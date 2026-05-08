@@ -44,6 +44,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const projects = useProjectStore((s) => s.projects);
   const cloudUser = useProjectStore((s) => s.cloudUser);
   const activeProjectId = useProjectStore((s) => s.activeProjectId);
+  const currentView = useProjectStore((s) => s.currentView);
   const targetPlatform = useProjectStore((s) => s.targetPlatform);
   const settings = useProjectStore((s) => s.settings);
 
@@ -217,6 +218,22 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           aria-label="Open settings"
         >
           ⚙️
+        </button>
+      </div>
+
+      <div className="sidebar-primary-nav" aria-label="Main navigation">
+        <button
+          type="button"
+          className={`sidebar-nav-card${currentView === 'memory-vault' ? ' sidebar-nav-card--active' : ''}`}
+          aria-current={currentView === 'memory-vault' ? 'page' : undefined}
+          onClick={() => {
+            setCurrentView('memory-vault');
+            onNavigate?.();
+          }}
+          title="Open your local Personal Memory Vault"
+        >
+          <span className="sidebar-nav-card__label">Memory Vault</span>
+          <span className="sidebar-nav-card__hint">Private personal memory</span>
         </button>
       </div>
 

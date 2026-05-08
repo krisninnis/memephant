@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import SettingsGeneral from './SettingsGeneral';
 import SettingsPrivacy from './SettingsPrivacy';
-import SettingsMemoryVault from './SettingsMemoryVault';
 import SettingsProjects from './SettingsProjects';
 import SettingsPlatforms from './SettingsPlatforms';
 import SettingsAbout from './SettingsAbout';
@@ -96,7 +95,35 @@ export function SettingsPage() {
 
         {activeTab === 'general' && <SettingsGeneral />}
         {activeTab === 'privacy' && <SettingsPrivacy />}
-        {activeTab === 'memory-vault' && <SettingsMemoryVault />}
+        {activeTab === 'memory-vault' && (
+          <div>
+            <h2 className="settings-section-title">Memory Vault</h2>
+            <p className="settings-section-subtitle">
+              Your Personal Memory Vault is now a top-level app area.
+            </p>
+            <div className="settings-group">
+              <div className="settings-group-title">Private local vault</div>
+              <div className="settings-trust-box">
+                <div>
+                  Open Memory Vault from the sidebar to manage private preferences, goals, boundaries,
+                  never-share data, and future consent controls.
+                </div>
+                <div className="settings-trust-list">
+                  <span>Local only</span>
+                  <span>Not included in project exports</span>
+                  <span>Not included in Context Passports</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="setting-btn setting-btn--primary"
+                onClick={() => setCurrentView('memory-vault')}
+              >
+                Open Memory Vault
+              </button>
+            </div>
+          </div>
+        )}
         {activeTab === 'projects' && <SettingsProjects />}
         {activeTab === 'platforms' && <SettingsPlatforms />}
         {activeTab === 'sync' && <SettingsSync />}

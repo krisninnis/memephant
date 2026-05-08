@@ -142,6 +142,11 @@ export function SettingsMemoryVault() {
   const [entryCategory, setEntryCategory] = useState<PersonalMemoryEntryCategory>('preference');
   const [formError, setFormError] = useState<string | null>(null);
   const [entryToDelete, setEntryToDelete] = useState<PersonalMemoryTextEntry | null>(null);
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editCategory, setEditCategory] = useState<PersonalMemoryEntryCategory>('preference');
+  const [editError, setEditError] = useState<string | null>(null);
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
   const entries = getVaultEntries(vault);
@@ -188,6 +193,7 @@ export function SettingsMemoryVault() {
     setVault(createDefaultPersonalMemoryVault());
     setConfirmClear(false);
     setEntryToDelete(null);
+    setEditingEntryId(null);
     showToast('Personal Memory Vault cleared from this device');
   };
 
@@ -226,6 +232,48 @@ export function SettingsMemoryVault() {
     setVault(nextVault);
     setEntryToDelete(null);
     showToast('Private memory deleted from this device');
+  };
+
+  const startEditingEntry = (entry: PersonalMemoryTextEntry) => {
+    setEditingEntryId(entry.id);
+    setEditTitle(entry.label ?? '');
+    setEditContent(entry.value);
+    setEditCategory(getEntryCategory(entry));
+    setEditError(null);
+  };
+
+  const cancelEditingEntry = () => {
+    setEditingEntryId(null);
+    setEditTitle('');
+    setEditContent('');
+    setEditCategory('preference');
+    setEditError(null);
+  };
+
+  const handleSaveEditedEntry = (entry: PersonalMemoryTextEntry) => {
+    const title = editTitle.trim();
+    const content = editContent.trim();
+
+    if (!title || !content) {
+      setEditError('Add a title and content before saving.');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const editedEntry: PersonalMemoryTextEntry = {
+      ...entry,
+      label: title,
+      category: editCategory,
+      value: content,
+      sensitivity: 'private',
+      updatedAt: now,
+    };
+    const nextVault = addEntryToVault(removeEntryFromVault(vault, entry.id), editedEntry);
+
+    savePersonalMemoryVault(nextVault);
+    setVault(nextVault);
+    cancelEditingEntry();
+    showToast('Private memory updated locally');
   };
 
   return (
@@ -345,22 +393,96 @@ export function SettingsMemoryVault() {
           <div className="memory-vault-entry-list">
             {entries.map((entry) => (
               <article className="memory-vault-entry" key={entry.id}>
-                <div className="memory-vault-entry-header">
-                  <div>
-                    <h3>{entry.label || 'Untitled private memory'}</h3>
-                    <div className="memory-vault-entry-meta">
-                      {getCategoryLabel(getEntryCategory(entry))} - Private - Local only
+                {editingEntryId === entry.id ? (
+                  <div className="memory-vault-edit-form">
+                    <label className="memory-vault-field">
+                      <span>Edit title</span>
+                      <input
+                        className="memory-vault-input"
+                        value={editTitle}
+                        onChange={(event) => {
+                          setEditTitle(event.target.value);
+                          setEditError(null);
+                        }}
+                      />
+                    </label>
+
+                    <label className="memory-vault-field">
+                      <span>Edit category</span>
+                      <select
+                        className="memory-vault-input"
+                        value={editCategory}
+                        onChange={(event) =>
+                          setEditCategory(event.target.value as PersonalMemoryEntryCategory)}
+                      >
+                        {CATEGORY_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="memory-vault-field memory-vault-field--full">
+                      <span>Edit content</span>
+                      <textarea
+                        className="memory-vault-input memory-vault-textarea"
+                        value={editContent}
+                        onChange={(event) => {
+                          setEditContent(event.target.value);
+                          setEditError(null);
+                        }}
+                      />
+                    </label>
+
+                    {editError && <p className="memory-vault-form-error">{editError}</p>}
+
+                    <div className="memory-vault-entry-actions">
+                      <button
+                        className="setting-btn setting-btn--primary"
+                        onClick={() => handleSaveEditedEntry(entry)}
+                        type="button"
+                      >
+                        Save changes
+                      </button>
+                      <button
+                        className="setting-btn"
+                        onClick={cancelEditingEntry}
+                        type="button"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </div>
-                  <button
-                    className="setting-btn setting-btn--danger"
-                    onClick={() => setEntryToDelete(entry)}
-                    type="button"
-                  >
-                    Delete
-                  </button>
-                </div>
-                <p>{entry.value}</p>
+                ) : (
+                  <>
+                    <div className="memory-vault-entry-header">
+                      <div>
+                        <h3>{entry.label || 'Untitled private memory'}</h3>
+                        <div className="memory-vault-entry-meta">
+                          {getCategoryLabel(getEntryCategory(entry))} - Private - Local only
+                        </div>
+                      </div>
+                      <div className="memory-vault-entry-actions">
+                        <button
+                          className="setting-btn"
+                          onClick={() => startEditingEntry(entry)}
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="setting-btn setting-btn--danger"
+                          onClick={() => setEntryToDelete(entry)}
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <p>{entry.value}</p>
+                  </>
+                )}
               </article>
             ))}
           </div>
