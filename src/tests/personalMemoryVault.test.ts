@@ -92,9 +92,22 @@ describe('Personal Memory Vault foundation', () => {
       id: 'entry-1',
       value: 'Use concise answers',
       label: undefined,
+      category: undefined,
       sensitivity: 'private',
       updatedAt: '2026-05-07T12:00:00.000Z',
     });
+  });
+
+  it('stores entry categories when provided', () => {
+    const entry = createPersonalMemoryEntry('Keep responses concise', {
+      id: 'entry-2',
+      label: 'Response style',
+      category: 'preference',
+      updatedAt: '2026-05-07T12:00:00.000Z',
+    });
+
+    expect(entry.category).toBe('preference');
+    expect(entry.sensitivity).toBe('private');
   });
 
   it('recognizes valid default vault objects', () => {

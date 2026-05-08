@@ -353,6 +353,99 @@
   margin: 0;
 }
 
+.memory-vault-form {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.memory-vault-form-note,
+.memory-vault-empty {
+  color: #7a9bbf;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-vault-field {
+  display: grid;
+  gap: 6px;
+}
+
+.memory-vault-field span {
+  color: #8ca2c7;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.memory-vault-input {
+  background: #0f0f1c;
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
+  color: #e0e0f0;
+  font-size: 13px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.memory-vault-input:focus {
+  border-color: #d97706;
+  outline: none;
+}
+
+.memory-vault-textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.memory-vault-form-error {
+  color: #f87171;
+  font-size: 12px;
+  margin: 0;
+}
+
+.memory-vault-entry-list {
+  display: grid;
+  gap: 12px;
+}
+
+.memory-vault-entry {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.memory-vault-entry-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.memory-vault-entry h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+
+.memory-vault-entry-meta {
+  color: #7b7b98;
+  font-size: 11px;
+}
+
+.memory-vault-entry p {
+  color: #a6a6bd;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 .settings-audit-list {
   display: grid;
   gap: 10px;
@@ -556,6 +649,11 @@
   .memory-vault-status-grid,
   .memory-vault-grid {
     grid-template-columns: 1fr;
+  }
+
+  .memory-vault-entry-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

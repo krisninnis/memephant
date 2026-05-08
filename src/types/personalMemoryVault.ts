@@ -4,6 +4,14 @@ export const PERSONAL_MEMORY_VAULT_SCHEMA_VERSION = '0.1.0';
 
 export type PersonalMemorySensitivity = 'standard' | 'private' | 'never_share';
 export type PersonalMemoryPermission = 'never' | 'ask_each_time' | 'allow';
+export type PersonalMemoryEntryCategory =
+  | 'owner_profile'
+  | 'preference'
+  | 'goal'
+  | 'rule'
+  | 'boundary'
+  | 'never_share'
+  | 'custom';
 
 export interface PersonalMemoryOwnerProfile {
   displayName?: string;
@@ -15,6 +23,7 @@ export interface PersonalMemoryOwnerProfile {
 export interface PersonalMemoryTextEntry {
   id: string;
   label?: string;
+  category?: PersonalMemoryEntryCategory;
   value: string;
   sensitivity: PersonalMemorySensitivity;
   updatedAt: string;
@@ -74,6 +83,7 @@ export function createPersonalMemoryEntry(
   options: {
     id?: string;
     label?: string;
+    category?: PersonalMemoryEntryCategory;
     sensitivity?: PersonalMemorySensitivity;
     updatedAt?: string;
   } = {},
@@ -83,6 +93,7 @@ export function createPersonalMemoryEntry(
   return {
     id: options.id ?? createId('pmv_entry'),
     label: options.label,
+    category: options.category,
     value,
     sensitivity: options.sensitivity ?? 'private',
     updatedAt,

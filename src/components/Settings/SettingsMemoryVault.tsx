@@ -3,8 +3,15 @@ import { useProjectStore } from '../../store/projectStore';
 import {
   clearPersonalMemoryVault,
   loadPersonalMemoryVault,
+  savePersonalMemoryVault,
 } from '../../services/personalMemoryVaultStorage';
-import { createDefaultPersonalMemoryVault, type PersonalMemoryVault } from '../../types/personalMemoryVault';
+import {
+  createDefaultPersonalMemoryVault,
+  createPersonalMemoryEntry,
+  type PersonalMemoryEntryCategory,
+  type PersonalMemoryTextEntry,
+  type PersonalMemoryVault,
+} from '../../types/personalMemoryVault';
 import ConfirmDialog from '../Shared/ConfirmDialog';
 
 type VaultSection = {
@@ -13,6 +20,16 @@ type VaultSection = {
   count?: number;
   status?: string;
 };
+
+const CATEGORY_OPTIONS: Array<{ value: PersonalMemoryEntryCategory; label: string }> = [
+  { value: 'owner_profile', label: 'Owner Profile' },
+  { value: 'preference', label: 'Preference' },
+  { value: 'goal', label: 'Goal' },
+  { value: 'rule', label: 'Rule' },
+  { value: 'boundary', label: 'Boundary' },
+  { value: 'never_share', label: 'Never Share' },
+  { value: 'custom', label: 'Custom' },
+];
 
 function hasOwnerProfile(vault: PersonalMemoryVault): boolean {
   return Boolean(
@@ -35,17 +52,104 @@ function sectionStatus(count?: number, status?: string): string {
   return count && count > 0 ? `${count} saved` : 'Empty';
 }
 
+function getEntryCategory(entry: PersonalMemoryTextEntry): PersonalMemoryEntryCategory {
+  return entry.category ?? 'custom';
+}
+
+function getCategoryLabel(category: PersonalMemoryEntryCategory): string {
+  return CATEGORY_OPTIONS.find((option) => option.value === category)?.label ?? 'Custom';
+}
+
+function getVaultEntries(vault: PersonalMemoryVault): PersonalMemoryTextEntry[] {
+  return [
+    ...vault.preferences,
+    ...vault.goals,
+    ...vault.rules,
+    ...vault.privateNotes,
+  ].filter((entry) => entry.value.trim().length > 0);
+}
+
+function countEntriesByCategory(
+  vault: PersonalMemoryVault,
+  category: PersonalMemoryEntryCategory,
+): number {
+  return getVaultEntries(vault).filter((entry) => getEntryCategory(entry) === category).length;
+}
+
+function addEntryToVault(
+  vault: PersonalMemoryVault,
+  entry: PersonalMemoryTextEntry,
+): PersonalMemoryVault {
+  const next: PersonalMemoryVault = {
+    ...vault,
+    preferences: [...vault.preferences],
+    goals: [...vault.goals],
+    rules: [...vault.rules],
+    privateNotes: [...vault.privateNotes],
+    neverShare: [...vault.neverShare],
+    updatedAt: entry.updatedAt,
+  };
+
+  switch (getEntryCategory(entry)) {
+    case 'preference':
+      next.preferences.push(entry);
+      break;
+    case 'goal':
+      next.goals.push(entry);
+      break;
+    case 'rule':
+    case 'boundary':
+      next.rules.push(entry);
+      break;
+    case 'never_share':
+      next.neverShare.push(entry.value);
+      next.privateNotes.push(entry);
+      break;
+    case 'owner_profile':
+    case 'custom':
+    default:
+      next.privateNotes.push(entry);
+      break;
+  }
+
+  return next;
+}
+
+function removeEntryFromVault(vault: PersonalMemoryVault, entryId: string): PersonalMemoryVault {
+  const removedEntry = getVaultEntries(vault).find((entry) => entry.id === entryId);
+  const now = new Date().toISOString();
+
+  return {
+    ...vault,
+    preferences: vault.preferences.filter((entry) => entry.id !== entryId),
+    goals: vault.goals.filter((entry) => entry.id !== entryId),
+    rules: vault.rules.filter((entry) => entry.id !== entryId),
+    privateNotes: vault.privateNotes.filter((entry) => entry.id !== entryId),
+    neverShare:
+      removedEntry?.category === 'never_share'
+        ? vault.neverShare.filter((item) => item !== removedEntry.value)
+        : [...vault.neverShare],
+    updatedAt: now,
+  };
+}
+
 export function SettingsMemoryVault() {
   const showToast = useProjectStore((s) => s.showToast);
   const [vault, setVault] = useState<PersonalMemoryVault>(() => loadPersonalMemoryVault());
   const [confirmClear, setConfirmClear] = useState(false);
+  const [entryTitle, setEntryTitle] = useState('');
+  const [entryContent, setEntryContent] = useState('');
+  const [entryCategory, setEntryCategory] = useState<PersonalMemoryEntryCategory>('preference');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [entryToDelete, setEntryToDelete] = useState<PersonalMemoryTextEntry | null>(null);
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
+  const entries = getVaultEntries(vault);
   const sections: VaultSection[] = [
     {
       title: 'Owner Profile',
       description: 'Name, role, bio, or broad self-description you choose to store.',
-      count: hasOwnerProfile(vault) ? 1 : 0,
+      count: (hasOwnerProfile(vault) ? 1 : 0) + countEntriesByCategory(vault, 'owner_profile'),
     },
     {
       title: 'Preferences',
@@ -83,7 +187,45 @@ export function SettingsMemoryVault() {
     clearPersonalMemoryVault();
     setVault(createDefaultPersonalMemoryVault());
     setConfirmClear(false);
+    setEntryToDelete(null);
     showToast('Personal Memory Vault cleared from this device');
+  };
+
+  const handleSaveEntry = () => {
+    const title = entryTitle.trim();
+    const content = entryContent.trim();
+
+    if (!title || !content) {
+      setFormError('Add a title and content before saving.');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const entry = createPersonalMemoryEntry(content, {
+      label: title,
+      category: entryCategory,
+      sensitivity: 'private',
+      updatedAt: now,
+    });
+    const nextVault = addEntryToVault(vault, entry);
+
+    savePersonalMemoryVault(nextVault);
+    setVault(nextVault);
+    setEntryTitle('');
+    setEntryContent('');
+    setEntryCategory('preference');
+    setFormError(null);
+    showToast('Private memory saved locally');
+  };
+
+  const handleDeleteEntry = () => {
+    if (!entryToDelete) return;
+
+    const nextVault = removeEntryFromVault(vault, entryToDelete.id);
+    savePersonalMemoryVault(nextVault);
+    setVault(nextVault);
+    setEntryToDelete(null);
+    showToast('Private memory deleted from this device');
   };
 
   return (
@@ -138,6 +280,98 @@ export function SettingsMemoryVault() {
       </div>
 
       <div className="settings-group">
+        <div className="settings-group-title">Add private memory</div>
+        <div className="memory-vault-form">
+          <p className="memory-vault-form-note">
+            Private by default. Not included in project exports or AI handoffs.
+          </p>
+
+          <label className="memory-vault-field">
+            <span>Title</span>
+            <input
+              className="memory-vault-input"
+              value={entryTitle}
+              onChange={(event) => {
+                setEntryTitle(event.target.value);
+                setFormError(null);
+              }}
+              placeholder="Example: Collaboration preference"
+            />
+          </label>
+
+          <label className="memory-vault-field">
+            <span>Category</span>
+            <select
+              className="memory-vault-input"
+              value={entryCategory}
+              onChange={(event) => setEntryCategory(event.target.value as PersonalMemoryEntryCategory)}
+            >
+              {CATEGORY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="memory-vault-field memory-vault-field--full">
+            <span>Content</span>
+            <textarea
+              className="memory-vault-input memory-vault-textarea"
+              value={entryContent}
+              onChange={(event) => {
+                setEntryContent(event.target.value);
+                setFormError(null);
+              }}
+              placeholder="Write a private memory you want to keep under your control."
+            />
+          </label>
+
+          {formError && <p className="memory-vault-form-error">{formError}</p>}
+
+          <button
+            className="setting-btn setting-btn--primary"
+            onClick={handleSaveEntry}
+            type="button"
+          >
+            Save private memory
+          </button>
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Saved private memories</div>
+        {entries.length > 0 ? (
+          <div className="memory-vault-entry-list">
+            {entries.map((entry) => (
+              <article className="memory-vault-entry" key={entry.id}>
+                <div className="memory-vault-entry-header">
+                  <div>
+                    <h3>{entry.label || 'Untitled private memory'}</h3>
+                    <div className="memory-vault-entry-meta">
+                      {getCategoryLabel(getEntryCategory(entry))} - Private - Local only
+                    </div>
+                  </div>
+                  <button
+                    className="setting-btn setting-btn--danger"
+                    onClick={() => setEntryToDelete(entry)}
+                    type="button"
+                  >
+                    Delete
+                  </button>
+                </div>
+                <p>{entry.value}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="memory-vault-empty">
+            No private memories saved yet.
+          </p>
+        )}
+      </div>
+
+      <div className="settings-group">
         <div className="settings-group-title">Vault controls</div>
         <div className="setting-row">
           <div className="setting-info">
@@ -163,6 +397,17 @@ export function SettingsMemoryVault() {
           confirmLabel="Clear Vault"
           onConfirm={handleClearVault}
           onCancel={() => setConfirmClear(false)}
+          dangerous
+        />
+      )}
+
+      {entryToDelete && (
+        <ConfirmDialog
+          title="Delete private memory?"
+          message="This removes only this local Personal Memory Vault entry. Project memory, exports, and cloud backup are not changed."
+          confirmLabel="Delete Memory"
+          onConfirm={handleDeleteEntry}
+          onCancel={() => setEntryToDelete(null)}
           dangerous
         />
       )}
