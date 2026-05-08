@@ -6,8 +6,11 @@ import {
   savePersonalMemoryVault,
 } from '../../services/personalMemoryVaultStorage';
 import {
+  createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
+  type ConsentLedgerAction,
+  type ConsentLedgerScope,
   type PersonalMemoryEntryCategory,
   type PersonalMemoryTextEntry,
   type PersonalMemoryVault,
@@ -38,6 +41,21 @@ const CATEGORY_OPTIONS: Array<{ value: PersonalMemoryEntryCategory; label: strin
   { value: 'custom', label: 'Custom' },
 ];
 
+const CONSENT_ACTION_OPTIONS: Array<{ value: ConsentLedgerAction; label: string }> = [
+  { value: 'consent_granted', label: 'Consent granted' },
+  { value: 'consent_refused', label: 'Consent refused' },
+  { value: 'consent_revoked', label: 'Consent revoked' },
+  { value: 'permission_updated', label: 'Permission updated' },
+];
+
+const CONSENT_SCOPE_OPTIONS: Array<{ value: ConsentLedgerScope; label: string }> = [
+  { value: 'ai_training', label: 'AI training' },
+  { value: 'commercial_licensing', label: 'Commercial licensing' },
+  { value: 'platform_sharing', label: 'Platform sharing' },
+  { value: 'memory_export', label: 'Memory export' },
+  { value: 'custom', label: 'Custom' },
+];
+
 const FUTURE_CONTROLS: FutureControl[] = [
   {
     label: 'Sharing permissions',
@@ -64,8 +82,8 @@ const FUTURE_CONTROLS: FutureControl[] = [
   },
   {
     label: 'Consent ledger',
-    value: 'Planned',
-    detail: 'A future safeguard could record approved sharing or licensing actions.',
+    value: 'Local only',
+    detail: 'A local append-only record can now capture manual consent decisions.',
   },
 ];
 
@@ -96,6 +114,26 @@ function getEntryCategory(entry: PersonalMemoryTextEntry): PersonalMemoryEntryCa
 
 function getCategoryLabel(category: PersonalMemoryEntryCategory): string {
   return CATEGORY_OPTIONS.find((option) => option.value === category)?.label ?? 'Custom';
+}
+
+function getConsentActionLabel(action: ConsentLedgerAction): string {
+  return CONSENT_ACTION_OPTIONS.find((option) => option.value === action)?.label ?? action;
+}
+
+function getConsentScopeLabel(scope: ConsentLedgerScope): string {
+  return CONSENT_SCOPE_OPTIONS.find((option) => option.value === scope)?.label ?? scope;
+}
+
+function getConsentStatus(action: ConsentLedgerAction, allowed: boolean): string {
+  if (action === 'consent_revoked') {
+    return 'Revoked';
+  }
+
+  if (action === 'consent_refused') {
+    return 'Refused';
+  }
+
+  return allowed ? 'Allowed' : 'Off';
 }
 
 function getVaultEntries(vault: PersonalMemoryVault): PersonalMemoryTextEntry[] {
@@ -185,9 +223,19 @@ export function SettingsMemoryVault() {
   const [editContent, setEditContent] = useState('');
   const [editCategory, setEditCategory] = useState<PersonalMemoryEntryCategory>('preference');
   const [editError, setEditError] = useState<string | null>(null);
+  const [consentAction, setConsentAction] = useState<ConsentLedgerAction>('consent_refused');
+  const [consentScope, setConsentScope] = useState<ConsentLedgerScope>('ai_training');
+  const [consentPlatform, setConsentPlatform] = useState('');
+  const [consentTarget, setConsentTarget] = useState('');
+  const [consentNotes, setConsentNotes] = useState('');
+  const [consentCommercialUseAllowed, setConsentCommercialUseAllowed] = useState(false);
+  const [consentAiTrainingAllowed, setConsentAiTrainingAllowed] = useState(false);
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
   const entries = getVaultEntries(vault);
+  const consentAllowsUse =
+    consentAction === 'consent_granted' || consentAction === 'permission_updated';
+  const recentConsentEvents = [...vault.consentLedger].reverse().slice(0, 5);
   const sections: VaultSection[] = [
     {
       title: 'Owner Profile',
@@ -223,6 +271,11 @@ export function SettingsMemoryVault() {
       title: 'Licensing Preferences',
       description: 'Future consent and licensing preferences. Marketplace features are not enabled.',
       status: licensingDisabled ? 'Disabled' : 'Enabled',
+    },
+    {
+      title: 'Consent Ledger',
+      description: 'Append-only local receipts for manual permission decisions.',
+      count: vault.consentLedger.length,
     },
   ];
 
@@ -312,6 +365,38 @@ export function SettingsMemoryVault() {
     setVault(nextVault);
     cancelEditingEntry();
     showToast('Private memory updated locally');
+  };
+
+  const resetConsentForm = () => {
+    setConsentAction('consent_refused');
+    setConsentScope('ai_training');
+    setConsentPlatform('');
+    setConsentTarget('');
+    setConsentNotes('');
+    setConsentCommercialUseAllowed(false);
+    setConsentAiTrainingAllowed(false);
+  };
+
+  const handleRecordConsentEvent = () => {
+    const event = createConsentLedgerEvent({
+      action: consentAction,
+      scope: consentScope,
+      platform: consentPlatform,
+      target: consentTarget,
+      commercialUseAllowed: consentCommercialUseAllowed,
+      aiTrainingAllowed: consentAiTrainingAllowed,
+      notes: consentNotes,
+    });
+    const nextVault: PersonalMemoryVault = {
+      ...vault,
+      consentLedger: [...vault.consentLedger, event],
+      updatedAt: event.createdAt,
+    };
+
+    savePersonalMemoryVault(nextVault);
+    setVault(nextVault);
+    resetConsentForm();
+    showToast('Consent event recorded locally');
   };
 
   return (
@@ -410,6 +495,154 @@ export function SettingsMemoryVault() {
             </section>
           ))}
         </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Consent Ledger</div>
+        <section className="memory-vault-consent-panel">
+          <div className="memory-vault-consent-panel__intro">
+            <div>
+              <h3>Local permission receipts</h3>
+              <p>
+                Local record of permission decisions. This is not legal advice or automatic
+                enforcement. Events are append-only; revocation creates a new event instead of
+                editing the original.
+              </p>
+            </div>
+            <span className="setting-badge">
+              {vault.consentLedger.length} {vault.consentLedger.length === 1 ? 'event' : 'events'}
+            </span>
+          </div>
+
+          <div className="memory-vault-consent-form">
+            <label className="memory-vault-field">
+              <span>Action</span>
+              <select
+                className="memory-vault-input"
+                value={consentAction}
+                onChange={(event) => {
+                  const nextAction = event.target.value as ConsentLedgerAction;
+                  setConsentAction(nextAction);
+                  if (nextAction === 'consent_refused' || nextAction === 'consent_revoked') {
+                    setConsentCommercialUseAllowed(false);
+                    setConsentAiTrainingAllowed(false);
+                  }
+                }}
+              >
+                {CONSENT_ACTION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field">
+              <span>Scope</span>
+              <select
+                className="memory-vault-input"
+                value={consentScope}
+                onChange={(event) => setConsentScope(event.target.value as ConsentLedgerScope)}
+              >
+                {CONSENT_SCOPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field">
+              <span>Platform optional</span>
+              <input
+                className="memory-vault-input"
+                value={consentPlatform}
+                onChange={(event) => setConsentPlatform(event.target.value)}
+                placeholder="Example: ChatGPT"
+              />
+            </label>
+
+            <label className="memory-vault-field">
+              <span>Target optional</span>
+              <input
+                className="memory-vault-input"
+                value={consentTarget}
+                onChange={(event) => setConsentTarget(event.target.value)}
+                placeholder="Example: preferences"
+              />
+            </label>
+
+            <label className="memory-vault-field memory-vault-field--full">
+              <span>Notes optional</span>
+              <textarea
+                className="memory-vault-input memory-vault-textarea"
+                value={consentNotes}
+                onChange={(event) => setConsentNotes(event.target.value)}
+                placeholder="Add a short note about what was allowed, refused, or revoked."
+              />
+            </label>
+
+            <div className="memory-vault-consent-checks">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={consentCommercialUseAllowed}
+                  disabled={!consentAllowsUse}
+                  onChange={(event) => setConsentCommercialUseAllowed(event.target.checked)}
+                />
+                Commercial use allowed
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={consentAiTrainingAllowed}
+                  disabled={!consentAllowsUse}
+                  onChange={(event) => setConsentAiTrainingAllowed(event.target.checked)}
+                />
+                AI training allowed
+              </label>
+            </div>
+
+            {!consentAllowsUse && (
+              <p className="memory-vault-form-note">
+                Refused and revoked events keep AI training and commercial use off.
+              </p>
+            )}
+
+            <button
+              className="setting-btn setting-btn--primary"
+              onClick={handleRecordConsentEvent}
+              type="button"
+            >
+              Record consent event
+            </button>
+          </div>
+
+          <div className="memory-vault-consent-events">
+            {recentConsentEvents.length > 0 ? (
+              recentConsentEvents.map((event) => (
+                <article className="memory-vault-consent-event" key={event.id}>
+                  <div className="memory-vault-consent-event__header">
+                    <div>
+                      <h3>{getConsentActionLabel(event.action)}</h3>
+                      <div className="memory-vault-entry-meta">
+                        {getConsentScopeLabel(event.scope)} - {getConsentStatus(event.action, event.allowed)}
+                      </div>
+                    </div>
+                    <time dateTime={event.createdAt}>
+                      {new Date(event.createdAt).toLocaleString()}
+                    </time>
+                  </div>
+                  <p>{event.receiptText}</p>
+                </article>
+              ))
+            ) : (
+              <p className="memory-vault-empty">
+                No consent events recorded yet.
+              </p>
+            )}
+          </div>
+        </section>
       </div>
 
       <div className="settings-group">

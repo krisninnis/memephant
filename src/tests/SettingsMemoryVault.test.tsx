@@ -62,13 +62,14 @@ describe('SettingsMemoryVault', () => {
     expect(screen.getByRole('heading', { name: 'Never Share' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Platform Permissions' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Licensing Preferences' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Consent Ledger' })).toBeInTheDocument();
   });
 
   it('starts local, private, and licensing-disabled by default', () => {
     render(<SettingsMemoryVault />);
 
     expect(screen.getByText('Private by default')).toBeInTheDocument();
-    expect(screen.getByText('Local only')).toBeInTheDocument();
+    expect(screen.getAllByText('Local only').length).toBeGreaterThan(0);
     expect(screen.getByText('Off by default')).toBeInTheDocument();
     expect(screen.getAllByText('Disabled').length).toBeGreaterThan(0);
     expect(
@@ -105,6 +106,48 @@ describe('SettingsMemoryVault', () => {
     expect(screen.getByRole('heading', { name: 'Consent ledger' })).toBeInTheDocument();
     expect(screen.getAllByText('Informational only - not active')).toHaveLength(3);
     expect(screen.getAllByText('Planned safeguard')).toHaveLength(2);
+  });
+
+  it('renders the local Consent Ledger section with safe defaults', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.getByText('Local permission receipts')).toBeInTheDocument();
+    expect(screen.getByText(/not legal advice or automatic enforcement/i)).toBeInTheDocument();
+    expect(screen.getByText(/Events are append-only/)).toBeInTheDocument();
+    expect(screen.getByText('No consent events recorded yet.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Commercial use allowed')).toBeDisabled();
+    expect(screen.getByLabelText('AI training allowed')).toBeDisabled();
+  });
+
+  it('adds a local consent ledger event', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.change(screen.getByLabelText('Action'), {
+      target: { value: 'consent_granted' },
+    });
+    fireEvent.change(screen.getByLabelText('Scope'), {
+      target: { value: 'platform_sharing' },
+    });
+    fireEvent.change(screen.getByLabelText('Platform optional'), {
+      target: { value: 'ChatGPT' },
+    });
+    fireEvent.change(screen.getByLabelText('Target optional'), {
+      target: { value: 'preference memory' },
+    });
+    fireEvent.change(screen.getByLabelText('Notes optional'), {
+      target: { value: 'ConsentLedgerUiSentinel' },
+    });
+    fireEvent.click(screen.getByLabelText('Commercial use allowed'));
+    fireEvent.click(screen.getByRole('button', { name: 'Record consent event' }));
+
+    expect(screen.getByRole('heading', { name: 'Consent granted' })).toBeInTheDocument();
+    expect(screen.getByText('Platform sharing - Allowed')).toBeInTheDocument();
+    expect(screen.getByText(/ConsentLedgerUiSentinel/)).toBeInTheDocument();
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(stored).toContain('ConsentLedgerUiSentinel');
+    expect(stored).toContain('"commercialUseAllowed":true');
+    expect(stored).toContain('"aiTrainingAllowed":false');
   });
 
   it('creates a private memory entry locally', () => {

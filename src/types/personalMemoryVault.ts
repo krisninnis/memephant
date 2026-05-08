@@ -4,6 +4,17 @@ export const PERSONAL_MEMORY_VAULT_SCHEMA_VERSION = '0.1.0';
 
 export type PersonalMemorySensitivity = 'standard' | 'private' | 'never_share';
 export type PersonalMemoryPermission = 'never' | 'ask_each_time' | 'allow';
+export type ConsentLedgerAction =
+  | 'consent_granted'
+  | 'consent_refused'
+  | 'consent_revoked'
+  | 'permission_updated';
+export type ConsentLedgerScope =
+  | 'ai_training'
+  | 'commercial_licensing'
+  | 'platform_sharing'
+  | 'memory_export'
+  | 'custom';
 export type PersonalMemoryEntryCategory =
   | 'owner_profile'
   | 'preference'
@@ -53,6 +64,20 @@ export interface PersonalMemoryAuditLogEntry {
   source: 'user' | 'system';
 }
 
+export interface ConsentLedgerEvent {
+  id: string;
+  createdAt: string;
+  action: ConsentLedgerAction;
+  scope: ConsentLedgerScope;
+  platform?: string;
+  target?: string;
+  allowed: boolean;
+  commercialUseAllowed: boolean;
+  aiTrainingAllowed: boolean;
+  notes?: string;
+  receiptText: string;
+}
+
 export interface PersonalMemoryVault {
   schemaVersion: typeof PERSONAL_MEMORY_VAULT_SCHEMA_VERSION;
   ownerProfile: PersonalMemoryOwnerProfile;
@@ -66,6 +91,7 @@ export interface PersonalMemoryVault {
   neverShare: string[];
   platformPermissions: Partial<Record<Platform, PersonalMemoryPlatformRule>>;
   dataLicensingPreferences: PersonalMemoryDataLicensingPreferences;
+  consentLedger: ConsentLedgerEvent[];
   auditLog: PersonalMemoryAuditLogEntry[];
   updatedAt: string;
 }
@@ -100,6 +126,94 @@ export function createPersonalMemoryEntry(
   };
 }
 
+function normalizeOptionalText(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function formatConsentLedgerLabel(value: string): string {
+  return value.replace(/_/g, ' ');
+}
+
+export function createConsentLedgerEvent(
+  input: {
+    id?: string;
+    createdAt?: string;
+    action: ConsentLedgerAction;
+    scope: ConsentLedgerScope;
+    platform?: string;
+    target?: string;
+    commercialUseAllowed?: boolean;
+    aiTrainingAllowed?: boolean;
+    notes?: string;
+  },
+): ConsentLedgerEvent {
+  const createdAt = input.createdAt ?? new Date().toISOString();
+  const allowed = input.action === 'consent_granted' || input.action === 'permission_updated';
+  const platform = normalizeOptionalText(input.platform);
+  const target = normalizeOptionalText(input.target);
+  const notes = normalizeOptionalText(input.notes);
+  const commercialUseAllowed = allowed ? Boolean(input.commercialUseAllowed) : false;
+  const aiTrainingAllowed = allowed ? Boolean(input.aiTrainingAllowed) : false;
+  const targetParts = [
+    platform ? `platform ${platform}` : null,
+    target ? `target ${target}` : null,
+  ].filter(Boolean);
+  const targetText = targetParts.length ? ` for ${targetParts.join(', ')}` : '';
+  const receiptText = [
+    `${formatConsentLedgerLabel(input.action)} for ${formatConsentLedgerLabel(input.scope)}${targetText}.`,
+    `AI training allowed: ${aiTrainingAllowed ? 'yes' : 'no'}.`,
+    `Commercial use allowed: ${commercialUseAllowed ? 'yes' : 'no'}.`,
+    notes ? `Notes: ${notes}` : null,
+  ].filter(Boolean).join(' ');
+
+  return {
+    id: input.id ?? createId('pmv_consent'),
+    createdAt,
+    action: input.action,
+    scope: input.scope,
+    platform,
+    target,
+    allowed,
+    commercialUseAllowed,
+    aiTrainingAllowed,
+    notes,
+    receiptText,
+  };
+}
+
+export function validateConsentLedgerEvent(value: unknown): value is ConsentLedgerEvent {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<ConsentLedgerEvent>;
+  const validActions: ConsentLedgerAction[] = [
+    'consent_granted',
+    'consent_refused',
+    'consent_revoked',
+    'permission_updated',
+  ];
+  const validScopes: ConsentLedgerScope[] = [
+    'ai_training',
+    'commercial_licensing',
+    'platform_sharing',
+    'memory_export',
+    'custom',
+  ];
+
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.createdAt === 'string' &&
+    validActions.includes(candidate.action as ConsentLedgerAction) &&
+    validScopes.includes(candidate.scope as ConsentLedgerScope) &&
+    typeof candidate.allowed === 'boolean' &&
+    typeof candidate.commercialUseAllowed === 'boolean' &&
+    typeof candidate.aiTrainingAllowed === 'boolean' &&
+    typeof candidate.receiptText === 'string'
+  );
+}
+
 export function createDefaultPersonalMemoryVault(
   now = new Date().toISOString(),
 ): PersonalMemoryVault {
@@ -122,8 +236,24 @@ export function createDefaultPersonalMemoryVault(
       deniedCategories: [],
       updatedAt: now,
     },
+    consentLedger: [],
     auditLog: [],
     updatedAt: now,
+  };
+}
+
+export function normalizePersonalMemoryVault(value: unknown): PersonalMemoryVault | null {
+  if (!isPersonalMemoryVault(value)) {
+    return null;
+  }
+
+  const candidate = value as PersonalMemoryVault & { consentLedger?: unknown };
+
+  return {
+    ...candidate,
+    consentLedger: Array.isArray(candidate.consentLedger)
+      ? candidate.consentLedger.filter(validateConsentLedgerEvent)
+      : [],
   };
 }
 

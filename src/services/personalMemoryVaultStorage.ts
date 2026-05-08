@@ -1,6 +1,6 @@
 import {
   createDefaultPersonalMemoryVault,
-  isPersonalMemoryVault,
+  normalizePersonalMemoryVault,
   type PersonalMemoryVault,
 } from '../types/personalMemoryVault';
 
@@ -27,8 +27,9 @@ export function loadPersonalMemoryVault(): PersonalMemoryVault {
     }
 
     const parsed = JSON.parse(raw) as unknown;
-    if (isPersonalMemoryVault(parsed)) {
-      return parsed;
+    const normalized = normalizePersonalMemoryVault(parsed);
+    if (normalized) {
+      return normalized;
     }
   } catch (err) {
     console.warn('[Memephant] Failed to load Personal Memory Vault:', err);

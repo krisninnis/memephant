@@ -1,7 +1,9 @@
 import {
+  createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
   isPersonalMemoryVault,
+  validateConsentLedgerEvent,
   PERSONAL_MEMORY_VAULT_SCHEMA_VERSION,
 } from '../types/personalMemoryVault';
 import { generateContextPassport } from '../utils/passportGenerator';
@@ -57,6 +59,17 @@ function makeVaultWithSentinels() {
     'PersonalVaultNeverShareSentinel',
     'C:\\Users\\example\\private\\personal-vault',
   ];
+  vault.consentLedger = [
+    createConsentLedgerEvent({
+      id: 'consent-sentinel-1',
+      createdAt: vault.updatedAt,
+      action: 'consent_granted',
+      scope: 'platform_sharing',
+      platform: 'PersonalVaultConsentPlatformSentinel',
+      target: 'PersonalVaultConsentTargetSentinel',
+      notes: 'PersonalVaultConsentNotesSentinel',
+    }),
+  ];
 
   return vault;
 }
@@ -67,6 +80,9 @@ function expectNoPersonalVaultSentinels(output: string): void {
   expect(output).not.toContain('PersonalVaultSentinelPreference');
   expect(output).not.toContain('PersonalVaultSentinelWorkStyle');
   expect(output).not.toContain('PersonalVaultNeverShareSentinel');
+  expect(output).not.toContain('PersonalVaultConsentPlatformSentinel');
+  expect(output).not.toContain('PersonalVaultConsentTargetSentinel');
+  expect(output).not.toContain('PersonalVaultConsentNotesSentinel');
   expect(output).not.toContain('C:\\Users\\example\\private\\personal-vault');
 }
 
@@ -80,7 +96,41 @@ describe('Personal Memory Vault foundation', () => {
     expect(vault.platformPermissions).toEqual({});
     expect(vault.dataLicensingPreferences.allowLicensing).toBe(false);
     expect(vault.dataLicensingPreferences.requireExplicitConsent).toBe(true);
+    expect(vault.consentLedger).toEqual([]);
     expect(vault.auditLog).toEqual([]);
+  });
+
+  it('creates consent ledger events with consent defaults off', () => {
+    const event = createConsentLedgerEvent({
+      id: 'consent-1',
+      createdAt: '2026-05-08T12:00:00.000Z',
+      action: 'consent_refused',
+      scope: 'ai_training',
+      commercialUseAllowed: true,
+      aiTrainingAllowed: true,
+    });
+
+    expect(event.allowed).toBe(false);
+    expect(event.commercialUseAllowed).toBe(false);
+    expect(event.aiTrainingAllowed).toBe(false);
+    expect(event.receiptText).toContain('AI training allowed: no');
+    expect(validateConsentLedgerEvent(event)).toBe(true);
+  });
+
+  it('records grant flags only for allowed consent events', () => {
+    const event = createConsentLedgerEvent({
+      id: 'consent-2',
+      createdAt: '2026-05-08T12:00:00.000Z',
+      action: 'consent_granted',
+      scope: 'commercial_licensing',
+      commercialUseAllowed: true,
+      aiTrainingAllowed: false,
+    });
+
+    expect(event.allowed).toBe(true);
+    expect(event.commercialUseAllowed).toBe(true);
+    expect(event.aiTrainingAllowed).toBe(false);
+    expect(event.receiptText).toContain('Commercial use allowed: yes');
   });
 
   it('creates private entries by default', () => {
@@ -185,6 +235,66 @@ describe('Personal Memory Vault local storage', () => {
     expect(window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY)).toContain(
       'PersonalVaultLocalStorageSentinel',
     );
+  });
+
+  it('loads old vaults without consentLedger safely', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-07T12:00:00.000Z');
+    const oldVault = { ...vault };
+    delete (oldVault as { consentLedger?: unknown }).consentLedger;
+
+    window.localStorage.setItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY, JSON.stringify(oldVault));
+
+    const loaded = loadPersonalMemoryVault();
+    expect(isPersonalMemoryVault(loaded)).toBe(true);
+    expect(loaded.consentLedger).toEqual([]);
+  });
+
+  it('drops invalid stored consent ledger entries safely', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-07T12:00:00.000Z');
+    const validEvent = createConsentLedgerEvent({
+      id: 'valid-consent',
+      createdAt: vault.updatedAt,
+      action: 'consent_revoked',
+      scope: 'memory_export',
+    });
+    const stored = {
+      ...vault,
+      consentLedger: [
+        validEvent,
+        { id: 'bad-consent', action: 'consent_granted', scope: 'ai_training' },
+      ],
+    };
+
+    window.localStorage.setItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY, JSON.stringify(stored));
+
+    const loaded = loadPersonalMemoryVault();
+    expect(loaded.consentLedger).toEqual([validEvent]);
+  });
+
+  it('keeps revoked and refused consent events append-only', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-07T12:00:00.000Z');
+    const granted = createConsentLedgerEvent({
+      id: 'consent-grant',
+      createdAt: vault.updatedAt,
+      action: 'consent_granted',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+    });
+    const revoked = createConsentLedgerEvent({
+      id: 'consent-revoke',
+      createdAt: '2026-05-07T13:00:00.000Z',
+      action: 'consent_revoked',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+    });
+
+    savePersonalMemoryVault({ ...vault, consentLedger: [granted, revoked] });
+
+    const loaded = loadPersonalMemoryVault();
+    expect(loaded.consentLedger).toHaveLength(2);
+    expect(loaded.consentLedger[0].action).toBe('consent_granted');
+    expect(loaded.consentLedger[1].action).toBe('consent_revoked');
+    expect(loaded.consentLedger[1].allowed).toBe(false);
   });
 
   it('falls back to an empty vault when stored data is invalid', () => {

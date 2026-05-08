@@ -104,7 +104,7 @@ describe('AppShell Memory Vault navigation', () => {
     expect(
       screen.getByRole('heading', { name: 'Personal Memory Vault' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Local only')).toBeInTheDocument();
+    expect(screen.getAllByText('Local only').length).toBeGreaterThan(0);
     expect(
       screen.getByText(/Not included in project exports or Context Passports/),
     ).toBeInTheDocument();

@@ -425,6 +425,83 @@
   font-weight: 700;
 }
 
+.memory-vault-consent-panel {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 12px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.memory-vault-consent-panel__intro,
+.memory-vault-consent-event__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.memory-vault-consent-panel__intro h3,
+.memory-vault-consent-event h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.memory-vault-consent-panel__intro p,
+.memory-vault-consent-event p {
+  color: #8ca2c7;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-vault-consent-form {
+  border-top: 1px solid #24243a;
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.memory-vault-consent-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.memory-vault-consent-checks label {
+  align-items: center;
+  color: #9fb0cb;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.memory-vault-consent-checks input:disabled {
+  opacity: 0.55;
+}
+
+.memory-vault-consent-events {
+  border-top: 1px solid #24243a;
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.memory-vault-consent-event {
+  background: #0f0f1c;
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.memory-vault-consent-event time {
+  color: #7b7b98;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
 .memory-vault-status-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -826,6 +903,12 @@
 
   .memory-vault-entry-actions .setting-btn {
     flex: 1;
+  }
+
+  .memory-vault-consent-panel__intro,
+  .memory-vault-consent-event__header {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
