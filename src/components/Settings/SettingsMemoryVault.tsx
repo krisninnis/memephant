@@ -78,14 +78,15 @@ const FUTURE_CONTROLS: FutureControl[] = [
     disabled: true,
   },
   {
-    label: 'Data export receipt',
-    value: 'Planned',
-    detail: 'A future safeguard could show exactly what personal memory was exported.',
+    label: 'Consent receipt',
+    value: 'Available',
+    detail:
+      'Copy a local Markdown receipt of permission state and consent history. Private memory contents are excluded.',
   },
   {
     label: 'Consent ledger',
     value: 'Local only',
-    detail: 'A local append-only record can now capture manual consent decisions.',
+    detail: 'Append-only local record for manual consent decisions.',
   },
 ];
 
@@ -504,7 +505,7 @@ export function SettingsMemoryVault() {
                 <span className="setting-badge">{control.value}</span>
               </div>
               <p>{control.detail}</p>
-              <small>{control.disabled ? 'Informational only - not active' : 'Planned safeguard'}</small>
+              <small>{control.disabled ? 'Informational only - not active' : 'Active local safeguard'}</small>
             </section>
           ))}
         </div>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import SettingsMemoryVault from '../components/Settings/SettingsMemoryVault';
 import {
   createConsentLedgerEvent,
@@ -110,16 +110,15 @@ describe('SettingsMemoryVault', () => {
     expect(screen.getByText(/Nothing here is shared without explicit action/)).toBeInTheDocument();
     expect(screen.getByText(/This is not legal advice and does not guarantee enforcement/)).toBeInTheDocument();
 
-    expect(
-      screen.getByLabelText('Future consent and licensing safeguards'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Sharing permissions' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'AI training permission' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Commercial licensing' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Data export receipt' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Consent ledger' })).toBeInTheDocument();
-    expect(screen.getAllByText('Informational only - not active')).toHaveLength(3);
-    expect(screen.getAllByText('Planned safeguard')).toHaveLength(2);
+    const safeguardsGrid = screen.getByLabelText('Future consent and licensing safeguards');
+    expect(safeguardsGrid).toBeInTheDocument();
+    expect(within(safeguardsGrid).getByRole('heading', { name: 'Sharing permissions' })).toBeInTheDocument();
+    expect(within(safeguardsGrid).getByRole('heading', { name: 'AI training permission' })).toBeInTheDocument();
+    expect(within(safeguardsGrid).getByRole('heading', { name: 'Commercial licensing' })).toBeInTheDocument();
+    expect(within(safeguardsGrid).getByRole('heading', { name: 'Consent receipt' })).toBeInTheDocument();
+    expect(within(safeguardsGrid).getByRole('heading', { name: 'Consent ledger' })).toBeInTheDocument();
+    expect(within(safeguardsGrid).getAllByText('Informational only - not active')).toHaveLength(3);
+    expect(within(safeguardsGrid).getAllByText('Active local safeguard')).toHaveLength(2);
   });
 
   it('renders the local Consent Ledger section with safe defaults', () => {
