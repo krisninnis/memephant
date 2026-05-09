@@ -1,8 +1,10 @@
 import {
+  appendConsentLedgerEvent,
   createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
   isPersonalMemoryVault,
+  mergeAppendOnlyConsentLedger,
   validateConsentLedgerEvent,
   PERSONAL_MEMORY_VAULT_SCHEMA_VERSION,
 } from '../types/personalMemoryVault';
@@ -131,6 +133,88 @@ describe('Personal Memory Vault foundation', () => {
     expect(event.commercialUseAllowed).toBe(true);
     expect(event.aiTrainingAllowed).toBe(false);
     expect(event.receiptText).toContain('Commercial use allowed: yes');
+  });
+
+  it('appends consent events without mutating the existing vault', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-07T12:00:00.000Z');
+    const event = createConsentLedgerEvent({
+      id: 'append-consent',
+      createdAt: '2026-05-07T12:30:00.000Z',
+      action: 'consent_refused',
+      scope: 'memory_export',
+    });
+
+    const nextVault = appendConsentLedgerEvent(vault, event);
+
+    expect(vault.consentLedger).toEqual([]);
+    expect(nextVault.consentLedger).toEqual([event]);
+    expect(nextVault.updatedAt).toBe(event.createdAt);
+  });
+
+  it('ignores duplicate consent event ids through the append helper', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-07T12:00:00.000Z');
+    const original = createConsentLedgerEvent({
+      id: 'duplicate-consent',
+      createdAt: vault.updatedAt,
+      action: 'consent_granted',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+    });
+    const attemptedMutation = {
+      ...original,
+      action: 'consent_revoked' as const,
+      allowed: false,
+      receiptText: 'MUTATED_EVENT_TEXT',
+    };
+
+    const withOriginal = appendConsentLedgerEvent(vault, original);
+    const afterDuplicate = appendConsentLedgerEvent(withOriginal, attemptedMutation);
+
+    expect(afterDuplicate.consentLedger).toHaveLength(1);
+    expect(afterDuplicate.consentLedger[0]).toEqual(original);
+    expect(afterDuplicate.consentLedger[0].receiptText).not.toBe('MUTATED_EVENT_TEXT');
+  });
+
+  it('creates corrective consent events that link to the original event', () => {
+    const event = createConsentLedgerEvent({
+      id: 'corrective-consent',
+      createdAt: '2026-05-07T13:00:00.000Z',
+      action: 'permission_updated',
+      scope: 'ai_training',
+      correctsEventId: 'original-consent',
+      aiTrainingAllowed: false,
+    });
+
+    expect(event.correctsEventId).toBe('original-consent');
+    expect(validateConsentLedgerEvent(event)).toBe(true);
+  });
+
+  it('merges consent ledgers append-only and preserves original event contents', () => {
+    const original = createConsentLedgerEvent({
+      id: 'grant-consent',
+      createdAt: '2026-05-07T12:00:00.000Z',
+      action: 'consent_granted',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+    });
+    const attemptedMutation = {
+      ...original,
+      platform: 'MUTATED_PLATFORM',
+      receiptText: 'MUTATED_RECEIPT',
+    };
+    const revocation = createConsentLedgerEvent({
+      id: 'revoke-consent',
+      createdAt: '2026-05-07T13:00:00.000Z',
+      action: 'consent_revoked',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+      correctsEventId: original.id,
+    });
+
+    const merged = mergeAppendOnlyConsentLedger([original], [attemptedMutation, revocation]);
+
+    expect(merged).toEqual([original, revocation]);
+    expect(merged[1].correctsEventId).toBe(original.id);
   });
 
   it('creates private entries by default', () => {
@@ -295,6 +379,51 @@ describe('Personal Memory Vault local storage', () => {
     expect(loaded.consentLedger[0].action).toBe('consent_granted');
     expect(loaded.consentLedger[1].action).toBe('consent_revoked');
     expect(loaded.consentLedger[1].allowed).toBe(false);
+  });
+
+  it('prevents stored consent events from being edited or deleted by whole-vault saves', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-07T12:00:00.000Z');
+    const granted = createConsentLedgerEvent({
+      id: 'stored-grant',
+      createdAt: vault.updatedAt,
+      action: 'consent_granted',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+    });
+    savePersonalMemoryVault({ ...vault, consentLedger: [granted] });
+
+    const editedGrant = {
+      ...granted,
+      platform: 'MUTATED_PLATFORM',
+      receiptText: 'MUTATED_RECEIPT_TEXT',
+    };
+    const correction = createConsentLedgerEvent({
+      id: 'stored-correction',
+      createdAt: '2026-05-07T13:00:00.000Z',
+      action: 'permission_updated',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+      correctsEventId: granted.id,
+    });
+
+    savePersonalMemoryVault({
+      ...vault,
+      consentLedger: [editedGrant, correction],
+      updatedAt: correction.createdAt,
+    });
+
+    const loaded = loadPersonalMemoryVault();
+    expect(loaded.consentLedger).toHaveLength(2);
+    expect(loaded.consentLedger[0]).toEqual(granted);
+    expect(loaded.consentLedger[0].receiptText).not.toBe('MUTATED_RECEIPT_TEXT');
+    expect(loaded.consentLedger[1]).toEqual(correction);
+
+    savePersonalMemoryVault({ ...loaded, consentLedger: [] });
+
+    const afterDeletionAttempt = loadPersonalMemoryVault();
+    expect(afterDeletionAttempt.consentLedger).toHaveLength(2);
+    expect(afterDeletionAttempt.consentLedger[0]).toEqual(granted);
+    expect(afterDeletionAttempt.consentLedger[1]).toEqual(correction);
   });
 
   it('falls back to an empty vault when stored data is invalid', () => {

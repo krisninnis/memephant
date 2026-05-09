@@ -154,6 +154,9 @@ export function generateConsentReceipt(
       lines.push(`- Action: ${formatLabel(event.action)}`);
       lines.push(`- Scope: ${formatLabel(event.scope)}`);
       lines.push(`- Status: ${getConsentStatus(event)}`);
+      if (event.correctsEventId) {
+        lines.push(`- Corrects event: ${sanitizeReceiptText(event.correctsEventId)}`);
+      }
       lines.push(`- AI training allowed: ${event.aiTrainingAllowed ? 'yes' : 'no'}`);
       lines.push(`- Commercial use allowed: ${event.commercialUseAllowed ? 'yes' : 'no'}`);
       if (event.platform) lines.push(`- Platform: ${sanitizeReceiptText(event.platform)}`);

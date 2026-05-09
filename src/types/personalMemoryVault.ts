@@ -69,6 +69,7 @@ export interface ConsentLedgerEvent {
   createdAt: string;
   action: ConsentLedgerAction;
   scope: ConsentLedgerScope;
+  correctsEventId?: string;
   platform?: string;
   target?: string;
   allowed: boolean;
@@ -146,10 +147,12 @@ export function createConsentLedgerEvent(
     commercialUseAllowed?: boolean;
     aiTrainingAllowed?: boolean;
     notes?: string;
+    correctsEventId?: string;
   },
 ): ConsentLedgerEvent {
   const createdAt = input.createdAt ?? new Date().toISOString();
   const allowed = input.action === 'consent_granted' || input.action === 'permission_updated';
+  const correctsEventId = normalizeOptionalText(input.correctsEventId);
   const platform = normalizeOptionalText(input.platform);
   const target = normalizeOptionalText(input.target);
   const notes = normalizeOptionalText(input.notes);
@@ -172,6 +175,7 @@ export function createConsentLedgerEvent(
     createdAt,
     action: input.action,
     scope: input.scope,
+    correctsEventId,
     platform,
     target,
     allowed,
@@ -210,8 +214,53 @@ export function validateConsentLedgerEvent(value: unknown): value is ConsentLedg
     typeof candidate.allowed === 'boolean' &&
     typeof candidate.commercialUseAllowed === 'boolean' &&
     typeof candidate.aiTrainingAllowed === 'boolean' &&
-    typeof candidate.receiptText === 'string'
+    typeof candidate.receiptText === 'string' &&
+    (candidate.correctsEventId === undefined || typeof candidate.correctsEventId === 'string')
   );
+}
+
+export function appendConsentLedgerEvent(
+  vault: PersonalMemoryVault,
+  event: ConsentLedgerEvent,
+): PersonalMemoryVault {
+  if (!validateConsentLedgerEvent(event)) {
+    return vault;
+  }
+
+  if (vault.consentLedger.some((existing) => existing.id === event.id)) {
+    return vault;
+  }
+
+  return {
+    ...vault,
+    consentLedger: [...vault.consentLedger, { ...event }],
+    updatedAt: event.createdAt,
+  };
+}
+
+export function mergeAppendOnlyConsentLedger(
+  existingEvents: ConsentLedgerEvent[],
+  nextEvents: ConsentLedgerEvent[],
+): ConsentLedgerEvent[] {
+  const existingById = new Map<string, ConsentLedgerEvent>();
+
+  existingEvents.filter(validateConsentLedgerEvent).forEach((event) => {
+    if (!existingById.has(event.id)) {
+      existingById.set(event.id, { ...event });
+    }
+  });
+
+  const merged = Array.from(existingById.values());
+  const seen = new Set(merged.map((event) => event.id));
+
+  nextEvents.filter(validateConsentLedgerEvent).forEach((event) => {
+    if (!seen.has(event.id)) {
+      merged.push({ ...event });
+      seen.add(event.id);
+    }
+  });
+
+  return merged;
 }
 
 export function createDefaultPersonalMemoryVault(

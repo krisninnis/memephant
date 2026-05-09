@@ -1,5 +1,6 @@
 import {
   createDefaultPersonalMemoryVault,
+  mergeAppendOnlyConsentLedger,
   normalizePersonalMemoryVault,
   type PersonalMemoryVault,
 } from '../types/personalMemoryVault';
@@ -44,7 +45,26 @@ export function savePersonalMemoryVault(vault: PersonalMemoryVault): void {
     return;
   }
 
-  storage.setItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY, JSON.stringify(vault));
+  let vaultToSave = vault;
+
+  try {
+    const raw = storage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    const existing = raw ? normalizePersonalMemoryVault(JSON.parse(raw) as unknown) : null;
+
+    if (existing) {
+      vaultToSave = {
+        ...vault,
+        consentLedger: mergeAppendOnlyConsentLedger(
+          existing.consentLedger,
+          vault.consentLedger,
+        ),
+      };
+    }
+  } catch {
+    vaultToSave = vault;
+  }
+
+  storage.setItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY, JSON.stringify(vaultToSave));
 }
 
 export function clearPersonalMemoryVault(): void {

@@ -6,6 +6,7 @@ import {
   savePersonalMemoryVault,
 } from '../../services/personalMemoryVaultStorage';
 import {
+  appendConsentLedgerEvent,
   createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
@@ -389,11 +390,7 @@ export function SettingsMemoryVault() {
       aiTrainingAllowed: consentAiTrainingAllowed,
       notes: consentNotes,
     });
-    const nextVault: PersonalMemoryVault = {
-      ...vault,
-      consentLedger: [...vault.consentLedger, event],
-      updatedAt: event.createdAt,
-    };
+    const nextVault = appendConsentLedgerEvent(vault, event);
 
     savePersonalMemoryVault(nextVault);
     setVault(nextVault);

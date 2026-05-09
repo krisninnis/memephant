@@ -77,6 +77,60 @@ describe('Consent Receipt export', () => {
     expect(receipt).toContain('ReceiptEventNotesSentinel');
   });
 
+  it('shows chronological corrective consent history without changing the original event', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    const original = createConsentLedgerEvent({
+      id: 'original-consent-event',
+      createdAt: '2026-05-09T10:15:00.000Z',
+      action: 'consent_granted',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+      notes: 'Original ledger note',
+    });
+    const correction = createConsentLedgerEvent({
+      id: 'corrective-consent-event',
+      createdAt: '2026-05-09T10:45:00.000Z',
+      action: 'consent_revoked',
+      scope: 'platform_sharing',
+      platform: 'ChatGPT',
+      correctsEventId: original.id,
+      notes: 'Corrective ledger note',
+    });
+    vault.consentLedger = [original, correction];
+
+    const receipt = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+
+    expect(receipt.indexOf('Original ledger note')).toBeLessThan(
+      receipt.indexOf('Corrective ledger note'),
+    );
+    expect(receipt).toContain('- Corrects event: original-consent-event');
+    expect(receipt).toContain('- Revoked events: 1');
+  });
+
+  it('does not expose private entry text when corrective events exist', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    vault.privateNotes = [
+      createPersonalMemoryEntry('Private corrective receipt memory sentinel', {
+        id: 'private-corrective-note',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'corrective-safe-event',
+        createdAt: '2026-05-09T10:45:00.000Z',
+        action: 'permission_updated',
+        scope: 'memory_export',
+        correctsEventId: 'old-safe-event',
+      }),
+    ];
+
+    const receipt = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+
+    expect(receipt).toContain('- Corrects event: old-safe-event');
+    expect(receipt).not.toContain('Private corrective receipt memory sentinel');
+  });
+
   it('redacts secrets and local file paths in ledger event text', () => {
     const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
     const event = createConsentLedgerEvent({
