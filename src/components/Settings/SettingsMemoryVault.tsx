@@ -90,6 +90,52 @@ const FUTURE_CONTROLS: FutureControl[] = [
   },
 ];
 
+
+type StarterSuggestion = {
+  id: string;
+  title: string;
+  category: PersonalMemoryEntryCategory;
+  content: string;
+};
+
+const STARTER_SUGGESTIONS: StarterSuggestion[] = [
+  {
+    id: 'starter-ai-response-style',
+    title: 'AI response style',
+    category: 'preference',
+    content:
+      'I prefer clear, direct answers with practical next steps. Use British English.',
+  },
+  {
+    id: 'starter-code-collaboration-style',
+    title: 'Code collaboration style',
+    category: 'preference',
+    content:
+      'When helping with code, inspect before changing, make small safe slices, and explain what changed.',
+  },
+  {
+    id: 'starter-no-guessing',
+    title: 'No guessing',
+    category: 'rule',
+    content:
+      'If something is uncertain or unverified, say so clearly instead of guessing.',
+  },
+  {
+    id: 'starter-private-vault-boundary',
+    title: 'Private vault boundary',
+    category: 'boundary',
+    content:
+      'Do not include personal memory in project exports, Context Passports, or AI handoffs unless I explicitly choose to share it.',
+  },
+  {
+    id: 'starter-user-owned-ai-memory',
+    title: 'User-owned AI memory',
+    category: 'goal',
+    content:
+      'I want my AI memory to stay user-owned, portable, inspectable, and private by default.',
+  },
+];
+
 function hasOwnerProfile(vault: PersonalMemoryVault): boolean {
   return Boolean(
     vault.ownerProfile.displayName ||
@@ -319,6 +365,14 @@ export function SettingsMemoryVault() {
     showToast('Private memory saved locally');
   };
 
+
+  const applyStarterSuggestion = (suggestion: StarterSuggestion) => {
+    setEntryTitle(suggestion.title);
+    setEntryContent(suggestion.content);
+    setEntryCategory(suggestion.category);
+    setFormError(null);
+  };
+
   const handleDeleteEntry = () => {
     if (!entryToDelete) return;
 
@@ -455,6 +509,45 @@ export function SettingsMemoryVault() {
           <a className="memory-vault-empty-state__link" href="#memory-vault-add-private-memory">
             Add your first memory
           </a>
+        </section>
+      )}
+
+      {entries.length === 0 && (
+        <section
+          className="memory-vault-suggestions"
+          aria-label="Memory Vault starter suggestions"
+        >
+          <div className="memory-vault-suggestions__header">
+            <h3>Try a starter memory</h3>
+            <p>
+              Pick one to prefill the form below. Nothing is saved until you click
+              Save private memory.
+            </p>
+          </div>
+          <div className="memory-vault-suggestions__grid">
+            {STARTER_SUGGESTIONS.map((suggestion) => (
+              <button
+                key={suggestion.id}
+                type="button"
+                className="memory-vault-suggestion-card"
+                onClick={() => applyStarterSuggestion(suggestion)}
+              >
+                <span className="memory-vault-suggestion-card__title">
+                  {suggestion.title}
+                </span>
+                <span className="memory-vault-suggestion-card__category">
+                  {getCategoryLabel(suggestion.category)}
+                </span>
+                <span className="memory-vault-suggestion-card__content">
+                  {suggestion.content}
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="memory-vault-suggestions__note">
+            Suggestions only prefill the form. They are stored locally only when you
+            click Save private memory.
+          </p>
         </section>
       )}
 

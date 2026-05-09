@@ -381,6 +381,87 @@
   margin-top: 10px !important;
 }
 
+.memory-vault-suggestions {
+  background: #0f1a2e;
+  border: 1px solid #1e3a5f;
+  border-radius: 12px;
+  margin-bottom: 28px;
+  padding: 18px;
+}
+
+.memory-vault-suggestions__header h3 {
+  color: #e6f0ff;
+  font-size: 15px;
+  margin: 0 0 6px;
+}
+
+.memory-vault-suggestions__header p {
+  color: #9fb9d8;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.memory-vault-suggestions__grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.memory-vault-suggestion-card {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 8px;
+  color: #e6f0ff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: 4px;
+  padding: 12px 14px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.memory-vault-suggestion-card:hover,
+.memory-vault-suggestion-card:focus-visible {
+  background: #1a1a2e;
+  border-color: #d97706;
+  outline: none;
+}
+
+.memory-vault-suggestion-card__title {
+  color: #e6f0ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.memory-vault-suggestion-card__category {
+  color: #9fb9d8;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.memory-vault-suggestion-card__content {
+  color: #b6c7df;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.memory-vault-suggestions__note {
+  color: #7c8ca7;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+@media (max-width: 640px) {
+  .memory-vault-suggestions__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .memory-vault-future-grid {
   display: grid;
   gap: 12px;

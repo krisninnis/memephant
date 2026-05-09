@@ -102,6 +102,61 @@ describe('SettingsMemoryVault', () => {
     expect(screen.getByRole('link', { name: 'Add your first memory' })).toBeInTheDocument();
   });
 
+  it('renders starter suggestions in the empty state', () => {
+    render(<SettingsMemoryVault />);
+
+    const suggestions = screen.getByLabelText('Memory Vault starter suggestions');
+    expect(suggestions).toBeInTheDocument();
+    expect(within(suggestions).getByRole('heading', { name: 'Try a starter memory' })).toBeInTheDocument();
+    expect(within(suggestions).getByRole('button', { name: /AI response style/i })).toBeInTheDocument();
+    expect(within(suggestions).getByRole('button', { name: /Code collaboration style/i })).toBeInTheDocument();
+    expect(within(suggestions).getByRole('button', { name: /No guessing/i })).toBeInTheDocument();
+    expect(within(suggestions).getByRole('button', { name: /Private vault boundary/i })).toBeInTheDocument();
+    expect(within(suggestions).getByRole('button', { name: /User-owned AI memory/i })).toBeInTheDocument();
+    expect(
+      within(suggestions).getByText(/Suggestions only prefill the form/),
+    ).toBeInTheDocument();
+  });
+
+  it('prefills the private memory form when clicking a starter suggestion', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: /No guessing/i }));
+
+    expect(screen.getByLabelText('Title')).toHaveValue('No guessing');
+    expect(screen.getByLabelText('Category')).toHaveValue('rule');
+    expect(screen.getByLabelText('Content')).toHaveValue(
+      'If something is uncertain or unverified, say so clearly instead of guessing.',
+    );
+  });
+
+  it('does not save an entry automatically when clicking a starter suggestion', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Private vault boundary/i }));
+
+    expect(window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY)).toBeNull();
+    expect(screen.getByText('No private memories saved yet.')).toBeInTheDocument();
+  });
+
+  it('saves a normal private local entry after starter prefill', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: /AI response style/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
+
+    expect(screen.getByText('AI response style')).toBeInTheDocument();
+    expect(
+      screen.getByText('I prefer clear, direct answers with practical next steps. Use British English.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Preference - Private - Local only')).toBeInTheDocument();
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(stored).toContain('AI response style');
+    expect(stored).toContain('I prefer clear, direct answers with practical next steps. Use British English.');
+    expect(stored).toContain('"sensitivity":"private"');
+  });
+
   it('renders the data rights and consent preview as informational safeguards', () => {
     render(<SettingsMemoryVault />);
 
