@@ -3,7 +3,26 @@ import {
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
 } from '../types/personalMemoryVault';
-import { generateConsentReceiptMarkdown } from '../utils/consentReceipt';
+import {
+  RECEIPT_INTEGRITY_HASH_LENGTH,
+  RECEIPT_INTEGRITY_HASH_PREFIX,
+  computeReceiptIntegrityHash,
+  generateConsentReceiptMarkdown,
+} from '../utils/consentReceipt';
+
+function splitReceiptBodyAndHashLine(receipt: string): { body: string; hashLine: string } {
+  const lastNewline = receipt.lastIndexOf('\n');
+  return {
+    body: receipt.slice(0, lastNewline),
+    hashLine: receipt.slice(lastNewline + 1),
+  };
+}
+
+function readDisplayedHash(receipt: string): string {
+  const { hashLine } = splitReceiptBodyAndHashLine(receipt);
+  expect(hashLine.startsWith(RECEIPT_INTEGRITY_HASH_PREFIX)).toBe(true);
+  return hashLine.slice(RECEIPT_INTEGRITY_HASH_PREFIX.length);
+}
 
 describe('Consent Receipt export', () => {
   it('generates an empty local-only receipt safely', () => {
@@ -188,5 +207,161 @@ describe('Consent Receipt export', () => {
     generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
 
     expect(JSON.stringify(vault)).toBe(before);
+  });
+});
+
+describe('Consent Receipt integrity hash', () => {
+  it('appends an integrity hash section and labels it as a tamper-evidence helper, not legal proof', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    const receipt = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+
+    expect(receipt).toContain('## Integrity Hash');
+    expect(receipt).toContain('tamper-evidence helper');
+    expect(receipt).toContain('not a digital signature');
+    expect(receipt).toContain('not legal proof');
+    expect(receipt).toContain('not identity verification');
+
+    const { hashLine } = splitReceiptBodyAndHashLine(receipt);
+    expect(hashLine).toMatch(
+      new RegExp(`^Integrity hash \\(SHA-256, 12 chars\\): [0-9a-f]{${RECEIPT_INTEGRITY_HASH_LENGTH}}$`),
+    );
+    expect(receipt.endsWith(hashLine)).toBe(true);
+  });
+
+  it('produces the same hash for the same vault and generatedAt timestamp', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'consent-deterministic',
+        createdAt: '2026-05-09T10:30:00.000Z',
+        action: 'consent_refused',
+        scope: 'ai_training',
+      }),
+    ];
+
+    const first = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+    const second = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+
+    expect(first).toBe(second);
+    expect(readDisplayedHash(first)).toBe(readDisplayedHash(second));
+  });
+
+  it('changes the hash when consent ledger data changes', () => {
+    const generatedAt = '2026-05-09T11:00:00.000Z';
+
+    const vaultA = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    vaultA.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'consent-original',
+        createdAt: '2026-05-09T10:30:00.000Z',
+        action: 'consent_refused',
+        scope: 'ai_training',
+      }),
+    ];
+
+    const vaultB = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    vaultB.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'consent-original',
+        createdAt: '2026-05-09T10:30:00.000Z',
+        action: 'consent_granted',
+        scope: 'ai_training',
+        aiTrainingAllowed: true,
+      }),
+    ];
+
+    const hashA = readDisplayedHash(generateConsentReceiptMarkdown(vaultA, generatedAt));
+    const hashB = readDisplayedHash(generateConsentReceiptMarkdown(vaultB, generatedAt));
+
+    expect(hashA).not.toEqual(hashB);
+  });
+
+  it('computes the integrity hash over the body and excludes the hash line itself', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'consent-body-exclusion',
+        createdAt: '2026-05-09T10:30:00.000Z',
+        action: 'permission_updated',
+        scope: 'memory_export',
+      }),
+    ];
+
+    const receipt = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+    const { body, hashLine } = splitReceiptBodyAndHashLine(receipt);
+    const displayedHash = hashLine.slice(RECEIPT_INTEGRITY_HASH_PREFIX.length);
+
+    expect(displayedHash).toHaveLength(RECEIPT_INTEGRITY_HASH_LENGTH);
+    expect(displayedHash).toMatch(/^[0-9a-f]+$/);
+    expect(body).not.toContain(RECEIPT_INTEGRITY_HASH_PREFIX);
+    expect(computeReceiptIntegrityHash(body)).toBe(displayedHash);
+  });
+
+  it('produces a different hash when the receipt body would change', () => {
+    const generatedAt = '2026-05-09T11:00:00.000Z';
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+
+    const baseline = generateConsentReceiptMarkdown(vault, generatedAt);
+    const baselineHash = readDisplayedHash(baseline);
+
+    const tamperedBody = splitReceiptBodyAndHashLine(baseline).body.replace(
+      'Memephant Personal Memory Vault - Consent Receipt',
+      'Tampered Consent Receipt Title',
+    );
+    expect(computeReceiptIntegrityHash(tamperedBody)).not.toEqual(baselineHash);
+  });
+
+  it('keeps the integrity hash section free of private entry contents and never-share text', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry('IntegrityHashPrivateEntrySentinel', {
+        id: 'integrity-pref-1',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.privateNotes = [
+      createPersonalMemoryEntry('IntegrityHashPrivateNoteSentinel', {
+        id: 'integrity-note-1',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.neverShare = ['IntegrityHashNeverShareSentinel'];
+
+    const receipt = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+
+    expect(receipt).not.toContain('IntegrityHashPrivateEntrySentinel');
+    expect(receipt).not.toContain('IntegrityHashPrivateNoteSentinel');
+    expect(receipt).not.toContain('IntegrityHashNeverShareSentinel');
+
+    const { hashLine } = splitReceiptBodyAndHashLine(receipt);
+    expect(hashLine).not.toContain('IntegrityHashPrivateEntrySentinel');
+    expect(hashLine).not.toContain('IntegrityHashPrivateNoteSentinel');
+    expect(hashLine).not.toContain('IntegrityHashNeverShareSentinel');
+  });
+
+  it('keeps redacting secrets and local paths even with the integrity hash appended', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-09T10:00:00.000Z');
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'consent-redaction-with-hash',
+        createdAt: '2026-05-09T10:50:00.000Z',
+        action: 'permission_updated',
+        scope: 'memory_export',
+        notes:
+          'token=integrityHashRedactionToken1234567890 plus C:\\Users\\thoma\\integrity-secret\\file.txt',
+      }),
+    ];
+
+    const receipt = generateConsentReceiptMarkdown(vault, '2026-05-09T11:00:00.000Z');
+
+    expect(receipt).toContain('[REDACTED]');
+    expect(receipt).toContain('[REDACTED_PATH]');
+    expect(receipt).not.toContain('integrityHashRedactionToken1234567890');
+    expect(receipt).not.toContain('C:\\Users\\thoma\\integrity-secret\\file.txt');
+
+    const { body, hashLine } = splitReceiptBodyAndHashLine(receipt);
+    expect(computeReceiptIntegrityHash(body)).toBe(
+      hashLine.slice(RECEIPT_INTEGRITY_HASH_PREFIX.length),
+    );
   });
 });
