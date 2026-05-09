@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Memephant — Remember your projects so your AIs don't have to</title>
-  <meta name="description" content="Memephant stores your project context and exports it — shaped correctly for ChatGPT, Claude, Grok, Perplexity, and Gemini — so every AI session picks up right where you left off." />
-  <meta name="keywords" content="AI context management, ChatGPT memory, Claude projects, AI productivity, project context, AI workflow, prompt management, AI assistant tool" />
+  <title>Memephant - Move projects between AI tools without rebuilding context</title>
+  <meta name="description" content="Move your project between ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs without rebuilding context. Local-first project memory for builders using multiple AI tools." />
+  <meta name="keywords" content="AI context management, ChatGPT memory, Claude projects, Codex handoff, AI project memory, local-first AI tools, project context, AI workflow" />
   <meta name="author" content="Kris Ninnis" />
   <meta name="theme-color" content="#d97706" />
 
@@ -23,49 +23,60 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://memephant.com/" />
   <meta property="og:site_name" content="Memephant" />
-  <meta property="og:title" content="Memephant — Remember your projects so your AIs don't have to" />
-  <meta property="og:description" content="Store your project context once. Export it to any AI in one click. Never explain yourself twice." />
-  <meta property="og:image" content="https://memephant.com/icons/icon-512.png" />
-  <meta property="og:image:width" content="512" />
-  <meta property="og:image:height" content="512" />
+  <meta property="og:title" content="Memephant - Move projects between AI tools without rebuilding context" />
+  <meta property="og:description" content="Local-first project memory for builders using ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs." />
+  <meta property="og:image" content="https://memephant.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Memephant project memory app preview" />
   <meta property="og:locale" content="en_US" />
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@memephant" />
-  <meta name="twitter:title" content="Memephant — Remember everything. Explain nothing." />
-  <meta name="twitter:description" content="Store your project context once. Export it to any AI in one click. Never explain yourself twice." />
-  <meta name="twitter:image" content="https://memephant.com/icons/icon-512.png" />
+  <meta name="twitter:title" content="Memephant - Move projects between AI tools without rebuilding context" />
+  <meta name="twitter:description" content="Local-first project memory for builders using ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs." />
+  <meta name="twitter:image" content="https://memephant.com/og-image.png" />
+  <meta name="twitter:image:alt" content="Memephant project memory app preview" />
 
   <!-- JSON-LD -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Memephant",
-    "applicationCategory": "ProductivityApplication",
-    "operatingSystem": "Windows, macOS, Linux, Web",
-    "description": "Local-first desktop app that stores your project context and exports it — shaped perfectly for ChatGPT, Claude, Grok, Perplexity, and Gemini — so every AI session picks up right where you left off.",
-    "screenshot": "https://memephant.com/icons/icon-512.png",
-    "offers": [
+    "@graph": [
       {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "name": "Free"
+        "@type": "Organization",
+        "@id": "https://memephant.com/#organization",
+        "name": "Memephant",
+        "url": "https://memephant.com/",
+        "logo": "https://memephant.com/icons/icon-512-v2.png",
+        "sameAs": ["https://github.com/krisninnis/memphant"]
       },
       {
-        "@type": "Offer",
-        "price": "8",
-        "priceCurrency": "USD",
-        "name": "Pro",
-        "billingIncrement": "P1M"
+        "@type": "WebSite",
+        "@id": "https://memephant.com/#website",
+        "name": "Memephant",
+        "url": "https://memephant.com/",
+        "publisher": { "@id": "https://memephant.com/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://memephant.com/#software",
+        "name": "Memephant",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Windows, macOS, Linux, Web",
+        "description": "Local-first project memory app for moving project context between ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs without rebuilding context.",
+        "screenshot": "https://memephant.com/og-image.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "name": "Free during early access"
+        },
+        "url": "https://memephant.com/",
+        "downloadUrl": "https://github.com/krisninnis/memphant/releases/latest",
+        "publisher": { "@id": "https://memephant.com/#organization" }
       }
-    ],
-    "url": "https://memephant.com/",
-    "downloadUrl": "https://github.com/krisninnis/memphant/releases/latest",
-    "sameAs": [
-      "https://github.com/krisninnis/memphant"
     ]
   }
   </script>
@@ -377,6 +388,7 @@
     .dot-blue   { background: #1d9bf0; }
     .dot-teal   { background: #20808d; }
     .dot-purple { background: #8b5cf6; }
+    .dot-gray   { background: #8b94a7; }
 
     /* ── Problem / Solution ───────────────────────────────────── */
     .problem-grid {
@@ -408,6 +420,70 @@
 
     .problem-card--good { border-color: rgba(16, 163, 127, 0.3); }
     .problem-card--good h3::before { content: "✓  "; color: #10a37f; }
+
+    /* ── Audience / Demo ─────────────────────────────────────── */
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 44px;
+    }
+
+    .audience-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .audience-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .audience-card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .demo-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
+      gap: 32px;
+      align-items: center;
+      margin-top: 52px;
+      padding: 32px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(217,119,6,0.10), rgba(79,142,247,0.08));
+      border: 1px solid rgba(217,119,6,0.22);
+    }
+
+    .demo-frame {
+      min-height: 260px;
+      border: 1px dashed rgba(255,255,255,0.22);
+      border-radius: calc(var(--radius) - 4px);
+      background: rgba(0,0,0,0.20);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 28px;
+    }
+
+    .demo-frame strong {
+      display: block;
+      color: var(--text);
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .demo-frame span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 420px;
+    }
 
     /* ── How it works ─────────────────────────────────────────── */
     .section-eyebrow {
@@ -846,8 +922,12 @@
       .hero { padding: 80px 0 60px; }
 
       .problem-grid,
+      .audience-grid,
       .features-grid,
       .pricing-grid { grid-template-columns: 1fr; }
+
+      .demo-panel { grid-template-columns: 1fr; padding: 24px; }
+      .demo-frame { min-height: 220px; }
 
       .pricing-grid { gap: 16px; }
 
@@ -889,6 +969,7 @@
     </a>
     <ul class="nav-links">
       <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#demo">Demo</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="#faq">FAQ</a></li>
@@ -902,14 +983,17 @@
 <section class="hero">
   <div class="container">
     <div class="hero-badge">🧪 Early Access — help us shape it</div>
-    <h1>Remember your projects so your <span>AIs don't have to</span></h1>
+    <h1>Move your project between AI tools <span>without rebuilding context</span></h1>
     <p class="hero-sub">
-      Switch between ChatGPT, Claude, Grok, Perplexity, and Gemini without losing a single thought.
-      Store your context once — copy it to any AI in one click.
+      Local-first project memory for builders using ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs.
+      Store the project once, then copy the right handoff for the AI you want to use next.
     </p>
     <div class="hero-cta">
       <a class="btn btn-primary" href="https://github.com/krisninnis/memphant/releases/latest">
         ↓ Download free
+      </a>
+      <a class="btn btn-outline" href="#demo">
+        Watch demo
       </a>
       <a class="btn btn-outline" href="https://github.com/krisninnis/memphant" target="_blank" rel="noopener">
         View on GitHub
@@ -924,6 +1008,8 @@
       <span class="platform-pill"><span class="dot dot-blue"></span>Grok</span>
       <span class="platform-pill"><span class="dot dot-teal"></span>Perplexity</span>
       <span class="platform-pill"><span class="dot dot-purple"></span>Gemini</span>
+      <span class="platform-pill"><span class="dot dot-gray"></span>Codex</span>
+      <span class="platform-pill"><span class="dot dot-gray"></span>Local LLMs</span>
     </div>
   </div>
 </section>
@@ -942,7 +1028,45 @@
       </div>
       <div class="problem-card problem-card--good">
         <h3>With Memephant</h3>
-        <p>One click sends the AI everything it needs to know — shaped perfectly for that platform. It feels like it already knows the project. You get straight to the work.</p>
+        <p>One click gives the AI the project state it needs, shaped for that platform. It feels like the session starts warm. You get straight to the work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Audience / Demo ──────────────────────────────────────────── -->
+<section class="section" id="demo">
+  <div class="container">
+    <div class="section-eyebrow">Built for</div>
+    <h2 class="section-heading">People doing long-running work with more than one AI</h2>
+    <p class="section-sub">Memephant is strongest when a project lives across multiple sessions, tools, and weeks of decisions.</p>
+
+    <div class="audience-grid">
+      <div class="audience-card">
+        <h3>Solo developers</h3>
+        <p>Carry product context between ChatGPT, Claude, Codex, and local models while shipping in small slices.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Indie hackers</h3>
+        <p>Keep strategy, roadmap, stack choices, and next steps portable while you use the best AI for each job.</p>
+      </div>
+      <div class="audience-card">
+        <h3>Technical founders</h3>
+        <p>Give each AI a clean project brief without pasting old chats, private paths, or messy context dumps.</p>
+      </div>
+    </div>
+
+    <div class="demo-panel">
+      <div>
+        <div class="section-eyebrow">Demo</div>
+        <h2 class="section-heading">Watch the 60-second project handoff loop</h2>
+        <p class="section-sub">The demo shows the core loop: store project memory, copy a platform-specific handoff, work in an AI chat, then review updates before applying them back to Memephant.</p>
+      </div>
+      <div class="demo-frame" aria-label="Demo video placeholder">
+        <div>
+          <strong>Demo video slot</strong>
+          <span>TODO: replace this placeholder with the real hosted demo video URL or a local /demo.webm asset when it is ready.</span>
+        </div>
       </div>
     </div>
   </div>
@@ -953,7 +1077,7 @@
   <div class="container">
     <div class="section-eyebrow">How it works</div>
     <h2 class="section-heading">From zero to full context in seconds</h2>
-    <p class="section-sub">A simple loop that keeps every AI you use perfectly in sync with your project.</p>
+    <p class="section-sub">A simple loop that keeps each AI oriented around the same approved project memory.</p>
 
     <div class="steps">
       <div class="step">
@@ -967,7 +1091,7 @@
         <div class="step-num">2</div>
         <div class="step-body">
           <h3>Copy for your AI</h3>
-          <p>Pick your platform — ChatGPT, Claude, Grok, Perplexity, or Gemini — and click copy. Memephant shapes your context perfectly for that AI's style.</p>
+          <p>Pick your platform — ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, or a local LLM — and click copy. Memephant shapes your context for that AI's style.</p>
         </div>
       </div>
       <div class="step">
@@ -1000,13 +1124,13 @@
   <div class="container">
     <div class="section-eyebrow">Features</div>
     <h2 class="section-heading">Everything your project memory needs</h2>
-    <p class="section-sub">Built around one rule: a non-technical user should understand what to do within 5 seconds.</p>
+    <p class="section-sub">Built around one promise: your project memory stays inspectable, portable, and under your control.</p>
 
     <div class="features-grid">
       <div class="feature-card">
         <div class="feature-icon">🔄</div>
-        <h3>Five platform formatters</h3>
-        <p>Each AI gets a tailored handoff — not a generic dump. ChatGPT, Claude, Grok, Perplexity, and Gemini each have their own optimised format.</p>
+        <h3>Platform-specific handoffs</h3>
+        <p>Each AI gets a tailored handoff — not a generic dump. ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local models can each get context in the right shape.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🔍</div>
@@ -1016,7 +1140,7 @@
       <div class="feature-card">
         <div class="feature-icon">⚡</div>
         <h3>Smart export mode</h3>
-        <p>Large projects auto-condense to fit inside each AI's context window. Never hit a limit mid-session.</p>
+        <p>Large projects can be condensed before a handoff so you send less repeated context and keep the session focused.</p>
         <span class="feature-badge">PRO</span>
       </div>
       <div class="feature-card">
@@ -1108,7 +1232,7 @@ Becomes MIT licensed in 2030.
         <p class="pricing-desc">Everything you need to stop explaining yourself to AIs.</p>
         <ul class="pricing-features">
           <li>Unlimited projects</li>
-          <li>All 5 export formats</li>
+          <li>Platform-specific export formats</li>
           <li>Paste-detect-diff-apply loop</li>
           <li>Folder scanning</li>
           <li>Secrets redaction</li>
@@ -1131,7 +1255,7 @@ Becomes MIT licensed in 2030.
           <li>Priority support</li>
           <li>Early access to new features</li>
         </ul>
-        <a class="pricing-cta pricing-cta--primary" href="https://github.com/krisninnis/memphant/releases/latest">Download &amp; upgrade inside the app</a>
+        <a class="pricing-cta pricing-cta--primary" href="https://github.com/krisninnis/memphant/releases/latest">Download early access</a>
       </div>
 
       <!-- Team -->
@@ -1145,7 +1269,7 @@ Becomes MIT licensed in 2030.
           <li>Priority support</li>
           <li>Early access to new features</li>
         </ul>
-        <a class="pricing-cta pricing-cta--outline" href="https://github.com/krisninnis/memphant/releases/latest">Download &amp; upgrade inside the app</a>
+        <a class="pricing-cta pricing-cta--outline" href="https://github.com/krisninnis/memphant/releases/latest">Download early access</a>
       </div>
     </div>
   </div>
@@ -1184,14 +1308,14 @@ Becomes MIT licensed in 2030.
           What is Smart export mode?
           <span class="faq-chevron">⌄</span>
         </button>
-        <div class="faq-a">When your project is large, Smart export auto-condenses it to fit inside the AI's context window — removing redundancy and prioritising what matters most. It's a Pro feature available in Settings → Projects.</div>
+        <div class="faq-a">When your project is large, Smart export helps condense the handoff by reducing redundancy and prioritising what matters most. It is planned as a Pro feature.</div>
       </div>
       <div class="faq-item">
         <button class="faq-q" onclick="toggleFaq(this)">
-          Can I cancel my Pro subscription?
+          Are paid plans active yet?
           <span class="faq-chevron">⌄</span>
         </button>
-        <div class="faq-a">Yes, anytime. Go to Settings → Cloud Backup → Manage subscription in the app. You'll retain Pro access until the end of your billing period, then drop to the Free plan — your projects and data are unaffected.</div>
+        <div class="faq-a">Not for public users yet. Memephant is free during early access while feedback and stability improve. Paid plans are planned, but the current CTA is to download and try the product.</div>
       </div>
       <div class="faq-item">
         <button class="faq-q" onclick="toggleFaq(this)">
@@ -1354,5 +1478,3 @@ Becomes MIT licensed in 2030.
 
 </body>
 </html>
-
-

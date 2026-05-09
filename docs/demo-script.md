@@ -1,102 +1,84 @@
-# Memphant — 60-Second Demo Script
+# Memephant - 60-Second Demo Script
 
 A tight Loom walkthrough showing the core loop. Keep it under 90 seconds total.
 
----
+## Before You Record
 
-## Before you record
-
-- [ ] Pre-fill a project called **"My SaaS App"** with realistic content:
-  - What it's about: "A subscription tool for freelancers to track client projects"
+- Pre-fill a project called **My SaaS App** with realistic content:
+  - What it is about: "A subscription tool for freelancers to track client projects"
   - Goals: "Launch beta in 3 months", "Reach 50 paid users"
-  - Key Decisions: "Using Supabase for auth", "Stripe for billing", "Tauri for desktop"
-  - Next Steps: "Write onboarding copy", "Test checkout flow"
-- [ ] Have a Claude or ChatGPT tab open in the browser, blank new chat
-- [ ] Set window size to 1280 × 800
-- [ ] Close all other apps — clean desktop
+  - Key decisions: "Using Supabase for auth", "Stripe for billing", "Tauri for desktop"
+  - Next steps: "Write onboarding copy", "Test checkout flow"
+- Have a Claude or ChatGPT tab open in the browser, blank new chat.
+- Set window size to 1280 x 800.
+- Close other apps for a clean desktop.
 
----
+## Script
 
-## Script (with timestamps)
+### 0:00 - 0:08 | Hook
 
-### 0:00 — 0:08 | Hook
+Screen: Memephant open, My SaaS App selected.
 
-> *Screen: Memphant open, My SaaS App selected*
+Say:
 
-**Say:**
-> "Every time I start a new AI chat, I have to explain my whole project from scratch.
-> Memphant fixes that in one click."
+> Every time I start a new AI chat, I have to explain my whole project from scratch. Memephant fixes that in one click.
 
----
+### 0:08 - 0:22 | Show The Project
 
-### 0:08 — 0:22 | Show the project
+Screen: Scroll slowly through the project editor.
 
-> *Screen: Scroll slowly through the project editor*
+Say:
 
-**Say:**
-> "I've got everything here — what the project's about, my goals, the decisions I've already made,
-> my next steps. It took two minutes to fill in."
+> I have everything here: what the project is about, my goals, the decisions already made, and my next steps. It took two minutes to fill in.
 
----
+### 0:22 - 0:35 | Copy For Claude
 
-### 0:22 — 0:35 | Copy for Claude
+Screen: Click Copy for Claude. Toast appears.
 
-> *Screen: Click "Copy for Claude" button — toast appears*
+Say:
 
-**Say:**
-> "I pick my AI platform — today I'm using Claude — and click copy.
-> Memphant formats it perfectly for Claude's style."
+> I pick my AI platform. Today I am using Claude. Memephant formats the project memory for Claude's style.
 
----
+### 0:35 - 0:50 | Paste Into Claude
 
-### 0:35 — 0:50 | Paste into Claude, show result
+Screen: Switch to Claude, paste, send, and show the response starting.
 
-> *Screen: Switch to Claude tab, paste, send — show Claude's response beginning*
+Say:
 
-**Say:**
-> "I paste it at the start of the chat. Claude instantly knows the full context —
-> my stack, my decisions, where I'm at — and we get straight to work.
-> No re-explaining. No catch-up."
+> I paste it at the start of the chat. Claude instantly has the project context: my stack, decisions, current state, and next steps. No re-explaining.
 
----
+### 0:50 - 1:05 | Paste Claude's Response Back
 
-### 0:50 — 1:05 | Paste Claude's response back
+Screen: Copy Claude's response, switch back to Memephant, paste into Paste Zone.
 
-> *Screen: Copy Claude's response, switch back to Memphant, paste into Paste Zone*
+Say:
 
-**Say:**
-> "When Claude updates my plan or makes a key decision, I paste its response back in.
-> Memphant detects exactly what changed and shows me a diff."
+> When Claude updates my plan or makes a decision, I paste the response back into Memephant. It detects what changed and shows me a diff before anything is applied.
 
-> *Screen: Diff preview appears — show 1–2 changed fields*
+Screen: Diff preview appears. Show one or two changed fields.
 
-> "I review it, click Apply, and my project memory is up to date.
-> Ready for the next session, the next AI, the next idea."
+Say:
 
----
+> I review it, click Apply, and my project memory is up to date. Ready for the next session, the next AI, or the next idea.
 
-### 1:05 — 1:15 | Close with CTA
+### 1:05 - 1:15 | CTA
 
-> *Screen: Return to project list — show multiple projects*
+Screen: Return to project list and show multiple projects.
 
-**Say:**
-> "Free download for Windows, Mac, and Linux.
-> Link in the description."
+Say:
 
----
+> Memephant is free during early access for Windows, macOS, and Linux. Link in the description.
 
-## Editing notes
+## Editing Notes
 
-- Cut dead air ruthlessly — target 60 seconds, 90 max
-- Add captions for the silent paste steps
-- Thumbnail: app hero shot with "Never explain yourself twice" overlay
-- Music: lo-fi background, fade out at CTA
+- Cut dead air ruthlessly.
+- Add captions for silent paste steps.
+- Thumbnail: app hero shot with "Move projects between AI tools" overlay.
+- Avoid fake metrics, fake users, or legal/privacy overclaims.
 
----
+## Loom Settings
 
-## Loom settings
-
-- Resolution: 1080p
-- Camera: small circle, bottom right
-- Record system audio: off
-- Start recording 3 seconds before you begin speaking
+- Resolution: 1080p.
+- Camera: small circle, bottom right.
+- Record system audio: off.
+- Start recording 3 seconds before speaking.

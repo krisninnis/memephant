@@ -1,10 +1,10 @@
 # 🐘 Memephant
 
-**Switch between AI tools without losing context**
+**Move your project between AI tools without rebuilding context**
 
-Memephant is a local-first app that helps you carry project memory between ChatGPT, Claude, Grok, Gemini, Perplexity, and other AI tools without starting from scratch.
+Memephant is a local-first app that helps you carry project memory between ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, local LLMs, and other AI tools without starting from scratch.
 
-![Demo](docs/screenshots/demo.gif)
+Demo script: [docs/demo-script.md](docs/demo-script.md)
 
 ## How it works
 
