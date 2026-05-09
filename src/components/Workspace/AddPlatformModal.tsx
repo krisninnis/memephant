@@ -6,6 +6,7 @@
  * Never mutates project data. Safe export rules always apply to output.
  */
 
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { CustomPlatform, CustomBaseFormat } from '../../utils/passportGenerator';
 import './ContextPassportModal.css';
@@ -83,7 +84,7 @@ export function AddPlatformModal({ onSave, onClose }: AddPlatformModalProps) {
     onSave(platform);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && e.target instanceof HTMLInputElement) {
       handleSave();
     }

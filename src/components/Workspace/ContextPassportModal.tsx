@@ -9,6 +9,7 @@
  * Custom platforms are persisted to localStorage only (settings data, not project data).
  */
 
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { ProjectMemory } from '../../types/memphant-types';
 import {
@@ -128,7 +129,7 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
     }
   };
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
+  const handleOverlayClick = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (e.target === overlayRef.current) onClose();
   };
 
