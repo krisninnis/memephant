@@ -464,6 +464,34 @@
   padding-top: 16px;
 }
 
+.memory-vault-consent-export {
+  align-items: flex-start;
+  background: #0f0f1c;
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.memory-vault-consent-export h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.memory-vault-consent-export p {
+  color: #8ca2c7;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-vault-receipt-preview {
+  min-height: 220px;
+}
+
 .memory-vault-consent-checks {
   display: flex;
   flex-wrap: wrap;
@@ -906,7 +934,8 @@
   }
 
   .memory-vault-consent-panel__intro,
-  .memory-vault-consent-event__header {
+  .memory-vault-consent-event__header,
+  .memory-vault-consent-export {
     align-items: stretch;
     flex-direction: column;
   }

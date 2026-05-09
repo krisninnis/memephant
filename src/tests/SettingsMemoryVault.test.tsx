@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import SettingsMemoryVault from '../components/Settings/SettingsMemoryVault';
 import {
+  createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
 } from '../types/personalMemoryVault';
@@ -43,12 +44,25 @@ jest.mock('../components/Shared/ConfirmDialog', () => {
 });
 
 describe('SettingsMemoryVault', () => {
+  const originalClipboard = navigator.clipboard;
+
   beforeEach(() => {
     window.localStorage.clear();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: jest.fn().mockResolvedValue(undefined),
+      },
+    });
   });
 
   afterEach(() => {
     window.localStorage.clear();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: originalClipboard,
+    });
+    jest.restoreAllMocks();
   });
 
   it('renders the local-only Personal Memory Vault shell', () => {
@@ -148,6 +162,61 @@ describe('SettingsMemoryVault', () => {
     expect(stored).toContain('ConsentLedgerUiSentinel');
     expect(stored).toContain('"commercialUseAllowed":true');
     expect(stored).toContain('"aiTrainingAllowed":false');
+  });
+
+  it('copies a consent receipt without exposing private memory content', async () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-08T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry('PrivateReceiptUiMemorySentinel', {
+        id: 'receipt-private-memory',
+        label: 'Receipt private memory',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.neverShare = ['PrivateReceiptNeverShareSentinel'];
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'receipt-consent-event',
+        createdAt: '2026-05-08T10:30:00.000Z',
+        action: 'consent_refused',
+        scope: 'ai_training',
+        notes: 'ReceiptUiLedgerNoteSentinel',
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy consent receipt' }));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    const receipt = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+    expect(receipt).toContain('# Memephant Personal Memory Vault - Consent Receipt');
+    expect(receipt).toContain('ReceiptUiLedgerNoteSentinel');
+    expect(receipt).toContain('This receipt does not include private memory entry contents.');
+    expect(receipt).not.toContain('PrivateReceiptUiMemorySentinel');
+    expect(receipt).not.toContain('PrivateReceiptNeverShareSentinel');
+  });
+
+  it('shows a readonly consent receipt preview if clipboard copy fails', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: jest.fn().mockRejectedValue(new Error('clipboard blocked')),
+      },
+    });
+
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy consent receipt' }));
+
+    const preview = await screen.findByLabelText('Consent receipt preview');
+    expect(preview).toHaveValue();
+    expect((preview as HTMLTextAreaElement).value).toContain(
+      '# Memephant Personal Memory Vault - Consent Receipt',
+    );
   });
 
   it('creates a private memory entry locally', () => {

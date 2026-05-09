@@ -15,6 +15,7 @@ import {
   type PersonalMemoryTextEntry,
   type PersonalMemoryVault,
 } from '../../types/personalMemoryVault';
+import { generateConsentReceiptMarkdown } from '../../utils/consentReceipt';
 import ConfirmDialog from '../Shared/ConfirmDialog';
 
 type VaultSection = {
@@ -230,6 +231,7 @@ export function SettingsMemoryVault() {
   const [consentNotes, setConsentNotes] = useState('');
   const [consentCommercialUseAllowed, setConsentCommercialUseAllowed] = useState(false);
   const [consentAiTrainingAllowed, setConsentAiTrainingAllowed] = useState(false);
+  const [consentReceiptPreview, setConsentReceiptPreview] = useState('');
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
   const entries = getVaultEntries(vault);
@@ -399,6 +401,20 @@ export function SettingsMemoryVault() {
     showToast('Consent event recorded locally');
   };
 
+  const handleCopyConsentReceipt = async () => {
+    const receipt = generateConsentReceiptMarkdown(vault);
+    setConsentReceiptPreview('');
+
+    try {
+      await navigator.clipboard.writeText(receipt);
+      showToast('Consent receipt copied locally');
+    } catch (err) {
+      console.warn('[Memephant] Failed to copy consent receipt:', err);
+      setConsentReceiptPreview(receipt);
+      showToast('Could not copy automatically. Receipt preview shown below.');
+    }
+  };
+
   return (
     <div>
       <div className="memory-vault-hero">
@@ -513,6 +529,34 @@ export function SettingsMemoryVault() {
               {vault.consentLedger.length} {vault.consentLedger.length === 1 ? 'event' : 'events'}
             </span>
           </div>
+
+          <div className="memory-vault-consent-export">
+            <div>
+              <h3>Consent receipt</h3>
+              <p>
+                Copy a Markdown receipt of local permission state and ledger history. Private
+                memory contents are not included.
+              </p>
+            </div>
+            <button
+              className="setting-btn setting-btn--primary"
+              onClick={handleCopyConsentReceipt}
+              type="button"
+            >
+              Copy consent receipt
+            </button>
+          </div>
+
+          {consentReceiptPreview && (
+            <label className="memory-vault-field">
+              <span>Consent receipt preview</span>
+              <textarea
+                className="memory-vault-input memory-vault-textarea memory-vault-receipt-preview"
+                readOnly
+                value={consentReceiptPreview}
+              />
+            </label>
+          )}
 
           <div className="memory-vault-consent-form">
             <label className="memory-vault-field">
