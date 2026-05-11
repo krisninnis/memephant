@@ -1735,3 +1735,67 @@
     min-width: 0;
   }
 }
+
+/* ── AI Answer Style presets ────────────────────────────────── */
+.memory-vault-answer-style {
+  display: grid;
+  gap: 16px;
+}
+
+.memory-vault-answer-style__intro {
+  color: #9999bb;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-vault-answer-style-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.memory-vault-answer-style-card {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 8px;
+  color: #e6f0ff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: 6px;
+  padding: 12px 14px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.memory-vault-answer-style-card:hover,
+.memory-vault-answer-style-card:focus-visible {
+  background: #1a1a2e;
+  border-color: #d97706;
+  outline: none;
+}
+
+.memory-vault-answer-style-card__header {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+}
+
+.memory-vault-answer-style-card__header strong {
+  color: #e6f0ff;
+  font-size: 0.875rem;
+}
+
+.memory-vault-answer-style-card__header span {
+  color: #9999bb;
+  font-size: 0.75rem;
+}
+
+.memory-vault-answer-style-card > p {
+  color: #9999bb;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin: 0;
+}

@@ -135,6 +135,57 @@ const STARTER_SUGGESTIONS: StarterSuggestion[] = [
       'I want my AI memory to stay user-owned, portable, inspectable, and private by default.',
   },
 ];
+type AnswerStylePreset = {
+  id: string;
+  title: string;
+  subtitle: string;
+  category: PersonalMemoryEntryCategory;
+  content: string;
+};
+
+const AI_ANSWER_STYLE_PRESETS: AnswerStylePreset[] = [
+  {
+    id: 'answer-style-straight-shooter',
+    title: 'Straight Shooter',
+    subtitle: 'Direct, no filler',
+    category: 'preference',
+    content:
+      'Give me direct answers without preamble, recap, or filler. Lead with the answer. Skip pleasantries.',
+  },
+  {
+    id: 'answer-style-strict-code-reviewer',
+    title: 'Strict Code Reviewer',
+    subtitle: 'Flag every issue',
+    category: 'rule',
+    content:
+      'Flag every issue you spot — style, logic, edge cases. Do not soften feedback or skip problems to spare my feelings.',
+  },
+  {
+    id: 'answer-style-balanced-builder',
+    title: 'Balanced Builder',
+    subtitle: 'Explain why, not just what',
+    category: 'preference',
+    content:
+      'Explain the reasoning behind suggestions, not just the steps. I want to understand decisions so I can adapt them.',
+  },
+  {
+    id: 'answer-style-friendly-coach',
+    title: 'Friendly Coach',
+    subtitle: 'Encourage and celebrate',
+    category: 'preference',
+    content:
+      'Acknowledge progress and be encouraging. Celebrate small wins alongside corrections.',
+  },
+  {
+    id: 'answer-style-red-team',
+    title: 'Red Team Mode',
+    subtitle: 'Challenge assumptions',
+    category: 'rule',
+    content:
+      'Challenge my assumptions. Find edge cases, failure modes, and things I have not considered.',
+  },
+];
+
 
 function hasOwnerProfile(vault: PersonalMemoryVault): boolean {
   return Boolean(
@@ -400,6 +451,13 @@ export function SettingsMemoryVault() {
     setEntryTitle(suggestion.title);
     setEntryContent(suggestion.content);
     setEntryCategory(suggestion.category);
+    setFormError(null);
+  };
+
+  const handleUseAnswerStylePreset = (preset: AnswerStylePreset) => {
+    setEntryTitle(preset.title);
+    setEntryContent(preset.content);
+    setEntryCategory(preset.category);
     setFormError(null);
   };
 
@@ -900,6 +958,32 @@ export function SettingsMemoryVault() {
           >
             Save private memory
           </button>
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">AI Answer Style</div>
+        <div className="memory-vault-answer-style">
+          <p className="memory-vault-answer-style__intro">
+            Pick a style preset to prefill the form below. Presets become private memories you
+            control — they never change project exports or AI handoffs.
+          </p>
+          <div className="memory-vault-answer-style-grid">
+            {AI_ANSWER_STYLE_PRESETS.map((preset) => (
+              <button
+                className="memory-vault-answer-style-card"
+                key={preset.id}
+                onClick={() => handleUseAnswerStylePreset(preset)}
+                type="button"
+              >
+                <div className="memory-vault-answer-style-card__header">
+                  <strong>{preset.title}</strong>
+                  <span>{preset.subtitle}</span>
+                </div>
+                <p>{preset.content}</p>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

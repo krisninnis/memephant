@@ -685,3 +685,111 @@ describe('SettingsMemoryVault', () => {
     expect(preview.value).toContain('WORKING_STYLE_RULE_SENTINEL');
   });
 });
+
+describe('AI Answer Style presets', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('renders all five preset cards', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.getByRole('button', { name: /Straight Shooter/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Strict Code Reviewer/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Balanced Builder/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Friendly Coach/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Red Team Mode/i })).toBeInTheDocument();
+  });
+
+  it('prefills the form when a preset card is clicked', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Straight Shooter/i }));
+
+    const titleInput = screen.getByPlaceholderText('Example: Collaboration preference') as HTMLInputElement;
+    const contentTextarea = screen.getByPlaceholderText(
+      'Write a private memory you want to keep under your control.',
+    ) as HTMLTextAreaElement;
+
+    expect(titleInput.value).toBe('Straight Shooter');
+    expect(contentTextarea.value).toContain('direct answers');
+  });
+
+  it('prefills with the correct category for a rule preset', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Strict Code Reviewer/i }));
+
+    const categorySelect = screen.getByLabelText('Category') as HTMLSelectElement;
+    expect(categorySelect.value).toBe('rule');
+  });
+
+  it('does not auto-save when a preset card is clicked', () => {
+    render(<SettingsMemoryVault />);
+
+    const storedBefore = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+
+    fireEvent.click(screen.getByRole('button', { name: /Friendly Coach/i }));
+
+    const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(storedAfter).toEqual(storedBefore);
+  });
+
+  it('clears the form error when a preset card is clicked', () => {
+    render(<SettingsMemoryVault />);
+
+    // Trigger a form error by clicking Save with empty fields
+    fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
+    expect(screen.getByText('Add a title and content before saving.')).toBeInTheDocument();
+
+    // Clicking a preset should clear the error
+    fireEvent.click(screen.getByRole('button', { name: /Red Team Mode/i }));
+    expect(screen.queryByText('Add a title and content before saving.')).not.toBeInTheDocument();
+  });
+
+  it('saving after AI Answer Style preset prefill creates a normal private local memory', () => {
+    // Use actual preset content as sentinel — it is unique to the Straight Shooter preset
+    const STRAIGHT_SHOOTER_TITLE = 'Straight Shooter';
+    const STRAIGHT_SHOOTER_CONTENT_SENTINEL = 'without preamble, recap, or filler';
+
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Straight Shooter/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
+
+    // Title appears both on the preset card and in Saved private memories — assert at least 2
+    const titleMatches = screen.getAllByText(STRAIGHT_SHOOTER_TITLE);
+    expect(titleMatches.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(/without preamble, recap, or filler/).length).toBeGreaterThanOrEqual(2);
+
+    // Category label shows Preference - Private - Local only
+    expect(screen.getByText('Preference - Private - Local only')).toBeInTheDocument();
+
+    // localStorage contains the content and marks it as private
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY) ?? '';
+    expect(stored).toContain(STRAIGHT_SHOOTER_TITLE);
+    expect(stored).toContain(STRAIGHT_SHOOTER_CONTENT_SENTINEL);
+    expect(stored).toContain('"sensitivity":"private"');
+  });
+
+  it('saved AI Answer Style rule preset appears in AI Working Style preview', () => {
+    // Use actual preset content as sentinel — unique to Strict Code Reviewer
+    const CODE_REVIEWER_CONTENT_SENTINEL = 'Flag every issue you spot';
+
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Strict Code Reviewer/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
+
+    // AI Working Style preview should now be rendered and contain the saved rule
+    const preview = screen.getByLabelText('AI working style preview') as HTMLTextAreaElement;
+    expect(preview).toBeInTheDocument();
+    expect(preview.readOnly).toBe(true);
+    expect(preview.value).toContain('Rules:');
+    expect(preview.value).toContain(CODE_REVIEWER_CONTENT_SENTINEL);
+  });
+});
