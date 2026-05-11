@@ -194,6 +194,33 @@ function getVaultEntries(vault: PersonalMemoryVault): PersonalMemoryTextEntry[] 
   ].filter((entry) => entry.value.trim().length > 0);
 }
 
+
+function isWorkingStyleEntry(entry: PersonalMemoryTextEntry): boolean {
+  const category = getEntryCategory(entry);
+  return category === 'preference' || category === 'rule' || category === 'boundary';
+}
+
+function formatWorkingStyleLine(entry: PersonalMemoryTextEntry): string {
+  const label = entry.label?.trim();
+  const value = entry.value.trim();
+  return label ? `- ${label}: ${value}` : `- ${value}`;
+}
+
+function buildAiWorkingStylePrompt(entries: PersonalMemoryTextEntry[]): string {
+  const workingEntries = entries.filter(isWorkingStyleEntry);
+  const preferences = workingEntries.filter((entry) => getEntryCategory(entry) === 'preference');
+  const rules = workingEntries.filter((entry) => getEntryCategory(entry) === 'rule');
+  const boundaries = workingEntries.filter((entry) => getEntryCategory(entry) === 'boundary');
+  const sections = [
+    preferences.length ? `Preferences:\n${preferences.map(formatWorkingStyleLine).join('\n')}` : null,
+    rules.length ? `Rules:\n${rules.map(formatWorkingStyleLine).join('\n')}` : null,
+    boundaries.length ? `Boundaries:\n${boundaries.map(formatWorkingStyleLine).join('\n')}` : null,
+  ].filter(Boolean);
+  return sections.length
+    ? `Use these working preferences when helping me:\n\n${sections.join('\n\n')}`
+    : '';
+}
+
 function countEntriesByCategory(
   vault: PersonalMemoryVault,
   category: PersonalMemoryEntryCategory,
@@ -280,9 +307,12 @@ export function SettingsMemoryVault() {
   const [consentCommercialUseAllowed, setConsentCommercialUseAllowed] = useState(false);
   const [consentAiTrainingAllowed, setConsentAiTrainingAllowed] = useState(false);
   const [consentReceiptPreview, setConsentReceiptPreview] = useState('');
+  const [workingStylePreview, setWorkingStylePreview] = useState('');
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
   const entries = getVaultEntries(vault);
+  const aiWorkingStylePrompt = buildAiWorkingStylePrompt(entries);
+  const hasAiWorkingStylePrompt = aiWorkingStylePrompt.trim().length > 0;
   const consentAllowsUse =
     consentAction === 'consent_granted' || consentAction === 'permission_updated';
   const recentConsentEvents = [...vault.consentLedger].reverse().slice(0, 5);
@@ -464,6 +494,20 @@ export function SettingsMemoryVault() {
       console.warn('[Memephant] Failed to copy consent receipt:', err);
       setConsentReceiptPreview(receipt);
       showToast('Could not copy automatically. Receipt preview shown below.');
+    }
+  };
+
+  const handleCopyAiWorkingStyle = async () => {
+    if (!hasAiWorkingStylePrompt) return;
+    setWorkingStylePreview('');
+
+    try {
+      await navigator.clipboard.writeText(aiWorkingStylePrompt);
+      showToast('AI working style copied');
+    } catch (err) {
+      console.warn('[Memephant] Failed to copy AI working style:', err);
+      setWorkingStylePreview(aiWorkingStylePrompt);
+      showToast('Could not copy automatically. Working style preview shown below.');
     }
   };
 
@@ -857,6 +901,43 @@ export function SettingsMemoryVault() {
             Save private memory
           </button>
         </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">AI Working Style</div>
+        <section className="memory-vault-working-style">
+          <div className="memory-vault-working-style__intro">
+            <div>
+              <h3>Copy your AI working style</h3>
+              <p>
+                Generate a manual prompt from preference, rule, and boundary memories.
+                This does not change project exports, Context Passports, Memory Bridge, or cloud sync.
+              </p>
+            </div>
+            <button
+              className="setting-btn setting-btn--primary"
+              disabled={!hasAiWorkingStylePrompt}
+              onClick={handleCopyAiWorkingStyle}
+              type="button"
+            >
+              Copy AI working style
+            </button>
+          </div>
+          {hasAiWorkingStylePrompt ? (
+            <label className="memory-vault-field">
+              <span>AI working style preview</span>
+              <textarea
+                className="memory-vault-input memory-vault-textarea memory-vault-working-style-preview"
+                readOnly
+                value={workingStylePreview || aiWorkingStylePrompt}
+              />
+            </label>
+          ) : (
+            <p className="memory-vault-empty">
+              Add preference, rule, or boundary memories to generate a working-style prompt.
+            </p>
+          )}
+        </section>
       </div>
 
       <div className="settings-group">

@@ -573,6 +573,39 @@
   min-height: 220px;
 }
 
+.memory-vault-working-style {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 12px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.memory-vault-working-style__intro {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.memory-vault-working-style__intro h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.memory-vault-working-style__intro p {
+  color: #8ca2c7;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-vault-working-style-preview {
+  min-height: 160px;
+}
+
 .memory-vault-consent-checks {
   display: flex;
   flex-wrap: wrap;
@@ -1666,39 +1699,4 @@
 .about-privacy-body {
   background: #0d0d0d;
   border: 1px solid #2a2a2a;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin: 0 0 0.75rem;
-  font-size: 0.82rem;
-  line-height: 1.7;
-  color: #b0b0b0;
-  white-space: pre-line;
-}
-
-.about-footer-note {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 12px;
-  color: #444;
-}
-
-@media (max-width: 900px) {
-  .about-header {
-    margin-bottom: 24px;
-  }
-
-  .about-header__icon {
-    font-size: 44px;
-    margin-bottom: 10px;
-  }
-
-  .about-update-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .about-update-actions .setting-btn {
-    width: 100%;
-    min-width: 0;
-  }
-}
+  border

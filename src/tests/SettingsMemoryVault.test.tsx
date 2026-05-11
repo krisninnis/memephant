@@ -518,4 +518,170 @@ describe('SettingsMemoryVault', () => {
     expect(screen.queryByText('PersonalVaultUiClearSentinel')).not.toBeInTheDocument();
     expect(screen.getAllByText('Empty').length).toBeGreaterThan(0);
   });
+
+  // AI Working Style tests
+
+  it('shows an empty AI Working Style state with no eligible entries', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.getByText('AI Working Style')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Add preference, rule, or boundary memories to generate a working-style prompt.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy AI working style' })).toBeDisabled();
+  });
+
+  it('previews AI working style from preferences, rules, and boundaries', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-08T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry('WORKING_STYLE_PREF_SENTINEL', {
+        id: 'ws-pref-1',
+        label: 'My preference',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.rules = [
+      createPersonalMemoryEntry('WORKING_STYLE_RULE_SENTINEL', {
+        id: 'ws-rule-1',
+        label: 'My rule',
+        category: 'rule',
+        updatedAt: vault.updatedAt,
+      }),
+      createPersonalMemoryEntry('WORKING_STYLE_BOUNDARY_SENTINEL', {
+        id: 'ws-boundary-1',
+        label: 'My boundary',
+        category: 'boundary',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    const preview = screen.getByLabelText('AI working style preview') as HTMLTextAreaElement;
+    expect(preview).toBeInTheDocument();
+    expect(preview.value).toContain('Use these working preferences when helping me:');
+    expect(preview.value).toContain('WORKING_STYLE_PREF_SENTINEL');
+    expect(preview.value).toContain('WORKING_STYLE_RULE_SENTINEL');
+    expect(preview.value).toContain('WORKING_STYLE_BOUNDARY_SENTINEL');
+    expect(preview.value).toContain('Preferences:');
+    expect(preview.value).toContain('Rules:');
+    expect(preview.value).toContain('Boundaries:');
+    expect(screen.getByRole('button', { name: 'Copy AI working style' })).not.toBeDisabled();
+  });
+
+  it('excludes non-working-style vault entries from AI working style', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-08T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry('WORKING_STYLE_PREF_SENTINEL', {
+        id: 'ws-excl-pref-1',
+        label: 'Safe pref',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.goals = [
+      createPersonalMemoryEntry('WORKING_STYLE_GOAL_SHOULD_NOT_COPY', {
+        id: 'ws-excl-goal-1',
+        category: 'goal',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.neverShare = ['WORKING_STYLE_NEVER_SHARE_SHOULD_NOT_COPY'];
+    vault.privateNotes = [
+      createPersonalMemoryEntry('WORKING_STYLE_PRIVATE_NOTE_SHOULD_NOT_COPY', {
+        id: 'ws-excl-note-1',
+        category: 'custom',
+        updatedAt: vault.updatedAt,
+      }),
+      createPersonalMemoryEntry('WORKING_STYLE_OWNER_PROFILE_SHOULD_NOT_COPY', {
+        id: 'ws-excl-owner-1',
+        category: 'owner_profile',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'ws-excl-consent-1',
+        createdAt: vault.updatedAt,
+        action: 'consent_refused',
+        scope: 'ai_training',
+        notes: 'WORKING_STYLE_CONSENT_SHOULD_NOT_COPY',
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    const preview = screen.getByLabelText('AI working style preview') as HTMLTextAreaElement;
+    expect(preview.value).toContain('WORKING_STYLE_PREF_SENTINEL');
+    expect(preview.value).not.toContain('WORKING_STYLE_GOAL_SHOULD_NOT_COPY');
+    expect(preview.value).not.toContain('WORKING_STYLE_NEVER_SHARE_SHOULD_NOT_COPY');
+    expect(preview.value).not.toContain('WORKING_STYLE_PRIVATE_NOTE_SHOULD_NOT_COPY');
+    expect(preview.value).not.toContain('WORKING_STYLE_OWNER_PROFILE_SHOULD_NOT_COPY');
+    expect(preview.value).not.toContain('WORKING_STYLE_CONSENT_SHOULD_NOT_COPY');
+  });
+
+  it('copies AI working style without mutating the vault', async () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-08T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry('WORKING_STYLE_PREF_SENTINEL', {
+        id: 'ws-copy-pref-1',
+        label: 'Copy pref',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+    const storedBefore = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy AI working style' }));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    const copied = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+    expect(copied).toContain('Use these working preferences when helping me:');
+    expect(copied).toContain('WORKING_STYLE_PREF_SENTINEL');
+
+    const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(storedAfter).toEqual(storedBefore);
+  });
+
+  it('shows AI working style preview if clipboard copy fails', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: jest
+          .fn()
+          .mockRejectedValue(new Error('clipboard blocked for working style')),
+      },
+    });
+
+    const vault = createDefaultPersonalMemoryVault('2026-05-08T10:00:00.000Z');
+    vault.rules = [
+      createPersonalMemoryEntry('WORKING_STYLE_RULE_SENTINEL', {
+        id: 'ws-fail-rule-1',
+        label: 'Fallback rule',
+        category: 'rule',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy AI working style' }));
+
+    const preview = await screen.findByLabelText(
+      'AI working style preview',
+    ) as HTMLTextAreaElement;
+    expect(preview).toBeInTheDocument();
+    expect(preview.readOnly).toBe(true);
+    expect(preview.value).toContain('WORKING_STYLE_RULE_SENTINEL');
+  });
 });
