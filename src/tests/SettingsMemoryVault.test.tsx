@@ -70,8 +70,8 @@ describe('SettingsMemoryVault', () => {
 
     expect(screen.getByRole('heading', { name: 'Personal Memory Vault' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Owner Profile' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Preferences' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Goals' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Preferences' }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole('heading', { name: 'Goals' }).length).toBeGreaterThanOrEqual(2);
     expect(screen.getByRole('heading', { name: 'Rules / Boundaries' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Never Share' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Platform Permissions' })).toBeInTheDocument();
@@ -107,12 +107,20 @@ describe('SettingsMemoryVault', () => {
 
     const suggestions = screen.getByLabelText('Memory Vault starter suggestions');
     expect(suggestions).toBeInTheDocument();
-    expect(within(suggestions).getByRole('heading', { name: 'Try a starter memory' })).toBeInTheDocument();
+    expect(
+      within(suggestions).getByRole('heading', { name: 'Try a starter memory' }),
+    ).toBeInTheDocument();
     expect(within(suggestions).getByRole('button', { name: /AI response style/i })).toBeInTheDocument();
-    expect(within(suggestions).getByRole('button', { name: /Code collaboration style/i })).toBeInTheDocument();
+    expect(
+      within(suggestions).getByRole('button', { name: /Code collaboration style/i }),
+    ).toBeInTheDocument();
     expect(within(suggestions).getByRole('button', { name: /No guessing/i })).toBeInTheDocument();
-    expect(within(suggestions).getByRole('button', { name: /Private vault boundary/i })).toBeInTheDocument();
-    expect(within(suggestions).getByRole('button', { name: /User-owned AI memory/i })).toBeInTheDocument();
+    expect(
+      within(suggestions).getByRole('button', { name: /Private vault boundary/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(suggestions).getByRole('button', { name: /User-owned AI memory/i }),
+    ).toBeInTheDocument();
     expect(
       within(suggestions).getByText(/Suggestions only prefill the form/),
     ).toBeInTheDocument();
@@ -167,9 +175,15 @@ describe('SettingsMemoryVault', () => {
 
     const safeguardsGrid = screen.getByLabelText('Future consent and licensing safeguards');
     expect(safeguardsGrid).toBeInTheDocument();
-    expect(within(safeguardsGrid).getByRole('heading', { name: 'Sharing permissions' })).toBeInTheDocument();
-    expect(within(safeguardsGrid).getByRole('heading', { name: 'AI training permission' })).toBeInTheDocument();
-    expect(within(safeguardsGrid).getByRole('heading', { name: 'Commercial licensing' })).toBeInTheDocument();
+    expect(
+      within(safeguardsGrid).getByRole('heading', { name: 'Sharing permissions' }),
+    ).toBeInTheDocument();
+    expect(
+      within(safeguardsGrid).getByRole('heading', { name: 'AI training permission' }),
+    ).toBeInTheDocument();
+    expect(
+      within(safeguardsGrid).getByRole('heading', { name: 'Commercial licensing' }),
+    ).toBeInTheDocument();
     expect(within(safeguardsGrid).getByRole('heading', { name: 'Consent receipt' })).toBeInTheDocument();
     expect(within(safeguardsGrid).getByRole('heading', { name: 'Consent ledger' })).toBeInTheDocument();
     expect(within(safeguardsGrid).getAllByText('Informational only - not active')).toHaveLength(3);
@@ -519,8 +533,6 @@ describe('SettingsMemoryVault', () => {
     expect(screen.getAllByText('Empty').length).toBeGreaterThan(0);
   });
 
-  // AI Working Style tests
-
   it('shows an empty AI Working Style state with no eligible entries', () => {
     render(<SettingsMemoryVault />);
 
@@ -742,17 +754,14 @@ describe('AI Answer Style presets', () => {
   it('clears the form error when a preset card is clicked', () => {
     render(<SettingsMemoryVault />);
 
-    // Trigger a form error by clicking Save with empty fields
     fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
     expect(screen.getByText('Add a title and content before saving.')).toBeInTheDocument();
 
-    // Clicking a preset should clear the error
     fireEvent.click(screen.getByRole('button', { name: /Red Team Mode/i }));
     expect(screen.queryByText('Add a title and content before saving.')).not.toBeInTheDocument();
   });
 
   it('saving after AI Answer Style preset prefill creates a normal private local memory', () => {
-    // Use actual preset content as sentinel — it is unique to the Straight Shooter preset
     const STRAIGHT_SHOOTER_TITLE = 'Straight Shooter';
     const STRAIGHT_SHOOTER_CONTENT_SENTINEL = 'without preamble, recap, or filler';
 
@@ -761,15 +770,11 @@ describe('AI Answer Style presets', () => {
     fireEvent.click(screen.getByRole('button', { name: /Straight Shooter/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
 
-    // Title appears both on the preset card and in Saved private memories — assert at least 2
     const titleMatches = screen.getAllByText(STRAIGHT_SHOOTER_TITLE);
     expect(titleMatches.length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText(/without preamble, recap, or filler/).length).toBeGreaterThanOrEqual(2);
-
-    // Category label shows Preference - Private - Local only
     expect(screen.getByText('Preference - Private - Local only')).toBeInTheDocument();
 
-    // localStorage contains the content and marks it as private
     const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY) ?? '';
     expect(stored).toContain(STRAIGHT_SHOOTER_TITLE);
     expect(stored).toContain(STRAIGHT_SHOOTER_CONTENT_SENTINEL);
@@ -777,7 +782,6 @@ describe('AI Answer Style presets', () => {
   });
 
   it('saved AI Answer Style rule preset appears in AI Working Style preview', () => {
-    // Use actual preset content as sentinel — unique to Strict Code Reviewer
     const CODE_REVIEWER_CONTENT_SENTINEL = 'Flag every issue you spot';
 
     render(<SettingsMemoryVault />);
@@ -785,11 +789,143 @@ describe('AI Answer Style presets', () => {
     fireEvent.click(screen.getByRole('button', { name: /Strict Code Reviewer/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
 
-    // AI Working Style preview should now be rendered and contain the saved rule
     const preview = screen.getByLabelText('AI working style preview') as HTMLTextAreaElement;
     expect(preview).toBeInTheDocument();
     expect(preview.readOnly).toBe(true);
     expect(preview.value).toContain('Rules:');
     expect(preview.value).toContain(CODE_REVIEWER_CONTENT_SENTINEL);
+  });
+});
+
+describe('Memory Audit section', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
+  function expectAuditItem(audit: HTMLElement, label: string, value: string) {
+    const labelEl = within(audit).getByText(label);
+    const card = labelEl.closest('article');
+    expect(card).not.toBeNull();
+    expect(within(card as HTMLElement).getByText(value)).toBeInTheDocument();
+  }
+
+  it('renders the Memory Audit section with key structural elements', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.getByText('Memory Audit')).toBeInTheDocument();
+
+    const audit = screen.getByLabelText('Personal Memory Vault audit');
+    expect(audit).toBeInTheDocument();
+    expect(within(audit).getByText('What Memephant knows locally')).toBeInTheDocument();
+    expect(within(audit).getByText(/Nothing here is shared/)).toBeInTheDocument();
+    expect(within(audit).getByText('Automatically shared')).toBeInTheDocument();
+  });
+
+  it('always shows zero for Automatically shared even with a populated vault', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-11T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry('AUDIT_AUTO_SHARE_PREF_SENTINEL', {
+        id: 'audit-auto-1',
+        label: 'Auto share pref',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    const audit = screen.getByLabelText('Personal Memory Vault audit');
+    expectAuditItem(audit, 'Automatically shared', '0');
+    expect(within(audit).getByText('Nothing in this vault is shared automatically.')).toBeInTheDocument();
+  });
+
+  it('counts categories correctly from a seeded vault', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-11T10:00:00.000Z');
+
+    vault.preferences = [
+      createPersonalMemoryEntry('AUDIT_PREF_SENTINEL_1', {
+        id: 'audit-pref-1',
+        label: 'Pref one',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+      createPersonalMemoryEntry('AUDIT_PREF_SENTINEL_2', {
+        id: 'audit-pref-2',
+        label: 'Pref two',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.goals = [
+      createPersonalMemoryEntry('AUDIT_GOAL_SENTINEL', {
+        id: 'audit-goal-1',
+        label: 'Goal one',
+        category: 'goal',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.rules = [
+      createPersonalMemoryEntry('AUDIT_RULE_SENTINEL', {
+        id: 'audit-rule-1',
+        label: 'Rule one',
+        category: 'rule',
+        updatedAt: vault.updatedAt,
+      }),
+      createPersonalMemoryEntry('AUDIT_BOUNDARY_SENTINEL', {
+        id: 'audit-boundary-1',
+        label: 'Boundary one',
+        category: 'boundary',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.neverShare = ['AUDIT_NEVER_SHARE_SENTINEL'];
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'audit-consent-1',
+        createdAt: vault.updatedAt,
+        action: 'consent_refused',
+        scope: 'ai_training',
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    const audit = screen.getByLabelText('Personal Memory Vault audit');
+
+    expectAuditItem(audit, 'Total private memories', '5');
+    expectAuditItem(audit, 'Preferences', '2');
+    expectAuditItem(audit, 'Goals', '1');
+    expectAuditItem(audit, 'Rules', '1');
+    expectAuditItem(audit, 'Boundaries', '1');
+    expectAuditItem(audit, 'Never-share items', '1');
+    expectAuditItem(audit, 'AI Working Style eligible', '4');
+    expectAuditItem(audit, 'Consent ledger events', '1');
+    expectAuditItem(audit, 'Automatically shared', '0');
+  });
+
+  it('rendering Memory Audit does not mutate localStorage', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-11T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry('AUDIT_NO_MUTATE_SENTINEL', {
+        id: 'audit-nomut-1',
+        label: 'No mutate pref',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    const storedBefore = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+
+    render(<SettingsMemoryVault />);
+
+    const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(storedAfter).toEqual(storedBefore);
   });
 });

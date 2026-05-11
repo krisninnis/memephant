@@ -33,6 +33,12 @@ type FutureControl = {
   disabled?: boolean;
 };
 
+type MemoryAuditItem = {
+  label: string;
+  value: number;
+  detail: string;
+};
+
 const CATEGORY_OPTIONS: Array<{ value: PersonalMemoryEntryCategory; label: string }> = [
   { value: 'owner_profile', label: 'Owner Profile' },
   { value: 'preference', label: 'Preference' },
@@ -364,6 +370,53 @@ export function SettingsMemoryVault() {
   const entries = getVaultEntries(vault);
   const aiWorkingStylePrompt = buildAiWorkingStylePrompt(entries);
   const hasAiWorkingStylePrompt = aiWorkingStylePrompt.trim().length > 0;
+  const memoryAuditItems: MemoryAuditItem[] = [
+    {
+      label: 'Total private memories',
+      value: entries.length,
+      detail: 'Saved local entries in this vault.',
+    },
+    {
+      label: 'Preferences',
+      value: countEntriesByCategory(vault, 'preference'),
+      detail: 'Personal preferences you may manually reuse.',
+    },
+    {
+      label: 'Goals',
+      value: countEntriesByCategory(vault, 'goal'),
+      detail: 'Long-term personal or work goals.',
+    },
+    {
+      label: 'Rules',
+      value: countEntriesByCategory(vault, 'rule'),
+      detail: 'Instructions for how AI should work with you.',
+    },
+    {
+      label: 'Boundaries',
+      value: countEntriesByCategory(vault, 'boundary'),
+      detail: 'Limits and privacy boundaries.',
+    },
+    {
+      label: 'Never-share items',
+      value: vault.neverShare.length,
+      detail: 'Items marked as protected from sharing.',
+    },
+    {
+      label: 'AI Working Style eligible',
+      value: entries.filter(isWorkingStyleEntry).length,
+      detail: 'Preference, rule, and boundary memories available for manual copy.',
+    },
+    {
+      label: 'Consent ledger events',
+      value: vault.consentLedger.length,
+      detail: 'Local permission records saved on this device.',
+    },
+    {
+      label: 'Automatically shared',
+      value: 0,
+      detail: 'Nothing in this vault is shared automatically.',
+    },
+  ];
   const consentAllowsUse =
     consentAction === 'consent_granted' || consentAction === 'permission_updated';
   const recentConsentEvents = [...vault.consentLedger].reverse().slice(0, 5);
@@ -1021,6 +1074,32 @@ export function SettingsMemoryVault() {
               Add preference, rule, or boundary memories to generate a working-style prompt.
             </p>
           )}
+        </section>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Memory Audit</div>
+        <section className="memory-vault-audit" aria-label="Personal Memory Vault audit">
+          <div className="memory-vault-audit__intro">
+            <h3>What Memephant knows locally</h3>
+            <p>
+              Review what is stored locally in your Personal Memory Vault. Nothing here is shared
+              automatically.
+            </p>
+          </div>
+          <div className="memory-vault-audit-grid">
+            {memoryAuditItems.map((item) => (
+              <article className="memory-vault-audit-card" key={item.label}>
+                <div className="memory-vault-audit-card__value">{item.value}</div>
+                <h4>{item.label}</h4>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
+          <p className="memory-vault-form-note">
+            Manual copy actions only happen when you click them. Project exports, Context Passports,
+            Memory Bridge, cloud sync, and Supabase do not receive Vault contents from this audit.
+          </p>
         </section>
       </div>
 

@@ -1799,3 +1799,60 @@
   line-height: 1.5;
   margin: 0;
 }
+
+/* ── Memory Audit ───────────────────────────────────────────── */
+.memory-vault-audit {
+  display: grid;
+  gap: 16px;
+}
+
+.memory-vault-audit__intro h3 {
+  color: #e6f0ff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.memory-vault-audit__intro p {
+  color: #9999bb;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-vault-audit-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.memory-vault-audit-card {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.memory-vault-audit-card__value {
+  color: #d97706;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.memory-vault-audit-card h4 {
+  color: #e6f0ff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.memory-vault-audit-card p {
+  color: #9999bb;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0;
+}
