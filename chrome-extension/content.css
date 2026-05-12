@@ -1,5 +1,5 @@
 /**
- * Memphant — Content Script Styles
+ * Memephant — Content Script Styles
  * Floating notification that appears when an update is detected on an AI page.
  */
 
@@ -132,7 +132,7 @@
 }
 
 /* Respect system dark/light preference — the floater is always dark since
-   it matches Memphant's UI, but we tweak shadow on light backgrounds. */
+   it matches Memephant's UI, but we tweak shadow on light backgrounds. */
 @media (prefers-color-scheme: light) {
   .mph-floater__inner {
     box-shadow:
@@ -149,7 +149,7 @@
   }
 }
 
-/* ─── Injected "Copy for Memphant" button ────────────────────────────────────
+/* ─── Injected "Copy for Memephant" button ────────────────────────────────────
    Appended to each AI response node on ChatGPT, Claude, Grok, Perplexity,
    and Gemini. Designed to blend with platform UIs while staying identifiable.
 */

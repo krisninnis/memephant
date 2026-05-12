@@ -1,5 +1,5 @@
 /**
- * Memphant — /api/auth-callback
+ * Memephant — /api/auth-callback
  *
  * Serves the OAuth callback page with Supabase credentials injected at
  * request time (so we don't have to bake secrets into a static file or

@@ -1,10 +1,10 @@
-# Memphant
+# Memephant
 
 ## What is this?
 A Tauri v2 desktop app that lets users carry project context between AI platforms (ChatGPT, Claude, Grok, Perplexity, Gemini) without losing continuity. Local-first, privacy-first, open source.
 
-- **GitHub:** github.com/krisninnis/memphant
-- **Local repo:** C:\Users\thoma\memphant
+- **GitHub:** github.com/krisninnis/memephant
+- **Local repo:** C:\Users\thoma\memephant
 
 ## Stack
 - Frontend: React 19 + TypeScript + Vite 7
@@ -19,7 +19,7 @@ A Tauri v2 desktop app that lets users carry project context between AI platform
 Simplicity over power. Always. Every single decision filters through this rule.
 
 ## Architecture
-- `src/types/memphant-types.ts` — all TypeScript types (Platform, ProjectMemory, AppSettings, etc.)
+- `src/types/memephant-types.ts` — all TypeScript types (Platform, ProjectMemory, AppSettings, etc.)
 - `src/store/projectStore.ts` — Zustand store (single source of truth)
 - `src/components/Layout/AppShell.tsx` — two-panel grid layout, routing between views
 - `src/components/Layout/WelcomeScreen.tsx` — shown when no projects exist
@@ -136,7 +136,7 @@ Simplicity over power. Always. Every single decision filters through this rule.
 - `STRIPE_WEBHOOK_SECRET` — from Stripe webhook endpoint details
 - `SUPABASE_URL` — same as VITE_SUPABASE_URL
 - `SUPABASE_SERVICE_ROLE_KEY` — from Supabase Dashboard → Settings → API (service_role key)
-- `APP_URL` — e.g. https://memphant.com (no trailing slash)
+- `APP_URL` — e.g. https://memephant.com (no trailing slash)
 
 ## Security rules (non-negotiable, never override)
 - Hardcoded Rust exclusion list for .env / keys / tokens — never user-configurable
