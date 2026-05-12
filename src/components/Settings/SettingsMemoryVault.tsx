@@ -193,6 +193,8 @@ const AI_ANSWER_STYLE_PRESETS: AnswerStylePreset[] = [
 ];
 
 
+const ANSWER_STYLE_PRESET_TITLES = new Set(AI_ANSWER_STYLE_PRESETS.map((p) => p.title));
+
 function hasOwnerProfile(vault: PersonalMemoryVault): boolean {
   return Boolean(
     vault.ownerProfile.displayName ||
@@ -276,6 +278,80 @@ function buildAiWorkingStylePrompt(entries: PersonalMemoryTextEntry[]): string {
   return sections.length
     ? `Use these working preferences when helping me:\n\n${sections.join('\n\n')}`
     : '';
+}
+
+function isAnswerStyleEntry(entry: PersonalMemoryTextEntry): boolean {
+  return Boolean(entry.label && ANSWER_STYLE_PRESET_TITLES.has(entry.label));
+}
+
+function buildPersonalContextPassport(
+  entries: PersonalMemoryTextEntry[],
+  options: {
+    includePreferences: boolean;
+    includeRules: boolean;
+    includeBoundaries: boolean;
+    includeAnswerStyle: boolean;
+    includeGoals: boolean;
+  },
+): string {
+  const eligible = entries.filter((entry) => {
+    const cat = getEntryCategory(entry);
+    return cat !== 'never_share' && cat !== 'owner_profile' && cat !== 'custom';
+  });
+
+  const answerStyleEntries = options.includeAnswerStyle
+    ? eligible.filter(isAnswerStyleEntry)
+    : [];
+  const answerStyleIds = new Set(answerStyleEntries.map((e) => e.id));
+
+  const preferenceEntries = options.includePreferences
+    ? eligible.filter((e) => getEntryCategory(e) === 'preference' && !answerStyleIds.has(e.id))
+    : [];
+  const ruleEntries = options.includeRules
+    ? eligible.filter((e) => getEntryCategory(e) === 'rule' && !answerStyleIds.has(e.id))
+    : [];
+  const boundaryEntries = options.includeBoundaries
+    ? eligible.filter((e) => getEntryCategory(e) === 'boundary' && !answerStyleIds.has(e.id))
+    : [];
+  const goalEntries = options.includeGoals
+    ? eligible.filter((e) => getEntryCategory(e) === 'goal')
+    : [];
+
+  const formatLine = (entry: PersonalMemoryTextEntry): string => {
+    const label = entry.label?.trim();
+    const value = entry.value.trim();
+    return label ? `- ${label}: ${value}` : `- ${value}`;
+  };
+
+  const parts: string[] = [
+    '# Personal Context Passport',
+    'Use these personal instructions when helping me.',
+  ];
+
+  if (preferenceEntries.length > 0) {
+    parts.push(`## Preferences\n${preferenceEntries.map(formatLine).join('\n')}`);
+  }
+  if (ruleEntries.length > 0) {
+    parts.push(`## Rules\n${ruleEntries.map(formatLine).join('\n')}`);
+  }
+  if (boundaryEntries.length > 0) {
+    parts.push(`## Boundaries\n${boundaryEntries.map(formatLine).join('\n')}`);
+  }
+  if (answerStyleEntries.length > 0) {
+    parts.push(`## AI Answer Style\n${answerStyleEntries.map(formatLine).join('\n')}`);
+  }
+  if (goalEntries.length > 0) {
+    parts.push(`## Goals\n${goalEntries.map(formatLine).join('\n')}`);
+  }
+
+  parts.push(
+    '## Privacy Boundary\n' +
+      'These instructions were manually copied by the user. Do not assume access to any other personal memory. ' +
+      'Never include private Vault contents in project exports, Context Passports, Memory Bridge, AI handoffs, ' +
+      'cloud sync, or external systems unless the user explicitly asks.',
+  );
+
+  return parts.join('\n\n');
 }
 
 function countEntriesByCategory(
@@ -365,11 +441,24 @@ export function SettingsMemoryVault() {
   const [consentAiTrainingAllowed, setConsentAiTrainingAllowed] = useState(false);
   const [consentReceiptPreview, setConsentReceiptPreview] = useState('');
   const [workingStylePreview, setWorkingStylePreview] = useState('');
+  const [selectedAnswerStyleId, setSelectedAnswerStyleId] = useState('');
+  const [passportIncludePreferences, setPassportIncludePreferences] = useState(true);
+  const [passportIncludeRules, setPassportIncludeRules] = useState(true);
+  const [passportIncludeBoundaries, setPassportIncludeBoundaries] = useState(true);
+  const [passportIncludeAnswerStyle, setPassportIncludeAnswerStyle] = useState(true);
+  const [passportIncludeGoals, setPassportIncludeGoals] = useState(false);
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
   const entries = getVaultEntries(vault);
   const aiWorkingStylePrompt = buildAiWorkingStylePrompt(entries);
   const hasAiWorkingStylePrompt = aiWorkingStylePrompt.trim().length > 0;
+  const personalContextPassport = buildPersonalContextPassport(entries, {
+    includePreferences: passportIncludePreferences,
+    includeRules: passportIncludeRules,
+    includeBoundaries: passportIncludeBoundaries,
+    includeAnswerStyle: passportIncludeAnswerStyle,
+    includeGoals: passportIncludeGoals,
+  });
   const memoryAuditItems: MemoryAuditItem[] = [
     {
       label: 'Total private memories',
@@ -496,6 +585,7 @@ export function SettingsMemoryVault() {
     setEntryContent('');
     setEntryCategory('preference');
     setFormError(null);
+    setSelectedAnswerStyleId('');
     showToast('Private memory saved locally');
   };
 
@@ -619,6 +709,16 @@ export function SettingsMemoryVault() {
       console.warn('[Memephant] Failed to copy AI working style:', err);
       setWorkingStylePreview(aiWorkingStylePrompt);
       showToast('Could not copy automatically. Working style preview shown below.');
+    }
+  };
+
+  const handleCopyPersonalContextPassport = async () => {
+    try {
+      await navigator.clipboard.writeText(personalContextPassport);
+      showToast('Personal Context Passport copied');
+    } catch (err) {
+      console.warn('[Memephant] Failed to copy Personal Context Passport:', err);
+      // Preview remains visible — no extra action needed
     }
   };
 
@@ -1021,22 +1121,38 @@ export function SettingsMemoryVault() {
             Pick a style preset to prefill the form below. Presets become private memories you
             control — they never change project exports or AI handoffs.
           </p>
-          <div className="memory-vault-answer-style-grid">
-            {AI_ANSWER_STYLE_PRESETS.map((preset) => (
-              <button
-                className="memory-vault-answer-style-card"
-                key={preset.id}
-                onClick={() => handleUseAnswerStylePreset(preset)}
-                type="button"
-              >
-                <div className="memory-vault-answer-style-card__header">
-                  <strong>{preset.title}</strong>
-                  <span>{preset.subtitle}</span>
-                </div>
-                <p>{preset.content}</p>
-              </button>
-            ))}
-          </div>
+          <label className="memory-vault-field">
+            <span>Answer style preset</span>
+            <select
+              aria-label="Answer style preset"
+              className="memory-vault-input"
+              value={selectedAnswerStyleId}
+              onChange={(event) => {
+                const id = event.target.value;
+                setSelectedAnswerStyleId(id);
+                const preset = AI_ANSWER_STYLE_PRESETS.find((p) => p.id === id);
+                if (preset) {
+                  handleUseAnswerStylePreset(preset);
+                }
+              }}
+            >
+              <option value="">Choose a style...</option>
+              {AI_ANSWER_STYLE_PRESETS.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {selectedAnswerStyleId && (() => {
+            const selected = AI_ANSWER_STYLE_PRESETS.find((p) => p.id === selectedAnswerStyleId);
+            return selected ? (
+              <div className="memory-vault-answer-style-preview">
+                <p className="memory-vault-answer-style-preview__subtitle">{selected.subtitle}</p>
+                <p className="memory-vault-answer-style-preview__content">{selected.content}</p>
+              </div>
+            ) : null;
+          })()}
         </div>
       </div>
 
@@ -1074,6 +1190,82 @@ export function SettingsMemoryVault() {
               Add preference, rule, or boundary memories to generate a working-style prompt.
             </p>
           )}
+        </section>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Personal Context Passport</div>
+        <section className="memory-vault-passport" aria-label="Personal Context Passport section">
+          <div className="memory-vault-passport__intro">
+            <h3>Copy personal AI instructions</h3>
+            <p>
+              Create a portable instruction prompt from the personal memories you choose. This is
+              separate from project Context Passport and project exports. Nothing is shared until
+              you copy it.
+            </p>
+          </div>
+
+          <div className="memory-vault-passport-checks">
+            <label>
+              <input
+                type="checkbox"
+                checked={passportIncludePreferences}
+                onChange={(event) => setPassportIncludePreferences(event.target.checked)}
+              />
+              Preferences
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={passportIncludeRules}
+                onChange={(event) => setPassportIncludeRules(event.target.checked)}
+              />
+              Rules
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={passportIncludeBoundaries}
+                onChange={(event) => setPassportIncludeBoundaries(event.target.checked)}
+              />
+              Boundaries
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={passportIncludeAnswerStyle}
+                onChange={(event) => setPassportIncludeAnswerStyle(event.target.checked)}
+              />
+              AI Answer Style
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={passportIncludeGoals}
+                onChange={(event) => setPassportIncludeGoals(event.target.checked)}
+              />
+              Goals optional
+            </label>
+            <span className="memory-vault-passport-exclusion">Never-share items excluded</span>
+          </div>
+
+          <label className="memory-vault-field">
+            <span>Personal Context Passport preview</span>
+            <textarea
+              aria-label="Personal Context Passport preview"
+              className="memory-vault-input memory-vault-textarea memory-vault-passport-preview"
+              readOnly
+              value={personalContextPassport}
+            />
+          </label>
+
+          <button
+            className="setting-btn setting-btn--primary"
+            onClick={handleCopyPersonalContextPassport}
+            type="button"
+          >
+            Copy Personal Context Passport
+          </button>
         </section>
       </div>
 

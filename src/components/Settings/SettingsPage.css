@@ -1800,59 +1800,51 @@
   margin: 0;
 }
 
-/* ── Memory Audit ───────────────────────────────────────────── */
-.memory-vault-audit {
+/* ── AI Answer Style: dropdown preset preview ───────────────── */
+.memory-vault-answer-style-preview {
+  background: #0f0f1c;
+  border: 1px solid #2a2a40;
+  border-radius: 8px;
   display: grid;
-  gap: 16px;
+  gap: 6px;
+  padding: 12px 14px;
 }
 
-.memory-vault-audit__intro h3 {
-  color: #e6f0ff;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  margin: 0 0 6px;
+.memory-vault-answer-style-preview__subtitle {
+  color: #d97706;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.memory-vault-audit__intro p {
-  color: #9999bb;
-  font-size: 0.875rem;
+.memory-vault-answer-style-preview__content {
+  color: #b6c7df;
+  font-size: 0.8125rem;
   line-height: 1.5;
   margin: 0;
 }
 
-.memory-vault-audit-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.memory-vault-audit-card {
+/* ── Personal Context Passport ──────────────────────────────── */
+.memory-vault-passport {
   background: #12121f;
   border: 1px solid #24243a;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
 }
 
-.memory-vault-audit-card__value {
-  color: #d97706;
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1;
+.memory-vault-passport__intro h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0 0 6px;
 }
 
-.memory-vault-audit-card h4 {
-  color: #e6f0ff;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.memory-vault-audit-card p {
-  color: #9999bb;
-  font-size: 0.75rem;
-  line-height: 1.4;
+.memory-vault-passport__intro p {
+  color: #8ca2c7;
+  font-size: 13px;
+  line-height: 1.5;
   margin: 0;
 }

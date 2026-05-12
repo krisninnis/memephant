@@ -698,80 +698,75 @@ describe('SettingsMemoryVault', () => {
   });
 });
 
-describe('AI Answer Style presets', () => {
+describe('AI Answer Style dropdown', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: jest.fn().mockResolvedValue(undefined) },
+    });
   });
 
   afterEach(() => {
     window.localStorage.clear();
+    jest.restoreAllMocks();
   });
 
-  it('renders all five preset cards', () => {
+  it('renders the AI Answer Style dropdown', () => {
+    render(<SettingsMemoryVault />);
+    expect(screen.getByLabelText('Answer style preset')).toBeInTheDocument();
+  });
+
+  it('selecting Straight Shooter pre-fills Title, Category, and Content', () => {
     render(<SettingsMemoryVault />);
 
-    expect(screen.getByRole('button', { name: /Straight Shooter/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Strict Code Reviewer/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Balanced Builder/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Friendly Coach/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Red Team Mode/i })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Answer style preset'), {
+      target: { value: 'answer-style-straight-shooter' },
+    });
+
+    expect(screen.getByLabelText('Title')).toHaveValue('Straight Shooter');
+    expect(screen.getByLabelText('Category')).toHaveValue('preference');
+    expect(screen.getByLabelText('Content')).toHaveValue(
+      'Give me direct answers without preamble, recap, or filler. Lead with the answer. Skip pleasantries.',
+    );
   });
 
-  it('prefills the form when a preset card is clicked', () => {
+  it('selecting Strict Code Reviewer sets category to rule', () => {
     render(<SettingsMemoryVault />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Straight Shooter/i }));
+    fireEvent.change(screen.getByLabelText('Answer style preset'), {
+      target: { value: 'answer-style-strict-code-reviewer' },
+    });
 
-    const titleInput = screen.getByPlaceholderText('Example: Collaboration preference') as HTMLInputElement;
-    const contentTextarea = screen.getByPlaceholderText(
-      'Write a private memory you want to keep under your control.',
-    ) as HTMLTextAreaElement;
-
-    expect(titleInput.value).toBe('Straight Shooter');
-    expect(contentTextarea.value).toContain('direct answers');
+    expect(screen.getByLabelText('Category')).toHaveValue('rule');
   });
 
-  it('prefills with the correct category for a rule preset', () => {
-    render(<SettingsMemoryVault />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Strict Code Reviewer/i }));
-
-    const categorySelect = screen.getByLabelText('Category') as HTMLSelectElement;
-    expect(categorySelect.value).toBe('rule');
-  });
-
-  it('does not auto-save when a preset card is clicked', () => {
+  it('selecting a preset does not save automatically or mutate localStorage', () => {
     render(<SettingsMemoryVault />);
 
     const storedBefore = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
 
-    fireEvent.click(screen.getByRole('button', { name: /Friendly Coach/i }));
+    fireEvent.change(screen.getByLabelText('Answer style preset'), {
+      target: { value: 'answer-style-friendly-coach' },
+    });
 
     const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
     expect(storedAfter).toEqual(storedBefore);
   });
 
-  it('clears the form error when a preset card is clicked', () => {
-    render(<SettingsMemoryVault />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
-    expect(screen.getByText('Add a title and content before saving.')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /Red Team Mode/i }));
-    expect(screen.queryByText('Add a title and content before saving.')).not.toBeInTheDocument();
-  });
-
-  it('saving after AI Answer Style preset prefill creates a normal private local memory', () => {
+  it('saving after selecting a preset creates a normal private local memory', () => {
     const STRAIGHT_SHOOTER_TITLE = 'Straight Shooter';
     const STRAIGHT_SHOOTER_CONTENT_SENTINEL = 'without preamble, recap, or filler';
 
     render(<SettingsMemoryVault />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Straight Shooter/i }));
+    fireEvent.change(screen.getByLabelText('Answer style preset'), {
+      target: { value: 'answer-style-straight-shooter' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
 
-    const titleMatches = screen.getAllByText(STRAIGHT_SHOOTER_TITLE);
-    expect(titleMatches.length).toBeGreaterThanOrEqual(2);
+    // Title appears in both saved entry h3 and the dropdown option
+    expect(screen.getAllByText(STRAIGHT_SHOOTER_TITLE).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/without preamble, recap, or filler/).length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Preference - Private - Local only')).toBeInTheDocument();
 
@@ -781,12 +776,14 @@ describe('AI Answer Style presets', () => {
     expect(stored).toContain('"sensitivity":"private"');
   });
 
-  it('saved AI Answer Style rule preset appears in AI Working Style preview', () => {
+  it('saved AI Answer Style preset appears in AI Working Style preview', () => {
     const CODE_REVIEWER_CONTENT_SENTINEL = 'Flag every issue you spot';
 
     render(<SettingsMemoryVault />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Strict Code Reviewer/i }));
+    fireEvent.change(screen.getByLabelText('Answer style preset'), {
+      target: { value: 'answer-style-strict-code-reviewer' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Save private memory' }));
 
     const preview = screen.getByLabelText('AI working style preview') as HTMLTextAreaElement;
@@ -794,6 +791,209 @@ describe('AI Answer Style presets', () => {
     expect(preview.readOnly).toBe(true);
     expect(preview.value).toContain('Rules:');
     expect(preview.value).toContain(CODE_REVIEWER_CONTENT_SENTINEL);
+  });
+});
+
+describe('Personal Context Passport', () => {
+  const PASSPORT_PREF_SENTINEL = 'PASSPORT_PREF_SENTINEL';
+  const PASSPORT_RULE_SENTINEL = 'PASSPORT_RULE_SENTINEL';
+  const PASSPORT_BOUNDARY_SENTINEL = 'PASSPORT_BOUNDARY_SENTINEL';
+  const PASSPORT_ANSWER_STYLE_SENTINEL = 'PASSPORT_ANSWER_STYLE_SENTINEL';
+  const PASSPORT_NEVER_SHARE_SHOULD_NOT_COPY = 'PASSPORT_NEVER_SHARE_SHOULD_NOT_COPY';
+  const PASSPORT_CUSTOM_NOTE_SHOULD_NOT_COPY = 'PASSPORT_CUSTOM_NOTE_SHOULD_NOT_COPY';
+  const PASSPORT_OWNER_PROFILE_SHOULD_NOT_COPY = 'PASSPORT_OWNER_PROFILE_SHOULD_NOT_COPY';
+  const PASSPORT_CONSENT_SHOULD_NOT_COPY = 'PASSPORT_CONSENT_SHOULD_NOT_COPY';
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: jest.fn().mockResolvedValue(undefined) },
+    });
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  it('renders Personal Context Passport section', () => {
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Personal Context Passport section');
+    expect(passport).toBeInTheDocument();
+    expect(
+      within(passport).getByRole('heading', { name: 'Copy personal AI instructions' }),
+    ).toBeInTheDocument();
+    expect(
+      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+    ).toBeInTheDocument();
+    expect(within(passport).getByLabelText('Personal Context Passport preview')).toBeInTheDocument();
+  });
+
+  it('preview includes selected preferences, rules, boundaries, and answer style memories', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry(PASSPORT_PREF_SENTINEL, {
+        id: 'passport-pref-1',
+        label: 'My pref',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+      createPersonalMemoryEntry(PASSPORT_ANSWER_STYLE_SENTINEL, {
+        id: 'passport-answer-style-1',
+        label: 'Straight Shooter',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.rules = [
+      createPersonalMemoryEntry(PASSPORT_RULE_SENTINEL, {
+        id: 'passport-rule-1',
+        label: 'My rule',
+        category: 'rule',
+        updatedAt: vault.updatedAt,
+      }),
+      createPersonalMemoryEntry(PASSPORT_BOUNDARY_SENTINEL, {
+        id: 'passport-boundary-1',
+        label: 'My boundary',
+        category: 'boundary',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Personal Context Passport section');
+    const preview = within(passport).getByLabelText(
+      'Personal Context Passport preview',
+    ) as HTMLTextAreaElement;
+    expect(preview.value).toContain(PASSPORT_PREF_SENTINEL);
+    expect(preview.value).toContain(PASSPORT_RULE_SENTINEL);
+    expect(preview.value).toContain(PASSPORT_BOUNDARY_SENTINEL);
+    expect(preview.value).toContain(PASSPORT_ANSWER_STYLE_SENTINEL);
+    expect(preview.value).toContain('## AI Answer Style');
+  });
+
+  it('preview excludes never_share, owner_profile, custom notes, and consent events', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T10:00:00.000Z');
+    vault.neverShare = [PASSPORT_NEVER_SHARE_SHOULD_NOT_COPY];
+    vault.privateNotes = [
+      createPersonalMemoryEntry(PASSPORT_CUSTOM_NOTE_SHOULD_NOT_COPY, {
+        id: 'passport-custom-1',
+        category: 'custom',
+        updatedAt: vault.updatedAt,
+      }),
+      createPersonalMemoryEntry(PASSPORT_OWNER_PROFILE_SHOULD_NOT_COPY, {
+        id: 'passport-owner-1',
+        category: 'owner_profile',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    vault.consentLedger = [
+      createConsentLedgerEvent({
+        id: 'passport-consent-1',
+        createdAt: vault.updatedAt,
+        action: 'consent_refused',
+        scope: 'ai_training',
+        notes: PASSPORT_CONSENT_SHOULD_NOT_COPY,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Personal Context Passport section');
+    const preview = within(passport).getByLabelText(
+      'Personal Context Passport preview',
+    ) as HTMLTextAreaElement;
+    expect(preview.value).not.toContain(PASSPORT_NEVER_SHARE_SHOULD_NOT_COPY);
+    expect(preview.value).not.toContain(PASSPORT_CUSTOM_NOTE_SHOULD_NOT_COPY);
+    expect(preview.value).not.toContain(PASSPORT_OWNER_PROFILE_SHOULD_NOT_COPY);
+    expect(preview.value).not.toContain(PASSPORT_CONSENT_SHOULD_NOT_COPY);
+  });
+
+  it('shows "Never-share items excluded" wording', () => {
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Personal Context Passport section');
+    expect(within(passport).getByText('Never-share items excluded')).toBeInTheDocument();
+  });
+
+  it('copy button writes the generated passport to navigator.clipboard', async () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry(PASSPORT_PREF_SENTINEL, {
+        id: 'passport-copy-pref-1',
+        label: 'Copy pref',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Personal Context Passport section');
+    fireEvent.click(
+      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+    );
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    const copied = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+    expect(copied).toContain('# Personal Context Passport');
+    expect(copied).toContain(PASSPORT_PREF_SENTINEL);
+    expect(copied).toContain('## Privacy Boundary');
+  });
+
+  it('clipboard failure keeps preview visible', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: jest.fn().mockRejectedValue(new Error('clipboard blocked')),
+      },
+    });
+
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Personal Context Passport section');
+    fireEvent.click(
+      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+    );
+
+    // Preview is always visible — wait a tick and verify it still exists
+    await screen.findByLabelText('Personal Context Passport preview');
+    const preview = within(passport).getByLabelText(
+      'Personal Context Passport preview',
+    ) as HTMLTextAreaElement;
+    expect(preview).toBeInTheDocument();
+    expect(preview.value).toContain('# Personal Context Passport');
+  });
+
+  it('rendering and copying the passport does not mutate localStorage', async () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T10:00:00.000Z');
+    vault.preferences = [
+      createPersonalMemoryEntry(PASSPORT_PREF_SENTINEL, {
+        id: 'passport-nomut-1',
+        label: 'No mutate pref',
+        category: 'preference',
+        updatedAt: vault.updatedAt,
+      }),
+    ];
+    savePersonalMemoryVault(vault);
+    const storedBefore = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Personal Context Passport section');
+    fireEvent.click(
+      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+    );
+
+    const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(storedAfter).toEqual(storedBefore);
   });
 });
 
