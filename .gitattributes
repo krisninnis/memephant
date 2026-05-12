@@ -1,0 +1,27 @@
+# Normalise text files to LF in the repository.
+* text=auto eol=lf
+
+# Keep Windows command scripts CRLF-friendly.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets should never be line-ending normalised.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.icns binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.mp4 binary
+*.mov binary
+*.mp3 binary
+*.wav binary
