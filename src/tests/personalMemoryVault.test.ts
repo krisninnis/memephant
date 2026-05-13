@@ -270,6 +270,8 @@ describe('Personal Memory Vault foundation', () => {
     expect(vault.frontalLobeProfile?.debuggingSupport).toBe('plain_english_error');
     expect(vault.frontalLobeProfile?.preferredPace).toBe('slow_guided');
     expect(vault.frontalLobeProfile?.customRules).toEqual([]);
+    // FrontalLobeMode (Task 8B)
+    expect(vault.frontalLobeProfile?.mode).toBe('default_on');
   });
 
   it('DEFAULT_FRONTAL_LOBE_PROFILE matches createDefaultPersonalMemoryVault profile', () => {
@@ -295,6 +297,7 @@ describe('Personal Memory Vault foundation', () => {
     expect(normalized!.frontalLobeProfile?.codeInstructionStyle).toBe('exact_file_and_patch');
     expect(normalized!.frontalLobeProfile?.debuggingSupport).toBe('plain_english_error');
     expect(normalized!.frontalLobeProfile?.preferredPace).toBe('slow_guided');
+    expect(normalized!.frontalLobeProfile?.mode).toBe('default_on');
   });
 
   it('normalizePersonalMemoryVault backfills Builder Skill Profile fields for partial vaults', () => {
@@ -321,6 +324,21 @@ describe('Personal Memory Vault foundation', () => {
     expect(normalized!.frontalLobeProfile?.codeInstructionStyle).toBe('exact_file_and_patch');
     expect(normalized!.frontalLobeProfile?.debuggingSupport).toBe('plain_english_error');
     expect(normalized!.frontalLobeProfile?.preferredPace).toBe('slow_guided');
+    // FrontalLobeMode also backfilled for vaults saved before Task 8B
+    expect(normalized!.frontalLobeProfile?.mode).toBe('default_on');
+  });
+
+  it('normalizePersonalMemoryVault backfills mode for vaults saved before Task 8B', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
+    // Simulate a vault saved before mode field was added
+    const profileWithoutMode = { ...vault.frontalLobeProfile! };
+    delete (profileWithoutMode as Partial<typeof profileWithoutMode>).mode;
+    const oldVault = { ...vault, frontalLobeProfile: profileWithoutMode };
+
+    const normalized = normalizePersonalMemoryVault(oldVault);
+    expect(normalized).not.toBeNull();
+    // mode backfilled from DEFAULT_FRONTAL_LOBE_PROFILE
+    expect(normalized!.frontalLobeProfile?.mode).toBe('default_on');
   });
 
   it('frontalLobeProfile is not required for isPersonalMemoryVault to return true', () => {

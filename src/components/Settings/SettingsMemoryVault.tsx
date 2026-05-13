@@ -20,6 +20,7 @@ import {
   type FrontalLobeCodingConfidence,
   type FrontalLobeDebuggingSupport,
   type FrontalLobeExplanationDepth,
+  type FrontalLobeMode,
   type FrontalLobePreferredPace,
   type FrontalLobeProfile,
   type FrontalLobeTone,
@@ -285,6 +286,13 @@ const FRONTAL_LOBE_PACE_OPTIONS: Array<{ value: FrontalLobePreferredPace; label:
   { value: 'normal', label: 'Normal pace' },
   { value: 'fast_with_risks', label: 'Fast, but explain risks' },
   { value: 'expert', label: 'Expert mode' },
+];
+
+const FRONTAL_LOBE_MODE_OPTIONS: Array<{ value: FrontalLobeMode; label: string }> = [
+  { value: 'default_on', label: 'On by default — include in every new handoff' },
+  { value: 'ask_each_time', label: 'Ask each time — prompt me before including' },
+  { value: 'manual_only', label: 'Manual only — I\'ll add it when I want it' },
+  { value: 'off', label: 'Off — never include my Working Style' },
 ];
 
 function getLabel<T extends string>(
@@ -625,9 +633,13 @@ export function SettingsMemoryVault() {
   const [frontalLobeCustomRules, setFrontalLobeCustomRules] = useState<string>(
     () => (vault.frontalLobeProfile?.customRules ?? []).join('\n'),
   );
+  const [frontalLobeMode, setFrontalLobeMode] = useState<FrontalLobeMode>(
+    () => vault.frontalLobeProfile?.mode ?? DEFAULT_FRONTAL_LOBE_PROFILE.mode,
+  );
 
-  const frontalLobePreview = buildFrontalLobePreview(
-    {
+ const frontalLobePreview = buildFrontalLobePreview(
+  {
+      mode: frontalLobeMode,
       defaultAnswerStyle: frontalLobeAnswerStyle,
       challengeLevel: frontalLobeChallengeLevel,
       codeReviewStrictness: frontalLobeCodeReviewStrictness,
@@ -933,6 +945,7 @@ export function SettingsMemoryVault() {
       codeInstructionStyle: frontalLobeCodeInstructionStyle,
       debuggingSupport: frontalLobeDebuggingSupport,
       preferredPace: frontalLobePreferredPace,
+      mode: frontalLobeMode,
       customRules: rules,
       updatedAt: now,
     };
@@ -958,6 +971,7 @@ export function SettingsMemoryVault() {
     setFrontalLobeCodeInstructionStyle(DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle);
     setFrontalLobeDebuggingSupport(DEFAULT_FRONTAL_LOBE_PROFILE.debuggingSupport);
     setFrontalLobePreferredPace(DEFAULT_FRONTAL_LOBE_PROFILE.preferredPace);
+    setFrontalLobeMode(DEFAULT_FRONTAL_LOBE_PROFILE.mode);
     setFrontalLobeCustomRules('');
     showToast('AI Working Style profile reset to defaults');
   };
@@ -1522,7 +1536,26 @@ export function SettingsMemoryVault() {
             </p>
           </div>
 
-          <div className="memory-vault-frontal-lobe__group-label">AI Working Style</div>
+          <div className="memory-vault-frontal-lobe__group-label">AI Working Style Defaults</div>
+          <div className="memory-vault-frontal-lobe__controls">
+            <label className="memory-vault-field">
+              <span>When to include your Working Style in AI handoffs</span>
+              <select
+                aria-label="AI Working Style default inclusion mode"
+                value={frontalLobeMode}
+                onChange={(e) => setFrontalLobeMode(e.target.value as FrontalLobeMode)}
+              >
+                {FRONTAL_LOBE_MODE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <span className="memory-vault-field-hint">
+                This controls future handoff behaviour. It does not send anything automatically yet.
+              </span>
+            </label>
+          </div>
+
+                    <div className="memory-vault-frontal-lobe__group-label">AI Working Style</div>
           <div className="memory-vault-frontal-lobe__controls">
             <label className="memory-vault-field">
               <span>Default answer style</span>

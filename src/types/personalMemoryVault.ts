@@ -48,6 +48,10 @@ export type FrontalLobePreferredPace =
   | 'fast_with_risks'
   | 'expert';
 
+// ── Default inclusion mode ───────────────────────────────────────────────────
+
+export type FrontalLobeMode = 'default_on' | 'ask_each_time' | 'manual_only' | 'off';
+
 export interface FrontalLobeProfile {
   defaultAnswerStyle: FrontalLobeAnswerStyle;
   challengeLevel: FrontalLobeChallengeLevel;
@@ -58,6 +62,7 @@ export interface FrontalLobeProfile {
   codeInstructionStyle: FrontalLobeCodeInstructionStyle;
   debuggingSupport: FrontalLobeDebuggingSupport;
   preferredPace: FrontalLobePreferredPace;
+  mode: FrontalLobeMode;
   customRules: string[];
   updatedAt?: string;
 }
@@ -72,6 +77,7 @@ export const DEFAULT_FRONTAL_LOBE_PROFILE: FrontalLobeProfile = {
   codeInstructionStyle: 'exact_file_and_patch',
   debuggingSupport: 'plain_english_error',
   preferredPace: 'slow_guided',
+  mode: 'default_on',
   customRules: [],
 };
 
@@ -380,7 +386,8 @@ export function normalizePersonalMemoryVault(value: unknown): PersonalMemoryVaul
       ? candidate.consentLedger.filter(validateConsentLedgerEvent)
       : [],
     // Hydrate frontalLobeProfile from defaults, merging any missing fields for
-    // vaults saved before Builder Skill Profile was added in Task 8A.
+    // vaults saved before Builder Skill Profile was added in Task 8A, or
+    // before FrontalLobeMode was added in Task 8B.
     frontalLobeProfile: candidate.frontalLobeProfile
       ? { ...DEFAULT_FRONTAL_LOBE_PROFILE, ...candidate.frontalLobeProfile }
       : { ...DEFAULT_FRONTAL_LOBE_PROFILE },

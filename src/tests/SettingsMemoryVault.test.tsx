@@ -1413,4 +1413,63 @@ describe('Frontal Lobe AI Working Style profile', () => {
     expect(preview.value).toContain('Preferred Pace:');
     expect(preview.value).toContain('When giving code:');
   });
+
+  // Test 14: default mode renders as 'default_on'
+  it('AI Working Style Defaults mode selector renders with default_on selected', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    expect(within(section).getByText('AI Working Style Defaults')).toBeInTheDocument();
+
+    const modeSelect = within(section).getByLabelText('AI Working Style default inclusion mode') as HTMLSelectElement;
+    expect(modeSelect.value).toBe('default_on');
+  });
+
+  // Test 15: changing mode updates state without auto-saving
+  it('changing mode selector updates UI state without writing to storage', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    const modeSelect = within(section).getByLabelText('AI Working Style default inclusion mode') as HTMLSelectElement;
+
+    window.localStorage.clear();
+    fireEvent.change(modeSelect, { target: { value: 'manual_only' } });
+
+    expect(modeSelect.value).toBe('manual_only');
+    // No save triggered — localStorage should still be empty
+    expect(window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY)).toBeNull();
+  });
+
+  // Test 16: saving persists mode to storage
+  it('saving Frontal Lobe profile persists mode to Personal Memory Vault storage', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    fireEvent.change(within(section).getByLabelText('AI Working Style default inclusion mode'), {
+      target: { value: 'off' },
+    });
+
+    fireEvent.click(within(section).getByRole('button', { name: 'Save Frontal Lobe profile' }));
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(stored).not.toBeNull();
+
+    const parsed = JSON.parse(stored ?? '{}') as { frontalLobeProfile?: Record<string, unknown> };
+    expect(parsed.frontalLobeProfile?.mode).toBe('off');
+  });
+
+  // Test 17: reset restores mode to default_on
+  it('resetting Frontal Lobe profile restores mode to default_on', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    const modeSelect = within(section).getByLabelText('AI Working Style default inclusion mode') as HTMLSelectElement;
+
+    fireEvent.change(modeSelect, { target: { value: 'ask_each_time' } });
+    expect(modeSelect.value).toBe('ask_each_time');
+
+    fireEvent.click(within(section).getByRole('button', { name: 'Reset Frontal Lobe profile' }));
+
+    expect(modeSelect.value).toBe('default_on');
+  });
 });
