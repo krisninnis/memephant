@@ -311,8 +311,9 @@ export function formatForClaudeWithManifest(
   manifestDigest: string,
   task?: string,
   recentActivity?: string,
+  frontalLobeBlock?: string,
 ): string {
-  return [
+  const parts = [
     formatForClaude(project, task, recentActivity),
     '',
     '<vcp_state_manifest>',
@@ -326,6 +327,8 @@ export function formatForClaudeWithManifest(
     'Do not invent IDs or claims; if the project context and manifest do not support something, say so.',
     '</vcp_guidance>',
   ].join('\n');
+
+  return appendFrontalLobe(parts, frontalLobeBlock);
 }
 
 function formatForChatGPT(project: ProjectMemory, task?: string, recentActivity?: string): string {
@@ -1061,27 +1064,49 @@ export function formatForPlatform(
   mode: ExportMode = 'full',
   platformConfig?: AIPlatformConfig,
   recentActivity?: string,
+  frontalLobeBlock?: string,
 ): string {
-  if (mode === 'delta') return formatDelta(project, task);
-  if (mode === 'specialist') return formatSpecialist(project, task);
-  if (mode === 'smart') return formatSmartExport(project, platform, task, platformConfig, recentActivity);
+  if (mode === 'delta') return appendFrontalLobe(formatDelta(project, task), frontalLobeBlock);
+  if (mode === 'specialist') return appendFrontalLobe(formatSpecialist(project, task), frontalLobeBlock);
+  if (mode === 'smart') return appendFrontalLobe(formatSmartExport(project, platform, task, platformConfig, recentActivity), frontalLobeBlock);
+
+  let output: string;
 
   switch (platform) {
     case 'claude':
-      return formatForClaude(project, task, recentActivity);
+      output = formatForClaude(project, task, recentActivity);
+      break;
     case 'chatgpt':
-      return formatForChatGPT(project, task, recentActivity);
+      output = formatForChatGPT(project, task, recentActivity);
+      break;
     case 'grok':
-      return formatForGrok(project, task);
+      output = formatForGrok(project, task);
+      break;
     case 'perplexity':
-      return formatForPerplexity(project, task);
+      output = formatForPerplexity(project, task);
+      break;
     case 'gemini':
-      return formatForGemini(project, task);
+      output = formatForGemini(project, task);
+      break;
     case 'codex':
-      return formatForCodex(project, task);
+      output = formatForCodex(project, task);
+      break;
     case 'cowork':
-      return formatForCowork(project, task);
+      output = formatForCowork(project, task);
+      break;
     default:
-      return formatGenericForPlatform(project, platform, task, platformConfig);
+      output = formatGenericForPlatform(project, platform, task, platformConfig);
   }
+
+  return appendFrontalLobe(output, frontalLobeBlock);
+}
+
+/**
+ * Appends a pre-built Frontal Lobe block to an export string, sanitising it first.
+ * Called internally — callers never pass raw vault data; they pass the output of
+ * buildFrontalLobeExportBlock() which contains only typed enum labels + custom rules.
+ */
+function appendFrontalLobe(base: string, block?: string): string {
+  if (!block || !block.trim()) return base;
+  return base + '\n\n' + sanitize(block);
 }

@@ -25,6 +25,11 @@ import {
   type MemoryBridgeMode,
 } from '../../utils/memoryBridge';
 import { getChangesSince } from '../../utils/getChangesSince';
+import {
+  buildFrontalLobeExportBlock,
+  shouldIncludeFrontalLobe,
+} from '../../utils/frontalLobeExport';
+import { loadPersonalMemoryVault } from '../../services/personalMemoryVaultStorage';
 import { scoreExport } from '../../utils/exportQuality';
 import {
   ensureValidPlatformId,
@@ -74,6 +79,15 @@ export function ExportButtons() {
   const [handoffMode, setHandoffMode] = useState<HandoffMode>('continue');
   const [contextOpen, setContextOpen] = useState(false);
   const [switchReason, setSwitchReason] = useState('');
+
+  // ── Frontal Lobe / AI Working Style inclusion ─────────────────────────────
+  const [vault] = useState(() => loadPersonalMemoryVault());
+  const frontalLobeMode = vault.frontalLobeProfile?.mode ?? 'default_on';
+  const [includeFrontalLobe, setIncludeFrontalLobe] = useState(false);
+  const frontalLobeBlock =
+    vault.frontalLobeProfile && shouldIncludeFrontalLobe(frontalLobeMode, includeFrontalLobe)
+      ? buildFrontalLobeExportBlock(vault.frontalLobeProfile)
+      : undefined;
   const targetPlatform = useProjectStore((s) => s.targetPlatform);
   const setTargetPlatform = useProjectStore((s) => s.setTargetPlatform);
   const currentTask = useProjectStore((s) => s.currentTask);
@@ -213,6 +227,7 @@ export function ExportButtons() {
         mode,
         selectedPlatform,
         recentActivity,
+        frontalLobeBlock,
       );
 
       const lastExportAt = activeProject.platformState?.[selectedPlatform.id]?.lastExportedAt;
@@ -291,6 +306,7 @@ export function ExportButtons() {
         manifest.digest,
         currentTask,
         recentActivity,
+        frontalLobeBlock,
       );
 
       const lastExportAt = activeProject.platformState?.[selectedPlatform.id]?.lastExportedAt;
@@ -425,6 +441,30 @@ export function ExportButtons() {
           🗺️ Generate Context Passport
         </button>
       )}
+
+      {/* Frontal Lobe ask_each_time checkbox */}
+      {frontalLobeMode === 'ask_each_time' && vault.frontalLobeProfile && (
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '12px',
+            color: 'rgba(255,255,255,0.75)',
+            marginBottom: '8px',
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="checkbox"
+            aria-label="Include AI Working Style in handoff"
+            checked={includeFrontalLobe}
+            onChange={(e) => setIncludeFrontalLobe(e.target.checked)}
+          />
+          Include AI Working Style in this handoff
+        </label>
+      )}
+
 
             <div
         aria-label="Memory handoff mode"
