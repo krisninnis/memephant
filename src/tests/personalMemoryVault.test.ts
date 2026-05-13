@@ -3,8 +3,10 @@ import {
   createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
+  DEFAULT_FRONTAL_LOBE_PROFILE,
   isPersonalMemoryVault,
   mergeAppendOnlyConsentLedger,
+  normalizePersonalMemoryVault,
   validateConsentLedgerEvent,
   PERSONAL_MEMORY_VAULT_SCHEMA_VERSION,
 } from '../types/personalMemoryVault';
@@ -251,6 +253,46 @@ describe('Personal Memory Vault foundation', () => {
     expect(isPersonalMemoryVault(vault)).toBe(true);
     expect(isPersonalMemoryVault({ schemaVersion: 'wrong' })).toBe(false);
   });
+
+  it('default vault includes frontalLobeProfile with safe conservative defaults', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
+
+    expect(vault.frontalLobeProfile).toBeDefined();
+    expect(vault.frontalLobeProfile?.defaultAnswerStyle).toBe('balanced_builder');
+    expect(vault.frontalLobeProfile?.challengeLevel).toBe('balanced');
+    expect(vault.frontalLobeProfile?.codeReviewStrictness).toBe('normal');
+    expect(vault.frontalLobeProfile?.explanationDepth).toBe('explain_why');
+    expect(vault.frontalLobeProfile?.tone).toBe('balanced');
+    expect(vault.frontalLobeProfile?.customRules).toEqual([]);
+  });
+
+  it('DEFAULT_FRONTAL_LOBE_PROFILE matches createDefaultPersonalMemoryVault profile', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
+    const { updatedAt: _u, ...profileWithoutDate } = vault.frontalLobeProfile!;
+
+    expect(profileWithoutDate).toEqual(DEFAULT_FRONTAL_LOBE_PROFILE);
+  });
+
+  it('normalizePersonalMemoryVault hydrates frontalLobeProfile for vaults missing it', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
+    // Simulate a vault saved before Task 8A (no frontalLobeProfile)
+    const { frontalLobeProfile: _removed, ...oldVault } = vault;
+    expect(isPersonalMemoryVault(oldVault)).toBe(true);
+
+    const normalized = normalizePersonalMemoryVault(oldVault);
+    expect(normalized).not.toBeNull();
+    expect(normalized!.frontalLobeProfile).toBeDefined();
+    expect(normalized!.frontalLobeProfile?.defaultAnswerStyle).toBe('balanced_builder');
+    expect(normalized!.frontalLobeProfile?.challengeLevel).toBe('balanced');
+  });
+
+  it('frontalLobeProfile is not required for isPersonalMemoryVault to return true', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
+    const { frontalLobeProfile: _removed, ...oldVault } = vault;
+
+    // Old vaults without frontalLobeProfile must still be valid
+    expect(isPersonalMemoryVault(oldVault)).toBe(true);
+  });
 });
 
 describe('Personal Memory Vault export guard', () => {
@@ -383,65 +425,4 @@ describe('Personal Memory Vault local storage', () => {
 
   it('prevents stored consent events from being edited or deleted by whole-vault saves', () => {
     const vault = createDefaultPersonalMemoryVault('2026-05-07T12:00:00.000Z');
-    const granted = createConsentLedgerEvent({
-      id: 'stored-grant',
-      createdAt: vault.updatedAt,
-      action: 'consent_granted',
-      scope: 'platform_sharing',
-      platform: 'ChatGPT',
-    });
-    savePersonalMemoryVault({ ...vault, consentLedger: [granted] });
-
-    const editedGrant = {
-      ...granted,
-      platform: 'MUTATED_PLATFORM',
-      receiptText: 'MUTATED_RECEIPT_TEXT',
-    };
-    const correction = createConsentLedgerEvent({
-      id: 'stored-correction',
-      createdAt: '2026-05-07T13:00:00.000Z',
-      action: 'permission_updated',
-      scope: 'platform_sharing',
-      platform: 'ChatGPT',
-      correctsEventId: granted.id,
-    });
-
-    savePersonalMemoryVault({
-      ...vault,
-      consentLedger: [editedGrant, correction],
-      updatedAt: correction.createdAt,
-    });
-
-    const loaded = loadPersonalMemoryVault();
-    expect(loaded.consentLedger).toHaveLength(2);
-    expect(loaded.consentLedger[0]).toEqual(granted);
-    expect(loaded.consentLedger[0].receiptText).not.toBe('MUTATED_RECEIPT_TEXT');
-    expect(loaded.consentLedger[1]).toEqual(correction);
-
-    savePersonalMemoryVault({ ...loaded, consentLedger: [] });
-
-    const afterDeletionAttempt = loadPersonalMemoryVault();
-    expect(afterDeletionAttempt.consentLedger).toHaveLength(2);
-    expect(afterDeletionAttempt.consentLedger[0]).toEqual(granted);
-    expect(afterDeletionAttempt.consentLedger[1]).toEqual(correction);
-  });
-
-  it('falls back to an empty vault when stored data is invalid', () => {
-    window.localStorage.setItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY, '{bad json');
-
-    const loaded = loadPersonalMemoryVault();
-    expect(isPersonalMemoryVault(loaded)).toBe(true);
-    expect(loaded.preferences).toEqual([]);
-  });
-
-  it('clears the local vault without touching project exports', () => {
-    const vault = makeVaultWithSentinels();
-    savePersonalMemoryVault(vault);
-
-    clearPersonalMemoryVault();
-
-    expect(window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY)).toBeNull();
-    const output = formatForPlatform(makeProject(), 'chatgpt');
-    expectNoPersonalVaultSentinels(output);
-  });
-});
+    const granted

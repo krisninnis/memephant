@@ -4,6 +4,7 @@ import {
   createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
+  DEFAULT_FRONTAL_LOBE_PROFILE,
 } from '../types/personalMemoryVault';
 import {
   PERSONAL_MEMORY_VAULT_STORAGE_KEY,
@@ -1126,6 +1127,4 @@ describe('Memory Audit section', () => {
     render(<SettingsMemoryVault />);
 
     const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
-    expect(storedAfter).toEqual(storedBefore);
-  });
-});
+    expect(storedAfter).

@@ -2,6 +2,42 @@ import type { Platform } from './memphant-types';
 
 export const PERSONAL_MEMORY_VAULT_SCHEMA_VERSION = '0.1.0';
 
+// ── Frontal Lobe / AI Working Style profile ──────────────────────────────────
+
+export type FrontalLobeAnswerStyle =
+  | 'straight_shooter'
+  | 'strict_code_reviewer'
+  | 'balanced_builder'
+  | 'friendly_coach'
+  | 'red_team_mode';
+
+export type FrontalLobeChallengeLevel = 'low' | 'balanced' | 'high' | 'red_team';
+
+export type FrontalLobeCodeReviewStrictness = 'gentle' | 'normal' | 'strict' | 'no_mercy';
+
+export type FrontalLobeExplanationDepth = 'steps_only' | 'explain_why' | 'teach_deeply';
+
+export type FrontalLobeTone = 'direct' | 'balanced' | 'friendly';
+
+export interface FrontalLobeProfile {
+  defaultAnswerStyle: FrontalLobeAnswerStyle;
+  challengeLevel: FrontalLobeChallengeLevel;
+  codeReviewStrictness: FrontalLobeCodeReviewStrictness;
+  explanationDepth: FrontalLobeExplanationDepth;
+  tone: FrontalLobeTone;
+  customRules: string[];
+  updatedAt?: string;
+}
+
+export const DEFAULT_FRONTAL_LOBE_PROFILE: FrontalLobeProfile = {
+  defaultAnswerStyle: 'balanced_builder',
+  challengeLevel: 'balanced',
+  codeReviewStrictness: 'normal',
+  explanationDepth: 'explain_why',
+  tone: 'balanced',
+  customRules: [],
+};
+
 export type PersonalMemorySensitivity = 'standard' | 'private' | 'never_share';
 export type PersonalMemoryPermission = 'never' | 'ask_each_time' | 'allow';
 export type ConsentLedgerAction =
@@ -94,6 +130,8 @@ export interface PersonalMemoryVault {
   dataLicensingPreferences: PersonalMemoryDataLicensingPreferences;
   consentLedger: ConsentLedgerEvent[];
   auditLog: PersonalMemoryAuditLogEntry[];
+  /** Local-only AI Working Style profile. Never included in project exports. */
+  frontalLobeProfile?: FrontalLobeProfile;
   updatedAt: string;
 }
 
@@ -275,50 +313,4 @@ export function createDefaultPersonalMemoryVault(
     goals: [],
     skills: [],
     rules: [],
-    privateNotes: [],
-    neverShare: [],
-    platformPermissions: {},
-    dataLicensingPreferences: {
-      allowLicensing: false,
-      requireExplicitConsent: true,
-      allowedCategories: [],
-      deniedCategories: [],
-      updatedAt: now,
-    },
-    consentLedger: [],
-    auditLog: [],
-    updatedAt: now,
-  };
-}
-
-export function normalizePersonalMemoryVault(value: unknown): PersonalMemoryVault | null {
-  if (!isPersonalMemoryVault(value)) {
-    return null;
-  }
-
-  const candidate = value as PersonalMemoryVault & { consentLedger?: unknown };
-
-  return {
-    ...candidate,
-    consentLedger: Array.isArray(candidate.consentLedger)
-      ? candidate.consentLedger.filter(validateConsentLedgerEvent)
-      : [],
-  };
-}
-
-export function isPersonalMemoryVault(value: unknown): value is PersonalMemoryVault {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const candidate = value as Partial<PersonalMemoryVault>;
-
-  return (
-    candidate.schemaVersion === PERSONAL_MEMORY_VAULT_SCHEMA_VERSION &&
-    Array.isArray(candidate.preferences) &&
-    Array.isArray(candidate.neverShare) &&
-    !!candidate.dataLicensingPreferences &&
-    typeof candidate.dataLicensingPreferences.allowLicensing === 'boolean' &&
-    typeof candidate.dataLicensingPreferences.requireExplicitConsent === 'boolean'
-  );
-}
+   

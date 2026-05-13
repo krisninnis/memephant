@@ -10,8 +10,15 @@ import {
   createConsentLedgerEvent,
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
+  DEFAULT_FRONTAL_LOBE_PROFILE,
   type ConsentLedgerAction,
   type ConsentLedgerScope,
+  type FrontalLobeAnswerStyle,
+  type FrontalLobeChallengeLevel,
+  type FrontalLobeCodeReviewStrictness,
+  type FrontalLobeExplanationDepth,
+  type FrontalLobeProfile,
+  type FrontalLobeTone,
   type PersonalMemoryEntryCategory,
   type PersonalMemoryTextEntry,
   type PersonalMemoryVault,
@@ -194,6 +201,81 @@ const AI_ANSWER_STYLE_PRESETS: AnswerStylePreset[] = [
 
 
 const ANSWER_STYLE_PRESET_TITLES = new Set(AI_ANSWER_STYLE_PRESETS.map((p) => p.title));
+
+// ── Frontal Lobe / AI Working Style ──────────────────────────────────────────
+
+const FRONTAL_LOBE_ANSWER_STYLE_OPTIONS: Array<{ value: FrontalLobeAnswerStyle; label: string }> = [
+  { value: 'straight_shooter', label: 'Straight Shooter' },
+  { value: 'strict_code_reviewer', label: 'Strict Code Reviewer' },
+  { value: 'balanced_builder', label: 'Balanced Builder' },
+  { value: 'friendly_coach', label: 'Friendly Coach' },
+  { value: 'red_team_mode', label: 'Red Team Mode' },
+];
+
+const FRONTAL_LOBE_CHALLENGE_OPTIONS: Array<{ value: FrontalLobeChallengeLevel; label: string }> = [
+  { value: 'low', label: 'Low' },
+  { value: 'balanced', label: 'Balanced' },
+  { value: 'high', label: 'High' },
+  { value: 'red_team', label: 'Red Team' },
+];
+
+const FRONTAL_LOBE_STRICTNESS_OPTIONS: Array<{
+  value: FrontalLobeCodeReviewStrictness;
+  label: string;
+}> = [
+  { value: 'gentle', label: 'Gentle' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'strict', label: 'Strict' },
+  { value: 'no_mercy', label: 'No mercy' },
+];
+
+const FRONTAL_LOBE_DEPTH_OPTIONS: Array<{ value: FrontalLobeExplanationDepth; label: string }> = [
+  { value: 'steps_only', label: 'Steps only' },
+  { value: 'explain_why', label: 'Explain why' },
+  { value: 'teach_deeply', label: 'Teach me deeply' },
+];
+
+const FRONTAL_LOBE_TONE_OPTIONS: Array<{ value: FrontalLobeTone; label: string }> = [
+  { value: 'direct', label: 'Direct' },
+  { value: 'balanced', label: 'Balanced' },
+  { value: 'friendly', label: 'Friendly' },
+];
+
+function getLabel<T extends string>(
+  options: Array<{ value: T; label: string }>,
+  value: T,
+): string {
+  return options.find((o) => o.value === value)?.label ?? value;
+}
+
+function buildFrontalLobePreview(profile: FrontalLobeProfile, customRulesText: string): string {
+  const rules = customRulesText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const parts: string[] = [
+    '# Frontal Lobe',
+    'Use this working style when helping me.',
+    `## Answer Style\n${getLabel(FRONTAL_LOBE_ANSWER_STYLE_OPTIONS, profile.defaultAnswerStyle)}`,
+    `## Challenge Level\n${getLabel(FRONTAL_LOBE_CHALLENGE_OPTIONS, profile.challengeLevel)}`,
+    `## Code Review Strictness\n${getLabel(FRONTAL_LOBE_STRICTNESS_OPTIONS, profile.codeReviewStrictness)}`,
+    `## Explanation Depth\n${getLabel(FRONTAL_LOBE_DEPTH_OPTIONS, profile.explanationDepth)}`,
+    `## Tone\n${getLabel(FRONTAL_LOBE_TONE_OPTIONS, profile.tone)}`,
+  ];
+
+  if (rules.length > 0) {
+    parts.push(`## Custom Working Rules\n${rules.map((r) => `- ${r}`).join('\n')}`);
+  }
+
+  parts.push(
+    '## Privacy Boundary\n' +
+      'This Frontal Lobe profile is stored locally in Memephant. Do not include it in project exports, ' +
+      'Context Passports, Memory Bridge, AI handoffs, cloud sync, or external systems unless I explicitly choose to share it.',
+  );
+
+  return parts.join('\n\n');
+}
 
 function hasOwnerProfile(vault: PersonalMemoryVault): boolean {
   return Boolean(
@@ -447,6 +529,39 @@ export function SettingsMemoryVault() {
   const [passportIncludeBoundaries, setPassportIncludeBoundaries] = useState(true);
   const [passportIncludeAnswerStyle, setPassportIncludeAnswerStyle] = useState(true);
   const [passportIncludeGoals, setPassportIncludeGoals] = useState(false);
+  // Frontal Lobe / AI Working Style profile — initialized from saved vault
+  const [frontalLobeAnswerStyle, setFrontalLobeAnswerStyle] = useState<FrontalLobeAnswerStyle>(
+    () => vault.frontalLobeProfile?.defaultAnswerStyle ?? DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle,
+  );
+  const [frontalLobeChallengeLevel, setFrontalLobeChallengeLevel] = useState<FrontalLobeChallengeLevel>(
+    () => vault.frontalLobeProfile?.challengeLevel ?? DEFAULT_FRONTAL_LOBE_PROFILE.challengeLevel,
+  );
+  const [frontalLobeCodeReviewStrictness, setFrontalLobeCodeReviewStrictness] =
+    useState<FrontalLobeCodeReviewStrictness>(
+      () => vault.frontalLobeProfile?.codeReviewStrictness ?? DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness,
+    );
+  const [frontalLobeExplanationDepth, setFrontalLobeExplanationDepth] =
+    useState<FrontalLobeExplanationDepth>(
+      () => vault.frontalLobeProfile?.explanationDepth ?? DEFAULT_FRONTAL_LOBE_PROFILE.explanationDepth,
+    );
+  const [frontalLobeTone, setFrontalLobeTone] = useState<FrontalLobeTone>(
+    () => vault.frontalLobeProfile?.tone ?? DEFAULT_FRONTAL_LOBE_PROFILE.tone,
+  );
+  const [frontalLobeCustomRules, setFrontalLobeCustomRules] = useState<string>(
+    () => (vault.frontalLobeProfile?.customRules ?? []).join('\n'),
+  );
+
+  const frontalLobePreview = buildFrontalLobePreview(
+    {
+      defaultAnswerStyle: frontalLobeAnswerStyle,
+      challengeLevel: frontalLobeChallengeLevel,
+      codeReviewStrictness: frontalLobeCodeReviewStrictness,
+      explanationDepth: frontalLobeExplanationDepth,
+      tone: frontalLobeTone,
+      customRules: [],
+    },
+    frontalLobeCustomRules,
+  );
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
   const entries = getVaultEntries(vault);
@@ -720,6 +835,44 @@ export function SettingsMemoryVault() {
       console.warn('[Memephant] Failed to copy Personal Context Passport:', err);
       // Preview remains visible — no extra action needed
     }
+  };
+
+  const handleSaveFrontalLobe = () => {
+    const rules = frontalLobeCustomRules
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const now = new Date().toISOString();
+    const profile: FrontalLobeProfile = {
+      defaultAnswerStyle: frontalLobeAnswerStyle,
+      challengeLevel: frontalLobeChallengeLevel,
+      codeReviewStrictness: frontalLobeCodeReviewStrictness,
+      explanationDepth: frontalLobeExplanationDepth,
+      tone: frontalLobeTone,
+      customRules: rules,
+      updatedAt: now,
+    };
+
+    const nextVault: PersonalMemoryVault = {
+      ...vault,
+      frontalLobeProfile: profile,
+      updatedAt: now,
+    };
+
+    savePersonalMemoryVault(nextVault);
+    setVault(nextVault);
+    showToast('AI Working Style profile saved locally');
+  };
+
+  const handleResetFrontalLobe = () => {
+    setFrontalLobeAnswerStyle(DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle);
+    setFrontalLobeChallengeLevel(DEFAULT_FRONTAL_LOBE_PROFILE.challengeLevel);
+    setFrontalLobeCodeReviewStrictness(DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness);
+    setFrontalLobeExplanationDepth(DEFAULT_FRONTAL_LOBE_PROFILE.explanationDepth);
+    setFrontalLobeTone(DEFAULT_FRONTAL_LOBE_PROFILE.tone);
+    setFrontalLobeCustomRules('');
+    showToast('AI Working Style profile reset to defaults');
   };
 
   return (
@@ -1270,179 +1423,18 @@ export function SettingsMemoryVault() {
       </div>
 
       <div className="settings-group">
-        <div className="settings-group-title">Memory Audit</div>
-        <section className="memory-vault-audit" aria-label="Personal Memory Vault audit">
-          <div className="memory-vault-audit__intro">
-            <h3>What Memephant knows locally</h3>
+        <div className="settings-group-title">Frontal Lobe</div>
+        <section className="memory-vault-frontal-lobe" aria-label="Frontal Lobe AI Working Style section">
+          <div className="memory-vault-frontal-lobe__intro">
+            <h3>AI Working Style</h3>
             <p>
-              Review what is stored locally in your Personal Memory Vault. Nothing here is shared
-              automatically.
+              Define how AI should work with you — directness, challenge level, code-review
+              strictness, explanation depth, and tone. This stays local and is not included in
+              project exports or AI handoffs unless you explicitly choose to share it in a future
+              step.
             </p>
           </div>
-          <div className="memory-vault-audit-grid">
-            {memoryAuditItems.map((item) => (
-              <article className="memory-vault-audit-card" key={item.label}>
-                <div className="memory-vault-audit-card__value">{item.value}</div>
-                <h4>{item.label}</h4>
-                <p>{item.detail}</p>
-              </article>
-            ))}
-          </div>
-          <p className="memory-vault-form-note">
-            Manual copy actions only happen when you click them. Project exports, Context Passports,
-            Memory Bridge, cloud sync, and Supabase do not receive Vault contents from this audit.
-          </p>
-        </section>
-      </div>
 
-      <div className="settings-group">
-        <div className="settings-group-title">Saved private memories</div>
-        {entries.length > 0 ? (
-          <div className="memory-vault-entry-list">
-            {entries.map((entry) => (
-              <article className="memory-vault-entry" key={entry.id}>
-                {editingEntryId === entry.id ? (
-                  <div className="memory-vault-edit-form">
-                    <label className="memory-vault-field">
-                      <span>Edit title</span>
-                      <input
-                        className="memory-vault-input"
-                        value={editTitle}
-                        onChange={(event) => {
-                          setEditTitle(event.target.value);
-                          setEditError(null);
-                        }}
-                      />
-                    </label>
-
-                    <label className="memory-vault-field">
-                      <span>Edit category</span>
-                      <select
-                        className="memory-vault-input"
-                        value={editCategory}
-                        onChange={(event) =>
-                          setEditCategory(event.target.value as PersonalMemoryEntryCategory)}
-                      >
-                        {CATEGORY_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="memory-vault-field memory-vault-field--full">
-                      <span>Edit content</span>
-                      <textarea
-                        className="memory-vault-input memory-vault-textarea"
-                        value={editContent}
-                        onChange={(event) => {
-                          setEditContent(event.target.value);
-                          setEditError(null);
-                        }}
-                      />
-                    </label>
-
-                    {editError && <p className="memory-vault-form-error">{editError}</p>}
-
-                    <div className="memory-vault-entry-actions">
-                      <button
-                        className="setting-btn setting-btn--primary"
-                        onClick={() => handleSaveEditedEntry(entry)}
-                        type="button"
-                      >
-                        Save changes
-                      </button>
-                      <button
-                        className="setting-btn"
-                        onClick={cancelEditingEntry}
-                        type="button"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="memory-vault-entry-header">
-                      <div>
-                        <h3>{entry.label || 'Untitled private memory'}</h3>
-                        <div className="memory-vault-entry-meta">
-                          {getCategoryLabel(getEntryCategory(entry))} - Private - Local only
-                        </div>
-                      </div>
-                      <div className="memory-vault-entry-actions">
-                        <button
-                          className="setting-btn"
-                          onClick={() => startEditingEntry(entry)}
-                          type="button"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="setting-btn setting-btn--danger"
-                          onClick={() => setEntryToDelete(entry)}
-                          type="button"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    <p>{entry.value}</p>
-                  </>
-                )}
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="memory-vault-empty">
-            No private memories saved yet.
-          </p>
-        )}
-      </div>
-
-      <div className="settings-group">
-        <div className="settings-group-title">Vault controls</div>
-        <div className="setting-row">
-          <div className="setting-info">
-            <div className="setting-label">Clear Vault</div>
-            <div className="setting-description">
-              Remove the local Personal Memory Vault shell from this device. Project memories are not affected.
-            </div>
-          </div>
-          <button
-            className="setting-btn setting-btn--danger"
-            onClick={() => setConfirmClear(true)}
-            type="button"
-          >
-            Clear Vault
-          </button>
-        </div>
-      </div>
-
-      {confirmClear && (
-        <ConfirmDialog
-          title="Clear Personal Memory Vault?"
-          message="This clears only the local Personal Memory Vault on this device. Project memory, exports, and cloud backup are not changed."
-          confirmLabel="Clear Vault"
-          onConfirm={handleClearVault}
-          onCancel={() => setConfirmClear(false)}
-          dangerous
-        />
-      )}
-
-      {entryToDelete && (
-        <ConfirmDialog
-          title="Delete private memory?"
-          message="This removes only this local Personal Memory Vault entry. Project memory, exports, and cloud backup are not changed."
-          confirmLabel="Delete Memory"
-          onConfirm={handleDeleteEntry}
-          onCancel={() => setEntryToDelete(null)}
-          dangerous
-        />
-      )}
-    </div>
-  );
-}
-
-export default SettingsMemoryVault;
+          <div className="memory-vault-frontal-lobe__controls">
+            <label className="memory-vault-field">
+              <span>Default an

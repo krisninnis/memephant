@@ -1848,3 +1848,49 @@
   line-height: 1.5;
   margin: 0;
 }
+
+/* ── Frontal Lobe / AI Working Style profile ────────────────── */
+.memory-vault-frontal-lobe {
+  background: #12121f;
+  border: 1px solid #24243a;
+  border-radius: 12px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.memory-vault-frontal-lobe__intro h3 {
+  color: #e0e0f0;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.memory-vault-frontal-lobe__intro p {
+  color: #8ca2c7;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-vault-frontal-lobe__controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.memory-vault-frontal-lobe__controls .memory-vault-field--full {
+  grid-column: 1 / -1;
+}
+
+.memory-vault-frontal-lobe-preview {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  min-height: 220px;
+}
+
+.memory-vault-frontal-lobe__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
