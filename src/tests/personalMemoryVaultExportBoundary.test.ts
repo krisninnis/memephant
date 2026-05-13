@@ -30,12 +30,14 @@ const VAULT_METADATA_SENTINELS = [
   'VAULT_LICENSE_SENTINEL',
   'VAULT_AUDIT_SENTINEL',
 ];
+const FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT = 'FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT';
 const ALL_VAULT_SENTINELS = [
   VAULT_SECRET_SENTINEL,
   PRIVATE_MEMORY_SENTINEL,
   NEVER_SHARE_SENTINEL,
   LOCAL_PATH_SENTINEL,
   FAKE_API_KEY_SENTINEL,
+  FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT,
   ...VAULT_METADATA_SENTINELS,
 ];
 
@@ -143,6 +145,10 @@ function makePopulatedVault(): PersonalMemoryVault {
       source: 'user',
     },
   ];
+  vault.frontalLobeProfile = {
+    ...vault.frontalLobeProfile!,
+    customRules: [FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT],
+  };
 
   return vault;
 }

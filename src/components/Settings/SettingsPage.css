@@ -1894,3 +1894,12 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+.memory-vault-frontal-lobe__group-label {
+  color: #8ca2c7;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  margin-bottom: -4px;
+  text-transform: uppercase;
+}

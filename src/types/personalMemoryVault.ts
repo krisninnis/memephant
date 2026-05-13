@@ -19,12 +19,45 @@ export type FrontalLobeExplanationDepth = 'steps_only' | 'explain_why' | 'teach_
 
 export type FrontalLobeTone = 'direct' | 'balanced' | 'friendly';
 
+// ── Builder Skill Profile ─────────────────────────────────────────────────────
+
+export type FrontalLobeCodingConfidence =
+  | 'brand_new'
+  | 'can_edit_with_exact_instructions'
+  | 'understands_basics'
+  | 'builds_with_guidance'
+  | 'experienced';
+
+export type FrontalLobeCodeInstructionStyle =
+  | 'exact_file_and_patch'
+  | 'small_safe_steps'
+  | 'full_files'
+  | 'focused_diffs'
+  | 'high_level_then_code';
+
+export type FrontalLobeDebuggingSupport =
+  | 'plain_english_error'
+  | 'exact_next_command'
+  | 'likely_causes_and_fixes'
+  | 'ask_for_logs'
+  | 'advanced_root_cause';
+
+export type FrontalLobePreferredPace =
+  | 'slow_guided'
+  | 'normal'
+  | 'fast_with_risks'
+  | 'expert';
+
 export interface FrontalLobeProfile {
   defaultAnswerStyle: FrontalLobeAnswerStyle;
   challengeLevel: FrontalLobeChallengeLevel;
   codeReviewStrictness: FrontalLobeCodeReviewStrictness;
   explanationDepth: FrontalLobeExplanationDepth;
   tone: FrontalLobeTone;
+  codingConfidence: FrontalLobeCodingConfidence;
+  codeInstructionStyle: FrontalLobeCodeInstructionStyle;
+  debuggingSupport: FrontalLobeDebuggingSupport;
+  preferredPace: FrontalLobePreferredPace;
   customRules: string[];
   updatedAt?: string;
 }
@@ -35,6 +68,10 @@ export const DEFAULT_FRONTAL_LOBE_PROFILE: FrontalLobeProfile = {
   codeReviewStrictness: 'normal',
   explanationDepth: 'explain_why',
   tone: 'balanced',
+  codingConfidence: 'can_edit_with_exact_instructions',
+  codeInstructionStyle: 'exact_file_and_patch',
+  debuggingSupport: 'plain_english_error',
+  preferredPace: 'slow_guided',
   customRules: [],
 };
 
@@ -313,4 +350,56 @@ export function createDefaultPersonalMemoryVault(
     goals: [],
     skills: [],
     rules: [],
-   
+    privateNotes: [],
+    neverShare: [],
+    platformPermissions: {},
+    dataLicensingPreferences: {
+      allowLicensing: false,
+      requireExplicitConsent: true,
+      allowedCategories: [],
+      deniedCategories: [],
+      updatedAt: now,
+    },
+    consentLedger: [],
+    auditLog: [],
+    frontalLobeProfile: { ...DEFAULT_FRONTAL_LOBE_PROFILE },
+    updatedAt: now,
+  };
+}
+
+export function normalizePersonalMemoryVault(value: unknown): PersonalMemoryVault | null {
+  if (!isPersonalMemoryVault(value)) {
+    return null;
+  }
+
+  const candidate = value as PersonalMemoryVault & { consentLedger?: unknown };
+
+  return {
+    ...candidate,
+    consentLedger: Array.isArray(candidate.consentLedger)
+      ? candidate.consentLedger.filter(validateConsentLedgerEvent)
+      : [],
+    // Hydrate frontalLobeProfile from defaults, merging any missing fields for
+    // vaults saved before Builder Skill Profile was added in Task 8A.
+    frontalLobeProfile: candidate.frontalLobeProfile
+      ? { ...DEFAULT_FRONTAL_LOBE_PROFILE, ...candidate.frontalLobeProfile }
+      : { ...DEFAULT_FRONTAL_LOBE_PROFILE },
+  };
+}
+
+export function isPersonalMemoryVault(value: unknown): value is PersonalMemoryVault {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<PersonalMemoryVault>;
+
+  return (
+    candidate.schemaVersion === PERSONAL_MEMORY_VAULT_SCHEMA_VERSION &&
+    Array.isArray(candidate.preferences) &&
+    Array.isArray(candidate.neverShare) &&
+    !!candidate.dataLicensingPreferences &&
+    typeof candidate.dataLicensingPreferences.allowLicensing === 'boolean' &&
+    typeof candidate.dataLicensingPreferences.requireExplicitConsent === 'boolean'
+  );
+}

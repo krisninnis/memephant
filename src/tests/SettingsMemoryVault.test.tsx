@@ -537,7 +537,7 @@ describe('SettingsMemoryVault', () => {
   it('shows an empty AI Working Style state with no eligible entries', () => {
     render(<SettingsMemoryVault />);
 
-    expect(screen.getByText('AI Working Style')).toBeInTheDocument();
+    expect(screen.getAllByText('AI Working Style').length).toBeGreaterThanOrEqual(2);
     expect(
       screen.getByText(
         'Add preference, rule, or boundary memories to generate a working-style prompt.',
@@ -1127,4 +1127,290 @@ describe('Memory Audit section', () => {
     render(<SettingsMemoryVault />);
 
     const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
-    expect(storedAfter).
+    expect(storedAfter).toEqual(storedBefore);
+  });
+});
+describe('Frontal Lobe AI Working Style profile', () => {
+  const FRONTAL_LOBE_RULE_SENTINEL = 'FRONTAL_LOBE_RULE_SENTINEL';
+  const FRONTAL_LOBE_EMPTY_LINE_SHOULD_NOT_RENDER = '';
+  const FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT = 'FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT';
+  const FRONTAL_LOBE_NO_CONSENT_EVENT = 'FRONTAL_LOBE_NO_CONSENT_EVENT';
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: jest.fn().mockResolvedValue(undefined) },
+    });
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  // Test 1: section renders with AI Working Style wording
+  it('renders Frontal Lobe section with AI Working Style wording', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    expect(section).toBeInTheDocument();
+    expect(within(section).getByRole('heading', { name: 'AI Working Style' })).toBeInTheDocument();
+    expect(within(section).getByText(/Your AI Working Style profile/)).toBeInTheDocument();
+    expect(within(section).getByLabelText('Default answer style')).toBeInTheDocument();
+    expect(within(section).getByLabelText('Coding confidence')).toBeInTheDocument();
+    expect(within(section).getByText('Builder Skill Profile')).toBeInTheDocument();
+  });
+
+  // Test 2: section copy does not use the word "personality"
+  it('does not use the word personality anywhere in the section', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    expect(section.textContent?.toLowerCase()).not.toContain('personality');
+  });
+
+  // Test 3: default profile values render for all 9 controls
+  it('renders default profile values for all controls', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+
+    expect(within(section).getByLabelText('Default answer style')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle);
+    expect(within(section).getByLabelText('Challenge level')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.challengeLevel);
+    expect(within(section).getByLabelText('Code review strictness')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness);
+    expect(within(section).getByLabelText('Explanation depth')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.explanationDepth);
+    expect(within(section).getByLabelText('Tone')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.tone);
+    expect(within(section).getByLabelText('Coding confidence')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence);
+    expect(within(section).getByLabelText('Code instruction style')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle);
+    expect(within(section).getByLabelText('Debugging support')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.debuggingSupport);
+    expect(within(section).getByLabelText('Preferred pace')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.preferredPace);
+
+    // Verify human-readable defaults in the preview
+    const preview = within(section).getByLabelText('Frontal Lobe preview') as HTMLTextAreaElement;
+    expect(preview.value).toContain('Balanced Builder');
+    expect(preview.value).toContain('Balanced');
+    expect(preview.value).toContain('Normal');
+    expect(preview.value).toContain('Explain why');
+    expect(preview.value).toContain('I can edit files if told exactly where');
+    expect(preview.value).toContain('Tell me the exact file and whether to replace or patch');
+    expect(preview.value).toContain('Explain the error in plain English');
+    expect(preview.value).toContain('Slow and guided');
+  });
+
+  // Test 4: changing controls updates the preview
+  it('changing controls live-updates the preview without saving', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    const preview = within(section).getByLabelText('Frontal Lobe preview') as HTMLTextAreaElement;
+
+    fireEvent.change(within(section).getByLabelText('Default answer style'), {
+      target: { value: 'strict_code_reviewer' },
+    });
+    expect(preview.value).toContain('Strict Code Reviewer');
+
+    fireEvent.change(within(section).getByLabelText('Challenge level'), {
+      target: { value: 'high' },
+    });
+    expect(preview.value).toContain('High');
+
+    fireEvent.change(within(section).getByLabelText('Coding confidence'), {
+      target: { value: 'brand_new' },
+    });
+    expect(preview.value).toContain('Brand new — explain everything step by step');
+
+    fireEvent.change(within(section).getByLabelText('Code instruction style'), {
+      target: { value: 'full_files' },
+    });
+    expect(preview.value).toContain('Give me full files where possible');
+
+    fireEvent.change(within(section).getByLabelText('Debugging support'), {
+      target: { value: 'advanced_root_cause' },
+    });
+    expect(preview.value).toContain('Give me advanced root-cause analysis');
+
+    fireEvent.change(within(section).getByLabelText('Preferred pace'), {
+      target: { value: 'expert' },
+    });
+    expect(preview.value).toContain('Expert mode');
+  });
+
+  // Test 5: custom working rules appear as bullets
+  it('custom working rules appear as bullet points in the preview', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    fireEvent.change(within(section).getByLabelText('Custom working rules'), {
+      target: { value: FRONTAL_LOBE_RULE_SENTINEL },
+    });
+
+    const preview = within(section).getByLabelText('Frontal Lobe preview') as HTMLTextAreaElement;
+    expect(preview.value).toContain(`- ${FRONTAL_LOBE_RULE_SENTINEL}`);
+    expect(preview.value).toContain('## Custom Working Rules');
+  });
+
+  // Test 6: empty lines in custom rules are filtered out
+  it('empty custom-rule lines are not rendered in the preview', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    fireEvent.change(within(section).getByLabelText('Custom working rules'), {
+      target: { value: `${FRONTAL_LOBE_RULE_SENTINEL}\n${FRONTAL_LOBE_EMPTY_LINE_SHOULD_NOT_RENDER}\nSecond rule` },
+    });
+
+    const preview = within(section).getByLabelText('Frontal Lobe preview') as HTMLTextAreaElement;
+    expect(preview.value).toContain(`- ${FRONTAL_LOBE_RULE_SENTINEL}`);
+    expect(preview.value).toContain('- Second rule');
+    // Empty line should not create a bare dash bullet
+    const bulletLines = preview.value.split('\n').filter((l) => l.trim() === '-');
+    expect(bulletLines).toHaveLength(0);
+  });
+
+  // Test 7: changing controls and preview does not mutate localStorage before save
+  it('changing controls and preview does not mutate localStorage before save', () => {
+    render(<SettingsMemoryVault />);
+
+    const storedBefore = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    fireEvent.change(within(section).getByLabelText('Default answer style'), {
+      target: { value: 'red_team_mode' },
+    });
+    fireEvent.change(within(section).getByLabelText('Coding confidence'), {
+      target: { value: 'experienced' },
+    });
+    fireEvent.change(within(section).getByLabelText('Custom working rules'), {
+      target: { value: FRONTAL_LOBE_RULE_SENTINEL },
+    });
+
+    const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(storedAfter).toEqual(storedBefore);
+  });
+
+  // Test 8: saving writes to local Personal Memory Vault storage
+  it('saving Frontal Lobe profile writes to local Personal Memory Vault storage', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    fireEvent.change(within(section).getByLabelText('Default answer style'), {
+      target: { value: 'strict_code_reviewer' },
+    });
+    fireEvent.change(within(section).getByLabelText('Coding confidence'), {
+      target: { value: 'brand_new' },
+    });
+    fireEvent.change(within(section).getByLabelText('Custom working rules'), {
+      target: { value: FRONTAL_LOBE_RULE_SENTINEL },
+    });
+
+    fireEvent.click(within(section).getByRole('button', { name: 'Save Frontal Lobe profile' }));
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(stored).not.toBeNull();
+
+    const parsed = JSON.parse(stored ?? '{}') as { frontalLobeProfile?: Record<string, unknown> };
+    expect(parsed.frontalLobeProfile).toBeDefined();
+    expect(parsed.frontalLobeProfile?.defaultAnswerStyle).toBe('strict_code_reviewer');
+    expect(parsed.frontalLobeProfile?.codingConfidence).toBe('brand_new');
+    expect(parsed.frontalLobeProfile?.customRules).toContain(FRONTAL_LOBE_RULE_SENTINEL);
+  });
+
+  // Test 9: resetting returns profile form and preview to defaults
+  it('resetting returns profile form and preview to defaults', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+
+    fireEvent.change(within(section).getByLabelText('Default answer style'), {
+      target: { value: 'red_team_mode' },
+    });
+    fireEvent.change(within(section).getByLabelText('Coding confidence'), {
+      target: { value: 'experienced' },
+    });
+    fireEvent.change(within(section).getByLabelText('Custom working rules'), {
+      target: { value: FRONTAL_LOBE_RULE_SENTINEL },
+    });
+
+    fireEvent.click(within(section).getByRole('button', { name: 'Reset Frontal Lobe profile' }));
+
+    expect(within(section).getByLabelText('Default answer style')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle);
+    expect(within(section).getByLabelText('Coding confidence')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence);
+    expect(within(section).getByLabelText('Custom working rules')).toHaveValue('');
+
+    const preview = within(section).getByLabelText('Frontal Lobe preview') as HTMLTextAreaElement;
+    expect(preview.value).toContain('Balanced Builder');
+    expect(preview.value).toContain('I can edit files if told exactly where');
+    expect(preview.value).not.toContain(FRONTAL_LOBE_RULE_SENTINEL);
+  });
+
+  // Test 10: saving does not create a consent ledger event
+  it('saving Frontal Lobe profile does not create a consent ledger event', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    fireEvent.click(within(section).getByRole('button', { name: 'Save Frontal Lobe profile' }));
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    const parsed = JSON.parse(stored ?? '{}') as { consentLedger?: unknown[] };
+    expect(parsed.consentLedger).toHaveLength(0);
+
+    // Sentinel: verify no consent event with our marker appears
+    expect(stored).not.toContain(FRONTAL_LOBE_NO_CONSENT_EVENT);
+  });
+
+  // Test 11: Frontal Lobe profile excluded from project export boundaries
+  it('Frontal Lobe profile sentinel data does not appear in project export surfaces', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T10:00:00.000Z');
+    vault.frontalLobeProfile = {
+      ...DEFAULT_FRONTAL_LOBE_PROFILE,
+      customRules: [FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT],
+    };
+    savePersonalMemoryVault(vault);
+
+    render(<SettingsMemoryVault />);
+
+    // AI Working Style copy button — does not include frontalLobeProfile data
+    const workingStylePreview = screen.queryByLabelText('AI working style preview');
+    if (workingStylePreview) {
+      expect((workingStylePreview as HTMLTextAreaElement).value).not.toContain(
+        FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT,
+      );
+    }
+
+    // Personal Context Passport — does not include frontalLobeProfile data
+    const passportPreview = screen.getByLabelText('Personal Context Passport preview') as HTMLTextAreaElement;
+    expect(passportPreview.value).not.toContain(FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT);
+  });
+
+  // Test 12: existing Personal Context Passport / AI Working Style tests still work
+  it('Frontal Lobe section coexists without breaking AI Working Style copy or Context Passport', () => {
+    render(<SettingsMemoryVault />);
+
+    const frontalSection = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    expect(frontalSection).toBeInTheDocument();
+    expect(screen.getByLabelText('Personal Context Passport section')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy AI working style' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy Personal Context Passport' })).toBeInTheDocument();
+  });
+
+  // Test 13: Builder Skill Profile fields all render and update preview
+  it('Builder Skill Profile section renders all four controls', () => {
+    render(<SettingsMemoryVault />);
+
+    const section = screen.getByLabelText('Frontal Lobe AI Working Style section');
+    expect(within(section).getByText('Builder Skill Profile')).toBeInTheDocument();
+    expect(within(section).getByLabelText('Coding confidence')).toBeInTheDocument();
+    expect(within(section).getByLabelText('Code instruction style')).toBeInTheDocument();
+    expect(within(section).getByLabelText('Debugging support')).toBeInTheDocument();
+    expect(within(section).getByLabelText('Preferred pace')).toBeInTheDocument();
+
+    // Check all Builder Skill Profile values appear in preview
+    const preview = within(section).getByLabelText('Frontal Lobe preview') as HTMLTextAreaElement;
+    expect(preview.value).toContain('## Builder Skill Profile');
+    expect(preview.value).toContain('Coding Confidence:');
+    expect(preview.value).toContain('Code Instruction Style:');
+    expect(preview.value).toContain('Debugging Support:');
+    expect(preview.value).toContain('Preferred Pace:');
+    expect(preview.value).toContain('When giving code:');
+  });
+});

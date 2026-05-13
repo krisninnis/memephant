@@ -15,8 +15,12 @@ import {
   type ConsentLedgerScope,
   type FrontalLobeAnswerStyle,
   type FrontalLobeChallengeLevel,
+  type FrontalLobeCodeInstructionStyle,
   type FrontalLobeCodeReviewStrictness,
+  type FrontalLobeCodingConfidence,
+  type FrontalLobeDebuggingSupport,
   type FrontalLobeExplanationDepth,
+  type FrontalLobePreferredPace,
   type FrontalLobeProfile,
   type FrontalLobeTone,
   type PersonalMemoryEntryCategory,
@@ -241,6 +245,48 @@ const FRONTAL_LOBE_TONE_OPTIONS: Array<{ value: FrontalLobeTone; label: string }
   { value: 'friendly', label: 'Friendly' },
 ];
 
+// ── Builder Skill Profile ─────────────────────────────────────────────────────
+
+const FRONTAL_LOBE_CODING_CONFIDENCE_OPTIONS: Array<{
+  value: FrontalLobeCodingConfidence;
+  label: string;
+}> = [
+  { value: 'brand_new', label: 'Brand new — explain everything step by step' },
+  { value: 'can_edit_with_exact_instructions', label: 'I can edit files if told exactly where' },
+  { value: 'understands_basics', label: 'I understand basics but need help with structure' },
+  { value: 'builds_with_guidance', label: 'I can build features with guidance' },
+  { value: 'experienced', label: 'Experienced — be concise and technical' },
+];
+
+const FRONTAL_LOBE_CODE_INSTRUCTION_OPTIONS: Array<{
+  value: FrontalLobeCodeInstructionStyle;
+  label: string;
+}> = [
+  { value: 'exact_file_and_patch', label: 'Tell me the exact file and whether to replace or patch' },
+  { value: 'small_safe_steps', label: 'Give me small safe steps, one at a time' },
+  { value: 'full_files', label: 'Give me full files where possible' },
+  { value: 'focused_diffs', label: 'Give me focused diffs only' },
+  { value: 'high_level_then_code', label: 'Give me high-level guidance first, then code' },
+];
+
+const FRONTAL_LOBE_DEBUGGING_OPTIONS: Array<{
+  value: FrontalLobeDebuggingSupport;
+  label: string;
+}> = [
+  { value: 'plain_english_error', label: 'Explain the error in plain English' },
+  { value: 'exact_next_command', label: 'Tell me exactly what command to run next' },
+  { value: 'likely_causes_and_fixes', label: 'Show likely causes and fixes' },
+  { value: 'ask_for_logs', label: 'Ask me for logs before guessing' },
+  { value: 'advanced_root_cause', label: 'Give me advanced root-cause analysis' },
+];
+
+const FRONTAL_LOBE_PACE_OPTIONS: Array<{ value: FrontalLobePreferredPace; label: string }> = [
+  { value: 'slow_guided', label: 'Slow and guided' },
+  { value: 'normal', label: 'Normal pace' },
+  { value: 'fast_with_risks', label: 'Fast, but explain risks' },
+  { value: 'expert', label: 'Expert mode' },
+];
+
 function getLabel<T extends string>(
   options: Array<{ value: T; label: string }>,
   value: T,
@@ -257,11 +303,23 @@ function buildFrontalLobePreview(profile: FrontalLobeProfile, customRulesText: s
   const parts: string[] = [
     '# Frontal Lobe',
     'Use this working style when helping me.',
-    `## Answer Style\n${getLabel(FRONTAL_LOBE_ANSWER_STYLE_OPTIONS, profile.defaultAnswerStyle)}`,
-    `## Challenge Level\n${getLabel(FRONTAL_LOBE_CHALLENGE_OPTIONS, profile.challengeLevel)}`,
-    `## Code Review Strictness\n${getLabel(FRONTAL_LOBE_STRICTNESS_OPTIONS, profile.codeReviewStrictness)}`,
-    `## Explanation Depth\n${getLabel(FRONTAL_LOBE_DEPTH_OPTIONS, profile.explanationDepth)}`,
-    `## Tone\n${getLabel(FRONTAL_LOBE_TONE_OPTIONS, profile.tone)}`,
+    '## AI Working Style\n' +
+      `Answer Style: ${getLabel(FRONTAL_LOBE_ANSWER_STYLE_OPTIONS, profile.defaultAnswerStyle)}\n` +
+      `Challenge Level: ${getLabel(FRONTAL_LOBE_CHALLENGE_OPTIONS, profile.challengeLevel)}\n` +
+      `Code Review Strictness: ${getLabel(FRONTAL_LOBE_STRICTNESS_OPTIONS, profile.codeReviewStrictness)}\n` +
+      `Explanation Depth: ${getLabel(FRONTAL_LOBE_DEPTH_OPTIONS, profile.explanationDepth)}\n` +
+      `Tone: ${getLabel(FRONTAL_LOBE_TONE_OPTIONS, profile.tone)}`,
+    '## Builder Skill Profile\n' +
+      `Coding Confidence: ${getLabel(FRONTAL_LOBE_CODING_CONFIDENCE_OPTIONS, profile.codingConfidence)}\n` +
+      `Code Instruction Style: ${getLabel(FRONTAL_LOBE_CODE_INSTRUCTION_OPTIONS, profile.codeInstructionStyle)}\n` +
+      `Debugging Support: ${getLabel(FRONTAL_LOBE_DEBUGGING_OPTIONS, profile.debuggingSupport)}\n` +
+      `Preferred Pace: ${getLabel(FRONTAL_LOBE_PACE_OPTIONS, profile.preferredPace)}\n` +
+      '\nWhen giving code:\n' +
+      '- Say which file it goes in.\n' +
+      '- Say whether to replace the whole file or only a section.\n' +
+      '- Use "Find this / Replace with this" for patches when helpful.\n' +
+      '- Give commands separately from code.\n' +
+      '- Do not assume the user knows where files are.',
   ];
 
   if (rules.length > 0) {
@@ -529,7 +587,8 @@ export function SettingsMemoryVault() {
   const [passportIncludeBoundaries, setPassportIncludeBoundaries] = useState(true);
   const [passportIncludeAnswerStyle, setPassportIncludeAnswerStyle] = useState(true);
   const [passportIncludeGoals, setPassportIncludeGoals] = useState(false);
-  // Frontal Lobe / AI Working Style profile — initialized from saved vault
+
+  // ── Frontal Lobe / AI Working Style profile ───────────────────────────────
   const [frontalLobeAnswerStyle, setFrontalLobeAnswerStyle] = useState<FrontalLobeAnswerStyle>(
     () => vault.frontalLobeProfile?.defaultAnswerStyle ?? DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle,
   );
@@ -547,6 +606,22 @@ export function SettingsMemoryVault() {
   const [frontalLobeTone, setFrontalLobeTone] = useState<FrontalLobeTone>(
     () => vault.frontalLobeProfile?.tone ?? DEFAULT_FRONTAL_LOBE_PROFILE.tone,
   );
+  // ── Builder Skill Profile state ───────────────────────────────────────────
+  const [frontalLobeCodingConfidence, setFrontalLobeCodingConfidence] =
+    useState<FrontalLobeCodingConfidence>(
+      () => vault.frontalLobeProfile?.codingConfidence ?? DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence,
+    );
+  const [frontalLobeCodeInstructionStyle, setFrontalLobeCodeInstructionStyle] =
+    useState<FrontalLobeCodeInstructionStyle>(
+      () => vault.frontalLobeProfile?.codeInstructionStyle ?? DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle,
+    );
+  const [frontalLobeDebuggingSupport, setFrontalLobeDebuggingSupport] =
+    useState<FrontalLobeDebuggingSupport>(
+      () => vault.frontalLobeProfile?.debuggingSupport ?? DEFAULT_FRONTAL_LOBE_PROFILE.debuggingSupport,
+    );
+  const [frontalLobePreferredPace, setFrontalLobePreferredPace] = useState<FrontalLobePreferredPace>(
+    () => vault.frontalLobeProfile?.preferredPace ?? DEFAULT_FRONTAL_LOBE_PROFILE.preferredPace,
+  );
   const [frontalLobeCustomRules, setFrontalLobeCustomRules] = useState<string>(
     () => (vault.frontalLobeProfile?.customRules ?? []).join('\n'),
   );
@@ -558,6 +633,10 @@ export function SettingsMemoryVault() {
       codeReviewStrictness: frontalLobeCodeReviewStrictness,
       explanationDepth: frontalLobeExplanationDepth,
       tone: frontalLobeTone,
+      codingConfidence: frontalLobeCodingConfidence,
+      codeInstructionStyle: frontalLobeCodeInstructionStyle,
+      debuggingSupport: frontalLobeDebuggingSupport,
+      preferredPace: frontalLobePreferredPace,
       customRules: [],
     },
     frontalLobeCustomRules,
@@ -850,6 +929,10 @@ export function SettingsMemoryVault() {
       codeReviewStrictness: frontalLobeCodeReviewStrictness,
       explanationDepth: frontalLobeExplanationDepth,
       tone: frontalLobeTone,
+      codingConfidence: frontalLobeCodingConfidence,
+      codeInstructionStyle: frontalLobeCodeInstructionStyle,
+      debuggingSupport: frontalLobeDebuggingSupport,
+      preferredPace: frontalLobePreferredPace,
       customRules: rules,
       updatedAt: now,
     };
@@ -871,6 +954,10 @@ export function SettingsMemoryVault() {
     setFrontalLobeCodeReviewStrictness(DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness);
     setFrontalLobeExplanationDepth(DEFAULT_FRONTAL_LOBE_PROFILE.explanationDepth);
     setFrontalLobeTone(DEFAULT_FRONTAL_LOBE_PROFILE.tone);
+    setFrontalLobeCodingConfidence(DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence);
+    setFrontalLobeCodeInstructionStyle(DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle);
+    setFrontalLobeDebuggingSupport(DEFAULT_FRONTAL_LOBE_PROFILE.debuggingSupport);
+    setFrontalLobePreferredPace(DEFAULT_FRONTAL_LOBE_PROFILE.preferredPace);
     setFrontalLobeCustomRules('');
     showToast('AI Working Style profile reset to defaults');
   };
@@ -1428,13 +1515,361 @@ export function SettingsMemoryVault() {
           <div className="memory-vault-frontal-lobe__intro">
             <h3>AI Working Style</h3>
             <p>
-              Define how AI should work with you — directness, challenge level, code-review
-              strictness, explanation depth, and tone. This stays local and is not included in
-              project exports or AI handoffs unless you explicitly choose to share it in a future
-              step.
+              Your AI Working Style profile. Define how AI should work with you — directness,
+              challenge level, coding support, explanation depth, and tone. This stays local and is
+              not included in project exports or AI handoffs unless you explicitly choose to share
+              it in a future step.
             </p>
           </div>
 
+          <div className="memory-vault-frontal-lobe__group-label">AI Working Style</div>
           <div className="memory-vault-frontal-lobe__controls">
             <label className="memory-vault-field">
-              <span>Default an
+              <span>Default answer style</span>
+              <select
+                aria-label="Default answer style"
+                className="memory-vault-input"
+                value={frontalLobeAnswerStyle}
+                onChange={(event) => setFrontalLobeAnswerStyle(event.target.value as FrontalLobeAnswerStyle)}
+              >
+                {FRONTAL_LOBE_ANSWER_STYLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field">
+              <span>Challenge level</span>
+              <select
+                aria-label="Challenge level"
+                className="memory-vault-input"
+                value={frontalLobeChallengeLevel}
+                onChange={(event) => setFrontalLobeChallengeLevel(event.target.value as FrontalLobeChallengeLevel)}
+              >
+                {FRONTAL_LOBE_CHALLENGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field">
+              <span>Code review strictness</span>
+              <select
+                aria-label="Code review strictness"
+                className="memory-vault-input"
+                value={frontalLobeCodeReviewStrictness}
+                onChange={(event) => setFrontalLobeCodeReviewStrictness(event.target.value as FrontalLobeCodeReviewStrictness)}
+              >
+                {FRONTAL_LOBE_STRICTNESS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field">
+              <span>Explanation depth</span>
+              <select
+                aria-label="Explanation depth"
+                className="memory-vault-input"
+                value={frontalLobeExplanationDepth}
+                onChange={(event) => setFrontalLobeExplanationDepth(event.target.value as FrontalLobeExplanationDepth)}
+              >
+                {FRONTAL_LOBE_DEPTH_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field">
+              <span>Tone</span>
+              <select
+                aria-label="Tone"
+                className="memory-vault-input"
+                value={frontalLobeTone}
+                onChange={(event) => setFrontalLobeTone(event.target.value as FrontalLobeTone)}
+              >
+                {FRONTAL_LOBE_TONE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="memory-vault-frontal-lobe__group-label">Builder Skill Profile</div>
+          <div className="memory-vault-frontal-lobe__controls">
+            <label className="memory-vault-field memory-vault-field--full">
+              <span>Coding confidence</span>
+              <select
+                aria-label="Coding confidence"
+                className="memory-vault-input"
+                value={frontalLobeCodingConfidence}
+                onChange={(event) => setFrontalLobeCodingConfidence(event.target.value as FrontalLobeCodingConfidence)}
+              >
+                {FRONTAL_LOBE_CODING_CONFIDENCE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field memory-vault-field--full">
+              <span>Code instruction style</span>
+              <select
+                aria-label="Code instruction style"
+                className="memory-vault-input"
+                value={frontalLobeCodeInstructionStyle}
+                onChange={(event) => setFrontalLobeCodeInstructionStyle(event.target.value as FrontalLobeCodeInstructionStyle)}
+              >
+                {FRONTAL_LOBE_CODE_INSTRUCTION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field memory-vault-field--full">
+              <span>Debugging support</span>
+              <select
+                aria-label="Debugging support"
+                className="memory-vault-input"
+                value={frontalLobeDebuggingSupport}
+                onChange={(event) => setFrontalLobeDebuggingSupport(event.target.value as FrontalLobeDebuggingSupport)}
+              >
+                {FRONTAL_LOBE_DEBUGGING_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="memory-vault-field memory-vault-field--full">
+              <span>Preferred pace</span>
+              <select
+                aria-label="Preferred pace"
+                className="memory-vault-input"
+                value={frontalLobePreferredPace}
+                onChange={(event) => setFrontalLobePreferredPace(event.target.value as FrontalLobePreferredPace)}
+              >
+                {FRONTAL_LOBE_PACE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="memory-vault-frontal-lobe__group-label">Custom Working Rules</div>
+          <label className="memory-vault-field">
+            <span>Custom working rules</span>
+            <textarea
+              aria-label="Custom working rules"
+              className="memory-vault-input memory-vault-textarea"
+              value={frontalLobeCustomRules}
+              onChange={(event) => setFrontalLobeCustomRules(event.target.value)}
+              placeholder="One rule per line."
+            />
+          </label>
+
+          <label className="memory-vault-field">
+            <span>Frontal Lobe preview</span>
+            <textarea
+              aria-label="Frontal Lobe preview"
+              className="memory-vault-input memory-vault-textarea memory-vault-frontal-lobe-preview"
+              readOnly
+              value={frontalLobePreview}
+            />
+          </label>
+
+          <div className="memory-vault-frontal-lobe__actions">
+            <button
+              className="setting-btn setting-btn--primary"
+              onClick={handleSaveFrontalLobe}
+              type="button"
+            >
+              Save Frontal Lobe profile
+            </button>
+            <button
+              className="setting-btn"
+              onClick={handleResetFrontalLobe}
+              type="button"
+            >
+              Reset Frontal Lobe profile
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Memory Audit</div>
+        <section className="memory-vault-audit" aria-label="Personal Memory Vault audit">
+          <div className="memory-vault-audit__intro">
+            <h3>What Memephant knows locally</h3>
+            <p>
+              Review what is stored locally in your Personal Memory Vault. Nothing here is shared
+              automatically.
+            </p>
+          </div>
+          <div className="memory-vault-audit-grid">
+            {memoryAuditItems.map((item) => (
+              <article className="memory-vault-audit-card" key={item.label}>
+                <div className="memory-vault-audit-card__value">{item.value}</div>
+                <h4>{item.label}</h4>
+                <p>{item.detail}</p>
+              </article>
+            ))}
+          </div>
+          <p className="memory-vault-form-note">
+            Manual copy actions only happen when you click them. Project exports, Context Passports,
+            Memory Bridge, cloud sync, and Supabase do not receive Vault contents from this audit.
+          </p>
+        </section>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Saved private memories</div>
+        {entries.length > 0 ? (
+          <div className="memory-vault-entry-list">
+            {entries.map((entry) => (
+              <article className="memory-vault-entry" key={entry.id}>
+                {editingEntryId === entry.id ? (
+                  <div className="memory-vault-edit-form">
+                    <label className="memory-vault-field">
+                      <span>Edit title</span>
+                      <input
+                        className="memory-vault-input"
+                        value={editTitle}
+                        onChange={(event) => {
+                          setEditTitle(event.target.value);
+                          setEditError(null);
+                        }}
+                      />
+                    </label>
+
+                    <label className="memory-vault-field">
+                      <span>Edit category</span>
+                      <select
+                        className="memory-vault-input"
+                        value={editCategory}
+                        onChange={(event) =>
+                          setEditCategory(event.target.value as PersonalMemoryEntryCategory)}
+                      >
+                        {CATEGORY_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="memory-vault-field memory-vault-field--full">
+                      <span>Edit content</span>
+                      <textarea
+                        className="memory-vault-input memory-vault-textarea"
+                        value={editContent}
+                        onChange={(event) => {
+                          setEditContent(event.target.value);
+                          setEditError(null);
+                        }}
+                      />
+                    </label>
+
+                    {editError && <p className="memory-vault-form-error">{editError}</p>}
+
+                    <div className="memory-vault-entry-actions">
+                      <button
+                        className="setting-btn setting-btn--primary"
+                        onClick={() => handleSaveEditedEntry(entry)}
+                        type="button"
+                      >
+                        Save changes
+                      </button>
+                      <button
+                        className="setting-btn"
+                        onClick={cancelEditingEntry}
+                        type="button"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="memory-vault-entry-header">
+                      <div>
+                        <h3>{entry.label || 'Untitled private memory'}</h3>
+                        <div className="memory-vault-entry-meta">
+                          {getCategoryLabel(getEntryCategory(entry))} - Private - Local only
+                        </div>
+                      </div>
+                      <div className="memory-vault-entry-actions">
+                        <button
+                          className="setting-btn"
+                          onClick={() => startEditingEntry(entry)}
+                          type="button"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="setting-btn setting-btn--danger"
+                          onClick={() => setEntryToDelete(entry)}
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <p>{entry.value}</p>
+                  </>
+                )}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="memory-vault-empty">
+            No private memories saved yet.
+          </p>
+        )}
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Vault controls</div>
+        <div className="setting-row">
+          <div className="setting-info">
+            <div className="setting-label">Clear Vault</div>
+            <div className="setting-description">
+              Remove the local Personal Memory Vault shell from this device. Project memories are not affected.
+            </div>
+          </div>
+          <button
+            className="setting-btn setting-btn--danger"
+            onClick={() => setConfirmClear(true)}
+            type="button"
+          >
+            Clear Vault
+          </button>
+        </div>
+      </div>
+
+      {confirmClear && (
+        <ConfirmDialog
+          title="Clear Personal Memory Vault?"
+          message="This clears only the local Personal Memory Vault on this device. Project memory, exports, and cloud backup are not changed."
+          confirmLabel="Clear Vault"
+          onConfirm={handleClearVault}
+          onCancel={() => setConfirmClear(false)}
+          dangerous
+        />
+      )}
+
+      {entryToDelete && (
+        <ConfirmDialog
+          title="Delete private memory?"
+          message="This removes only this local Personal Memory Vault entry. Project memory, exports, and cloud backup are not changed."
+          confirmLabel="Delete Memory"
+          onConfirm={handleDeleteEntry}
+          onCancel={() => setEntryToDelete(null)}
+          dangerous
+        />
+      )}
+    </div>
+  );
+}
+
+export default SettingsMemoryVault;
+
