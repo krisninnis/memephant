@@ -36,3 +36,4 @@ src-tauri/target/
 *.tsbuildinfo
 docs/internal/
 .vercel
+.env*.local
