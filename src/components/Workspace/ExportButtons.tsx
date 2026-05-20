@@ -70,12 +70,45 @@ type CopyOption = {
   disabled?: boolean;
 };
 
+type PreviewMode = ExportMode | 'deep-state';
+
+type ExportPreview = {
+  mode: PreviewMode;
+  modeLabel: string;
+  targetPlatformId: string;
+  targetPlatformName: string;
+  copyPlatformId: string;
+  exportText: string;
+  aiWorkingStyleStatus: string;
+  aiWorkingStyleIncluded: boolean;
+  recentActivityIncluded: boolean;
+  characterCount: number;
+  changedFiles: string[];
+};
+
+function getPreviewModeLabel(mode: PreviewMode): string {
+  if (mode === 'delta') return 'Essentials';
+  if (mode === 'specialist') return 'Specific task';
+  if (mode === 'deep-state') return 'Full context + deep state';
+  if (mode === 'smart') return 'Smart';
+  return 'Full context';
+}
+
+function getCopiedModeLabel(mode: PreviewMode): string {
+  if (mode === 'delta') return 'just the essentials';
+  if (mode === 'specialist') return 'a specific task';
+  if (mode === 'deep-state') return 'full context and deeper project memory';
+  return 'full context';
+}
+
 export function ExportButtons() {
   const [copied, setCopied] = useState(false);
   const [manifestCopied, setManifestCopied] = useState(false);
   const [manifestLoading, setManifestLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [passportOpen, setPassportOpen] = useState(false);
+  const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [handoffMode, setHandoffMode] = useState<HandoffMode>('continue');
   const [contextOpen, setContextOpen] = useState(false);
@@ -218,184 +251,221 @@ export function ExportButtons() {
     return buildMemoryBridgeBlock(activeProject, selectedPlatform.id);
   }, [activeProject, memoryBridgeMode, selectedPlatform.id]);
 
-  const handleCopyMode = useCallback(async (mode: ExportMode) => {
+  const buildExportPreview = useCallback(async (mode: ExportMode): Promise<ExportPreview> => {
+    if (!activeProject) {
+      throw new Error('Open a project first');
+    }
+
+    setScannerLevel(settings.privacy.secretsScannerLevel);
+
+    const exportText = formatForPlatform(
+      activeProject,
+      selectedPlatform.id,
+      currentTask,
+      mode,
+      selectedPlatform,
+      recentActivity,
+      frontalLobeBlock,
+    );
+
+    const lastExportAt = activeProject.platformState?.[selectedPlatform.id]?.lastExportedAt;
+    const changedFiles = lastExportAt && activeProject.linkedFolder?.path
+      ? await getFilesChangedSince(activeProject.linkedFolder.path, lastExportAt)
+      : [];
+
+    const sessionForPreamble = activeProject.lastAiSession
+      ? { ...activeProject.lastAiSession, filesChangedSince: changedFiles }
+      : undefined;
+    const preamble = buildContinuityPreamble(sessionForPreamble, selectedPlatform.id);
+    const preparedExportText = prepareExportForMemoryMode(exportText);
+    const finalExportText = preamble + preparedExportText;
+    const aiWorkingStyleIncluded = Boolean(frontalLobeBlock)
+      && finalExportText.includes('# AI Working Style');
+
+    return {
+      mode,
+      modeLabel: getPreviewModeLabel(mode),
+      targetPlatformId: selectedPlatform.id,
+      targetPlatformName: selectedPlatform.name,
+      copyPlatformId: selectedPlatform.id,
+      exportText: finalExportText,
+      aiWorkingStyleStatus: frontalLobeStatus,
+      aiWorkingStyleIncluded,
+      recentActivityIncluded: memoryBridgeMode !== 'auto' && Boolean(recentActivity?.trim()),
+      characterCount: finalExportText.length,
+      changedFiles,
+    };
+  }, [
+    activeProject,
+    currentTask,
+    frontalLobeBlock,
+    frontalLobeStatus,
+    memoryBridgeMode,
+    prepareExportForMemoryMode,
+    recentActivity,
+    selectedPlatform,
+    settings.privacy.secretsScannerLevel,
+  ]);
+
+  const buildDeepStatePreview = useCallback(async (): Promise<ExportPreview> => {
+    if (!activeProject) {
+      throw new Error('Open a project first');
+    }
+
+    setScannerLevel(settings.privacy.secretsScannerLevel);
+
+    const manifest = await generateStateManifest(activeProject);
+    const exportText = formatForClaudeWithManifest(
+      activeProject,
+      manifest.text,
+      manifest.digest,
+      currentTask,
+      recentActivity,
+      frontalLobeBlock,
+    );
+
+    const lastExportAt = activeProject.platformState?.[selectedPlatform.id]?.lastExportedAt;
+    const changedFiles = lastExportAt && activeProject.linkedFolder?.path
+      ? await getFilesChangedSince(activeProject.linkedFolder.path, lastExportAt)
+      : [];
+
+    const sessionForPreamble = activeProject.lastAiSession
+      ? { ...activeProject.lastAiSession, filesChangedSince: changedFiles }
+      : undefined;
+    const preamble = buildContinuityPreamble(sessionForPreamble, selectedPlatform.id);
+    const preparedExportText = prepareExportForMemoryMode(exportText);
+    const finalExportText = preamble + preparedExportText;
+    const aiWorkingStyleIncluded = Boolean(frontalLobeBlock)
+      && finalExportText.includes('# AI Working Style');
+
+    return {
+      mode: 'deep-state',
+      modeLabel: getPreviewModeLabel('deep-state'),
+      targetPlatformId: selectedPlatform.id,
+      targetPlatformName: selectedPlatform.name,
+      copyPlatformId: 'claude',
+      exportText: finalExportText,
+      aiWorkingStyleStatus: frontalLobeStatus,
+      aiWorkingStyleIncluded,
+      recentActivityIncluded: memoryBridgeMode !== 'auto' && Boolean(recentActivity?.trim()),
+      characterCount: finalExportText.length,
+      changedFiles,
+    };
+  }, [
+    activeProject,
+    currentTask,
+    frontalLobeBlock,
+    frontalLobeStatus,
+    memoryBridgeMode,
+    prepareExportForMemoryMode,
+    recentActivity,
+    selectedPlatform.id,
+    selectedPlatform.name,
+    settings.privacy.secretsScannerLevel,
+  ]);
+
+  const handleInspectExport = useCallback(async (mode: PreviewMode = 'full') => {
     if (!activeProject) {
       showToast('Open a project first', 'error');
       return;
     }
 
     try {
-      setScannerLevel(settings.privacy.secretsScannerLevel);
+      setPreviewLoading(true);
+      if (mode === 'deep-state') setManifestLoading(true);
 
-      const exportText = formatForPlatform(
-        activeProject,
-        selectedPlatform.id,
-        currentTask,
-        mode,
-        selectedPlatform,
-        recentActivity,
-        frontalLobeBlock,
-      );
+      const preview = mode === 'deep-state'
+        ? await buildDeepStatePreview()
+        : await buildExportPreview(mode);
 
-      const lastExportAt = activeProject.platformState?.[selectedPlatform.id]?.lastExportedAt;
-      const changedFiles = lastExportAt && activeProject.linkedFolder?.path
-        ? await getFilesChangedSince(activeProject.linkedFolder.path, lastExportAt)
-        : [];
-
-      const sessionForPreamble = activeProject.lastAiSession
-        ? { ...activeProject.lastAiSession, filesChangedSince: changedFiles }
-        : undefined;
-      const preamble = buildContinuityPreamble(sessionForPreamble, selectedPlatform.id);
-      const preparedExportText = prepareExportForMemoryMode(exportText);
-      await copyExportToClipboard(preamble + preparedExportText, selectedPlatform.id);
-
-      setCopied(true);
-      const modeLabel =
-        mode === 'delta'
-          ? 'just the essentials'
-          : mode === 'specialist'
-            ? 'a specific task'
-            : 'full context';
-      showToast(`Copied ${modeLabel} for ${selectedPlatform.name}`);
-
-      updateLastAiSession(activeProject.id, {
-        platform: selectedPlatform.id,
-        mode: handoffMode,
-        sessionAt: new Date().toISOString(),
-        userTaskSummary: currentTask || undefined,
-        userSwitchReason: switchReason || undefined,
-        filesChangedSince: changedFiles,
-      });
-
-      updateProject(activeProject.id, {
-        platformState: {
-          ...activeProject.platformState,
-          [selectedPlatform.id]: {
-            ...activeProject.platformState?.[selectedPlatform.id],
-            lastExportedAt: new Date().toISOString(),
-          },
-        },
-      });
-
-      setTimeout(() => setCopied(false), 1800);
-  } catch (err) {
-    console.error('Export failed:', err);
-    showToast('Failed to copy export', 'error');
-  }
-}, [
-  activeProject,
-  prepareExportForMemoryMode,
-  currentTask,
-  handoffMode,
-  recentActivity,
-  frontalLobeBlock,
-  selectedPlatform,
-  settings.privacy.secretsScannerLevel,
-  showToast,
-  switchReason,
-  updateLastAiSession,
-  updateProject,
-]);
-
-  const handleCopyDeepState = useCallback(async () => {
-    if (!activeProject) {
-      showToast('Open a project first', 'error');
-      return;
-    }
-
-    try {
-      setManifestLoading(true);
-      setScannerLevel(settings.privacy.secretsScannerLevel);
-
-      const manifest = await generateStateManifest(activeProject);
-      const exportText = formatForClaudeWithManifest(
-        activeProject,
-        manifest.text,
-        manifest.digest,
-        currentTask,
-        recentActivity,
-        frontalLobeBlock,
-      );
-
-      const lastExportAt = activeProject.platformState?.[selectedPlatform.id]?.lastExportedAt;
-      const changedFiles = lastExportAt && activeProject.linkedFolder?.path
-        ? await getFilesChangedSince(activeProject.linkedFolder.path, lastExportAt)
-        : [];
-
-      const sessionForPreamble = activeProject.lastAiSession
-        ? { ...activeProject.lastAiSession, filesChangedSince: changedFiles }
-        : undefined;
-      const preamble = buildContinuityPreamble(sessionForPreamble, selectedPlatform.id);
-      const preparedExportText = prepareExportForMemoryMode(exportText);
-      await copyExportToClipboard(preamble + preparedExportText, 'claude');
-
-      setManifestCopied(true);
-      showToast('Copied with full context and deeper project memory');
-
-      updateLastAiSession(activeProject.id, {
-        platform: selectedPlatform.id,
-        mode: handoffMode,
-        sessionAt: new Date().toISOString(),
-        userTaskSummary: currentTask || undefined,
-        userSwitchReason: switchReason || undefined,
-        filesChangedSince: changedFiles,
-      });
-
-      updateProject(activeProject.id, {
-        platformState: {
-          ...activeProject.platformState,
-          [selectedPlatform.id]: {
-            ...activeProject.platformState?.[selectedPlatform.id],
-            lastExportedAt: new Date().toISOString(),
-          },
-        },
-      });
-
-      setTimeout(() => setManifestCopied(false), 1800);
+      setExportPreview(preview);
+      setMenuOpen(false);
     } catch (err) {
-      console.error('Claude deep state export failed:', err);
-      const message = err instanceof Error
-        ? err.message
-        : 'Failed to prepare the deeper context copy';
-      showToast(message, 'error');
+      console.error('Export preview failed:', err);
+      showToast('Failed to prepare export preview', 'error');
     } finally {
-      setManifestLoading(false);
+      setPreviewLoading(false);
+      if (mode === 'deep-state') setManifestLoading(false);
     }
   }, [
     activeProject,
-    prepareExportForMemoryMode,
-    currentTask,
-    handoffMode,
-    recentActivity,
-    frontalLobeBlock,
-    selectedPlatform.id,
-    settings.privacy.secretsScannerLevel,
+    buildDeepStatePreview,
+    buildExportPreview,
     showToast,
+  ]);
+
+  const handleCopyPreview = useCallback(async () => {
+    if (!activeProject || !exportPreview) return;
+
+    try {
+      await copyExportToClipboard(exportPreview.exportText, exportPreview.copyPlatformId);
+
+      setCopied(true);
+      if (exportPreview.mode === 'deep-state') {
+        setManifestCopied(true);
+      }
+
+      showToast(`Copied ${getCopiedModeLabel(exportPreview.mode)} for ${exportPreview.targetPlatformName}`);
+
+      updateLastAiSession(activeProject.id, {
+        platform: exportPreview.targetPlatformId,
+        mode: handoffMode,
+        sessionAt: new Date().toISOString(),
+        userTaskSummary: currentTask || undefined,
+        userSwitchReason: switchReason || undefined,
+        filesChangedSince: exportPreview.changedFiles,
+      });
+
+      updateProject(activeProject.id, {
+        platformState: {
+          ...activeProject.platformState,
+          [exportPreview.targetPlatformId]: {
+            ...activeProject.platformState?.[exportPreview.targetPlatformId],
+            lastExportedAt: new Date().toISOString(),
+          },
+        },
+      });
+
+      setExportPreview(null);
+      setTimeout(() => setCopied(false), 1800);
+      if (exportPreview.mode === 'deep-state') {
+        setTimeout(() => setManifestCopied(false), 1800);
+      }
+    } catch (err) {
+      console.error('Export failed:', err);
+      showToast('Failed to copy export', 'error');
+    }
+  }, [
+    activeProject,
+    currentTask,
+    exportPreview,
+    handoffMode,
     switchReason,
     updateLastAiSession,
     updateProject,
+    showToast,
   ]);
 
   const handlePrimaryCopy = useCallback(async () => {
-    await handleCopyMode('full');
-  }, [handleCopyMode]);
+    await handleInspectExport('full');
+  }, [handleInspectExport]);
 
   const menuOptions = useMemo<CopyOption[]>(() => {
     const options: CopyOption[] = [
       {
         id: 'full',
         label: 'Copy with full context',
-        onSelect: () => handleCopyMode('full'),
+        onSelect: () => handleInspectExport('full'),
       },
       {
         id: 'delta',
         label: 'Copy just the essentials',
-        onSelect: () => handleCopyMode('delta'),
+        onSelect: () => handleInspectExport('delta'),
       },
       {
         id: 'specialist',
         label: 'Copy for a specific task',
-        onSelect: () => handleCopyMode('specialist'),
+        onSelect: () => handleInspectExport('specialist'),
       },
     ];
 
@@ -404,13 +474,13 @@ export function ExportButtons() {
         id: 'deep-state',
         label: 'Copy with full context + deep state',
         busyLabel: 'Preparing deeper context...',
-        onSelect: handleCopyDeepState,
+        onSelect: () => handleInspectExport('deep-state'),
         disabled: manifestLoading,
       });
     }
 
     return options;
-  }, [handleCopyDeepState, handleCopyMode, manifestLoading, selectedPlatform.id]);
+  }, [handleInspectExport, manifestLoading, selectedPlatform.id]);
 
   const renderPillGroup = (platforms: typeof enabledPlatforms) =>
     platforms.map((platform) => {
@@ -454,6 +524,16 @@ export function ExportButtons() {
       <div className="frontal-lobe-export-status" aria-live="polite">
         {frontalLobeStatus}
       </div>
+
+      <button
+        type="button"
+        className="export-inspect-btn"
+        onClick={() => void handleInspectExport('full')}
+        disabled={!activeProject || previewLoading}
+        title="Preview the exact AI handoff before copying"
+      >
+        {previewLoading ? 'Preparing preview...' : 'Inspect export'}
+      </button>
 
       {/* Frontal Lobe ask_each_time checkbox */}
       {frontalLobeMode === 'ask_each_time' && vault.frontalLobeProfile && (
@@ -553,7 +633,7 @@ export function ExportButtons() {
               borderBottomRightRadius: '16px',
             } as CSSProperties}
             onClick={() => void handlePrimaryCopy()}
-            disabled={!activeProject}
+            disabled={!activeProject || previewLoading}
             title={
               memoryBridgeMode === 'auto'
                 ? `Copy Auto Memory protocol with hippocampus.md and prefrontal.md for ${selectedPlatform.name}`
@@ -848,6 +928,89 @@ export function ExportButtons() {
           project={activeProject}
           onClose={() => setPassportOpen(false)}
         />
+      )}
+
+      {exportPreview && (
+        <div className="export-preview-overlay" role="presentation">
+          <section
+            className="export-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="export-preview-title"
+          >
+            <div className="export-preview-modal__header">
+              <div>
+                <h2 id="export-preview-title">Inspect export</h2>
+                <p>Review the exact handoff before anything goes to your clipboard.</p>
+              </div>
+              <button
+                type="button"
+                className="export-preview-modal__close"
+                onClick={() => setExportPreview(null)}
+                aria-label="Close export preview"
+              >
+                x
+              </button>
+            </div>
+
+            <dl className="export-preview-summary">
+              <div>
+                <dt>Target</dt>
+                <dd>{exportPreview.targetPlatformName}</dd>
+              </div>
+              <div>
+                <dt>Mode</dt>
+                <dd>{exportPreview.modeLabel}</dd>
+              </div>
+              <div>
+                <dt>AI Working Style</dt>
+                <dd>
+                  {exportPreview.aiWorkingStyleStatus}
+                  <span className="export-preview-summary__subvalue">
+                    {exportPreview.aiWorkingStyleIncluded ? 'Included in preview' : 'Not in this export'}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt>Recent activity</dt>
+                <dd>{exportPreview.recentActivityIncluded ? 'Included' : 'Not included'}</dd>
+              </div>
+              <div>
+                <dt>Approx. size</dt>
+                <dd>{exportPreview.characterCount.toLocaleString()} characters</dd>
+              </div>
+            </dl>
+
+            <p className="export-preview-warning">
+              Private vault contents are excluded unless explicitly included. This preview shows the
+              exact text that will be copied.
+            </p>
+
+            <textarea
+              className="export-preview-textarea"
+              readOnly
+              value={exportPreview.exportText}
+              aria-label="Export preview text"
+            />
+
+            <div className="export-preview-actions">
+              <button
+                type="button"
+                className="export-preview-actions__secondary"
+                onClick={() => setExportPreview(null)}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="export-preview-actions__primary"
+                onClick={() => void handleCopyPreview()}
+              >
+                Copy export
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </>
   );
