@@ -23,6 +23,7 @@ import type { ProjectMemory } from '../types/memphant-types';
 import type { SubscriptionTier, SubscriptionStatus } from '../store/projectStore';
 import { enqueue, dequeue, getAll as getQueued } from './syncQueue';
 import { getRuntimeEnv } from '../utils/runtimeEnv';
+import { toCloudProjectData } from './toCloudProjectData';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1160,7 +1161,7 @@ export async function pushProject(
       user_id: userId,
       project_id: project.id,
       name: project.name,
-      data: project as unknown as Record<string, unknown>,
+      data: toCloudProjectData(project),
       updated_at: localUpdatedAt(project),
     };
 
@@ -1486,7 +1487,7 @@ async function drainQueue(
         user_id: userId,
         project_id: project.id,
         name: project.name,
-        data: project as unknown as Record<string, unknown>,
+        data: toCloudProjectData(project),
         updated_at: localUpdatedAt(project),
       };
 
@@ -1532,7 +1533,7 @@ async function pushAll(
     user_id: userId,
     project_id: p.id,
     name: p.name,
-    data: p as unknown as Record<string, unknown>,
+    data: toCloudProjectData(p),
     updated_at: localUpdatedAt(p),
   }));
 
