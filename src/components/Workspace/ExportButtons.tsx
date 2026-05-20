@@ -27,6 +27,7 @@ import {
 import { getChangesSince } from '../../utils/getChangesSince';
 import {
   buildFrontalLobeExportBlock,
+  getFrontalLobeExportStatus,
   shouldIncludeFrontalLobe,
 } from '../../utils/frontalLobeExport';
 import { loadPersonalMemoryVault } from '../../services/personalMemoryVaultStorage';
@@ -84,6 +85,12 @@ export function ExportButtons() {
   const [vault] = useState(() => loadPersonalMemoryVault());
   const frontalLobeMode = vault.frontalLobeProfile?.mode ?? 'default_on';
   const [includeFrontalLobe, setIncludeFrontalLobe] = useState(false);
+  const hasFrontalLobeProfile = Boolean(vault.frontalLobeProfile);
+  const frontalLobeStatus = getFrontalLobeExportStatus(
+    frontalLobeMode,
+    hasFrontalLobeProfile,
+    includeFrontalLobe,
+  );
   const frontalLobeBlock =
     vault.frontalLobeProfile && shouldIncludeFrontalLobe(frontalLobeMode, includeFrontalLobe)
       ? buildFrontalLobeExportBlock(vault.frontalLobeProfile)
@@ -281,6 +288,7 @@ export function ExportButtons() {
   currentTask,
   handoffMode,
   recentActivity,
+  frontalLobeBlock,
   selectedPlatform,
   settings.privacy.secretsScannerLevel,
   showToast,
@@ -359,6 +367,7 @@ export function ExportButtons() {
     currentTask,
     handoffMode,
     recentActivity,
+    frontalLobeBlock,
     selectedPlatform.id,
     settings.privacy.secretsScannerLevel,
     showToast,
@@ -442,19 +451,13 @@ export function ExportButtons() {
         </button>
       )}
 
+      <div className="frontal-lobe-export-status" aria-live="polite">
+        {frontalLobeStatus}
+      </div>
+
       {/* Frontal Lobe ask_each_time checkbox */}
       {frontalLobeMode === 'ask_each_time' && vault.frontalLobeProfile && (
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '12px',
-            color: 'rgba(255,255,255,0.75)',
-            marginBottom: '8px',
-            cursor: 'pointer',
-          }}
-        >
+        <label className="frontal-lobe-export-toggle">
           <input
             type="checkbox"
             aria-label="Include AI Working Style in handoff"

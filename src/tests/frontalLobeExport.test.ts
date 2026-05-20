@@ -9,6 +9,7 @@
 
 import {
   buildFrontalLobeExportBlock,
+  getFrontalLobeExportStatus,
   shouldIncludeFrontalLobe,
 } from '../utils/frontalLobeExport';
 import { formatForPlatform, formatForClaudeWithManifest } from '../utils/exportFormatters';
@@ -176,6 +177,44 @@ describe('shouldIncludeFrontalLobe', () => {
 });
 
 // ── formatForPlatform integration ─────────────────────────────────────────────
+
+describe('getFrontalLobeExportStatus', () => {
+  it('default_on with a profile shows Included automatically', () => {
+    expect(getFrontalLobeExportStatus('default_on', true)).toBe(
+      'AI Working Style: Included automatically',
+    );
+  });
+
+  it('ask_each_time unchecked with a profile shows Ask each time', () => {
+    expect(getFrontalLobeExportStatus('ask_each_time', true, false)).toBe(
+      'AI Working Style: Ask each time',
+    );
+  });
+
+  it('ask_each_time checked with a profile shows Included for this handoff', () => {
+    expect(getFrontalLobeExportStatus('ask_each_time', true, true)).toBe(
+      'AI Working Style: Included for this handoff',
+    );
+  });
+
+  it('manual_only with a profile shows Manual only', () => {
+    expect(getFrontalLobeExportStatus('manual_only', true, true)).toBe(
+      'AI Working Style: Manual only',
+    );
+  });
+
+  it('off with a profile shows Off', () => {
+    expect(getFrontalLobeExportStatus('off', true, true)).toBe(
+      'AI Working Style: Off',
+    );
+  });
+
+  it('no profile shows Not set', () => {
+    expect(getFrontalLobeExportStatus('default_on', false, true)).toBe(
+      'AI Working Style: Not set',
+    );
+  });
+});
 
 describe('formatForPlatform Frontal Lobe integration', () => {
   const project = makeProject();

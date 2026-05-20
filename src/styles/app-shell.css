@@ -2220,6 +2220,33 @@ select {
   font-weight: 400;
 }
 
+.frontal-lobe-export-status {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 6px 10px;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 8px;
+  background: rgba(14, 165, 233, 0.08);
+  color: rgba(224, 242, 254, 0.92);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.frontal-lobe-export-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.frontal-lobe-export-toggle input {
+  accent-color: #38bdf8;
+}
+
 .export-manifest-btn {
   display: flex;
   justify-content: space-between;

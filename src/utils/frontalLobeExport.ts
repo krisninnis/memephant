@@ -156,3 +156,25 @@ export function shouldIncludeFrontalLobe(
   if (mode === 'ask_each_time') return userOverride;
   return false;
 }
+
+/**
+ * Returns a status-only label for export UI visibility.
+ *
+ * This intentionally depends only on mode, profile presence, and the temporary
+ * include override. It never receives or exposes profile contents.
+ */
+export function getFrontalLobeExportStatus(
+  mode: FrontalLobeMode,
+  hasProfile: boolean,
+  includeOverride = false,
+): string {
+  if (!hasProfile) return 'AI Working Style: Not set';
+  if (mode === 'default_on') return 'AI Working Style: Included automatically';
+  if (mode === 'ask_each_time') {
+    return includeOverride
+      ? 'AI Working Style: Included for this handoff'
+      : 'AI Working Style: Ask each time';
+  }
+  if (mode === 'manual_only') return 'AI Working Style: Manual only';
+  return 'AI Working Style: Off';
+}
