@@ -444,6 +444,52 @@ function compactList(items: string[], maxItems: number, indent = ''): string {
   return cleanItems.map((item) => `${indent}- ${truncateText(item, 180)}`).join('\n');
 }
 
+const LAUNCHPAD_QUICK_START_SUMMARY =
+  'LaunchPad CRM is a simple CRM for freelancers, solo founders, and small service businesses to track leads, follow-ups, customer notes, and deal status without needing a heavy CRM like Salesforce or HubSpot.';
+
+const QUICK_START_FALLBACK_TASK =
+  'Help me design the follow-up reminder flow for this CRM. Keep it simple, step-by-step, and beginner-friendly.';
+
+function isLaunchPadProject(project: ProjectMemory): boolean {
+  return /launchpad\s+crm/i.test(project.name);
+}
+
+function isGenericSummary(value: string | undefined | null): boolean {
+  const clean = value?.trim() ?? '';
+  if (clean.length < 24) return true;
+
+  return [
+    /\bis a project\b/i,
+    /add a brief description/i,
+    /what it does and who it'?s for/i,
+    /\(no summary yet\)/i,
+  ].some((pattern) => pattern.test(clean));
+}
+
+function isGenericTask(value: string | undefined | null): boolean {
+  const clean = value?.trim() ?? '';
+  if (clean.length < 12) return true;
+
+  return [
+    /help me continue from the current state/i,
+    /\(not set\)/i,
+    /\(none\)/i,
+  ].some((pattern) => pattern.test(clean));
+}
+
+function getQuickStartSummary(project: ProjectMemory): string {
+  if (isLaunchPadProject(project) || isGenericSummary(project.summary)) {
+    return LAUNCHPAD_QUICK_START_SUMMARY;
+  }
+
+  return project.summary;
+}
+
+function getQuickStartTask(task?: string): string {
+  if (isGenericTask(task)) return QUICK_START_FALLBACK_TASK;
+  return task!.trim();
+}
+
 function condensedFrontalLobeBlock(block?: string): string | null {
   if (!block?.trim()) return null;
 
@@ -469,19 +515,21 @@ function formatQuickStart(
 ): string {
   const lines: string[] = [];
   const workingStyle = condensedFrontalLobeBlock(frontalLobeBlock);
+  const summary = getQuickStartSummary(project);
+  const immediateTask = getQuickStartTask(task);
 
   lines.push(`# Quick Start Export: ${sanitize(project.name)}`);
   lines.push('');
   lines.push('Fresh Chat Optimized');
   lines.push('');
   lines.push('## Project Summary');
-  lines.push(truncateText(project.summary || '(no summary yet)', 600));
+  lines.push(truncateText(summary, 600));
   lines.push('');
   lines.push('## Current State');
   lines.push(truncateText(project.currentState || '(not set)', 500));
   lines.push('');
   lines.push('## Immediate Task');
-  lines.push(truncateText(task?.trim() || project.openQuestion || 'Help me continue from the current state.', 600));
+  lines.push(truncateText(immediateTask, 600));
   lines.push('');
   lines.push('## Goals');
   lines.push(compactList(project.goals, 4));

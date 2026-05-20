@@ -562,6 +562,11 @@ describe('smart mode', () => {
 // ─── Edge cases ───────────────────────────────────────────────────────────────
 
 describe('quick mode', () => {
+  const launchPadFallbackSummary =
+    'LaunchPad CRM is a simple CRM for freelancers, solo founders, and small service businesses to track leads, follow-ups, customer notes, and deal status without needing a heavy CRM like Salesforce or HubSpot.';
+  const fallbackTask =
+    'Help me design the follow-up reminder flow for this CRM. Keep it simple, step-by-step, and beginner-friendly.';
+
   it('creates a compact fresh-chat handoff under the safe size threshold', () => {
     const project = makeProject({
       summary: 'A'.repeat(5000),
@@ -583,6 +588,61 @@ describe('quick mode', () => {
     expect(output.length).toBeLessThan(12000);
     expect(output).toContain('Fresh Chat Optimized');
     expect(output).not.toContain('RECENT ACTIVITY SHOULD NOT APPEAR');
+  });
+
+  it('replaces generic placeholder summaries in Quick Start Export', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'LaunchPad CRM',
+        summary: "LaunchPad CRM is a project. Add a brief description of what it does and who it's for.",
+      }),
+      'chatgpt',
+      'Design the next screen.',
+      'quick',
+    );
+
+    expect(output).toContain(launchPadFallbackSummary);
+    expect(output).not.toContain('Add a brief description');
+  });
+
+  it('replaces generic immediate tasks in Quick Start Export', () => {
+    const output = formatForPlatform(
+      makeProject({ name: 'LaunchPad CRM' }),
+      'chatgpt',
+      'Help me continue from the current state.',
+      'quick',
+    );
+
+    expect(output).toContain(fallbackTask);
+    expect(output).not.toContain('Help me continue from the current state.');
+  });
+
+  it('preserves non-placeholder custom summaries', () => {
+    const summary = 'A focused invoicing assistant for designers who need recurring client billing and payment reminders.';
+
+    const output = formatForPlatform(
+      makeProject({ name: 'InvoicePilot', summary }),
+      'chatgpt',
+      'Review onboarding.',
+      'quick',
+    );
+
+    expect(output).toContain(summary);
+    expect(output).not.toContain(launchPadFallbackSummary);
+  });
+
+  it('preserves non-placeholder user tasks', () => {
+    const task = 'Help me simplify the lead import screen and identify the smallest useful MVP version.';
+
+    const output = formatForPlatform(
+      makeProject({ name: 'LaunchPad CRM' }),
+      'chatgpt',
+      task,
+      'quick',
+    );
+
+    expect(output).toContain(task);
+    expect(output).not.toContain(fallbackTask);
   });
 
   it('includes AI Working Style only once', () => {
