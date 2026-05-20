@@ -39,6 +39,8 @@ import {
 } from '../../utils/platformRegistry';
 import type { ExportMode, HandoffMode } from '../../types/memphant-types';
 import { ContextPassportModal } from './ContextPassportModal';
+import { ExportDiffPanel } from './ExportDiffPanel';
+import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
 
 function formatSyncAge(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
@@ -985,6 +987,16 @@ export function ExportButtons() {
               Private vault contents are excluded unless explicitly included. This preview shows the
               exact text that will be copied.
             </p>
+
+            {activeProject && (
+              <ExportDiffPanel
+                summary={getExportDiffSummary(
+                  activeProject,
+                  exportPreview.targetPlatformId,
+                  exportPreview.aiWorkingStyleIncluded,
+                )}
+              />
+            )}
 
             <textarea
               className="export-preview-textarea"
