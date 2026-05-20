@@ -186,7 +186,7 @@ describe('Personal Memory Vault / project export boundary', () => {
   it('never includes Personal Memory Vault values in any project export mode or platform handoff', () => {
     const project = makeProject();
     const platforms: Platform[] = ['claude', 'chatgpt', 'grok', 'perplexity', 'gemini', 'codex', 'cowork'];
-    const modes: ExportMode[] = ['full', 'delta', 'specialist', 'smart'];
+    const modes: ExportMode[] = ['quick', 'full', 'delta', 'specialist', 'smart'];
 
     for (const platform of platforms) {
       for (const mode of modes) {

@@ -12,10 +12,10 @@ type ChoiceDefaults = {
 };
 
 const CHOICE_DEFAULTS: Record<OnboardingChoice, ChoiceDefaults> = {
-  writing: { platform: 'chatgpt', mode: 'full' },
+  writing: { platform: 'chatgpt', mode: 'quick' },
   coding: { platform: 'claude', mode: 'full' },
   research: { platform: 'perplexity', mode: 'delta' },
-  business: { platform: 'chatgpt', mode: 'smart' },
+  business: { platform: 'chatgpt', mode: 'quick' },
   mix: { platform: 'claude', mode: 'full' },
 };
 

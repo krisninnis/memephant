@@ -561,6 +561,60 @@ describe('smart mode', () => {
 
 // ─── Edge cases ───────────────────────────────────────────────────────────────
 
+describe('quick mode', () => {
+  it('creates a compact fresh-chat handoff under the safe size threshold', () => {
+    const project = makeProject({
+      summary: 'A'.repeat(5000),
+      currentState: 'B'.repeat(5000),
+      goals: Array.from({ length: 20 }, (_, i) => `Goal ${i + 1} ${'x'.repeat(200)}`),
+      rules: Array.from({ length: 20 }, (_, i) => `Rule ${i + 1} ${'y'.repeat(200)}`),
+    });
+
+    const output = formatForPlatform(
+      project,
+      'chatgpt',
+      'Start by reviewing the payment flow.',
+      'quick',
+      undefined,
+      'RECENT ACTIVITY SHOULD NOT APPEAR',
+      '# AI Working Style\nAnswer Style: Balanced Builder\nTone: Direct',
+    );
+
+    expect(output.length).toBeLessThan(12000);
+    expect(output).toContain('Fresh Chat Optimized');
+    expect(output).not.toContain('RECENT ACTIVITY SHOULD NOT APPEAR');
+  });
+
+  it('includes AI Working Style only once', () => {
+    const output = formatForPlatform(
+      makeProject(),
+      'chatgpt',
+      undefined,
+      'quick',
+      undefined,
+      undefined,
+      '# AI Working Style\nAnswer Style: Straight Shooter\nTone: Direct',
+    );
+
+    expect(output.match(/AI Working Style/g)).toHaveLength(1);
+  });
+
+  it('does not include memphant_update instructions or giant response schema examples', () => {
+    const output = formatForPlatform(makeProject(), 'chatgpt', undefined, 'quick');
+
+    expect(output).not.toContain('memphant_update');
+    expect(output).not.toContain('"schemaVersion"');
+    expect(output).not.toContain('```json');
+  });
+
+  it('does not emit duplicate sections', () => {
+    const output = formatForPlatform(makeProject(), 'chatgpt', undefined, 'quick');
+    const headings = output.match(/^## .+$/gm) ?? [];
+
+    expect(new Set(headings).size).toBe(headings.length);
+  });
+});
+
 describe('Frontal Lobe append safety', () => {
   it('does not append a second AI Working Style block if one is already present', () => {
     const project = makeProject({

@@ -93,6 +93,7 @@ export function SettingsProjects() {
             value={p.defaultExportMode}
             onChange={(e) => update({ defaultExportMode: e.target.value as typeof p.defaultExportMode })}
           >
+            <option value="quick">Quick Start — fresh chat</option>
             <option value="full">Full — everything</option>
             <option value="smart" disabled={!isPro}>
               Smart — auto-condensed{isPro ? '' : ' (Pro)'}
@@ -110,5 +111,4 @@ export function SettingsProjects() {
 }
 
 export default SettingsProjects;
-
 

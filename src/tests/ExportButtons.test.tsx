@@ -150,7 +150,7 @@ describe('ExportButtons export preview', () => {
       .toBeInTheDocument();
   });
 
-  it('uses concise smart mode by default for ChatGPT exports', async () => {
+  it('uses Quick Start mode by default for ChatGPT exports', async () => {
     mockProjectStoreState.targetPlatform = 'chatgpt';
 
     await openPreview();
@@ -159,11 +159,20 @@ describe('ExportButtons export preview', () => {
       mockProject,
       'chatgpt',
       'Keep going',
-      'smart',
+      'quick',
       expect.objectContaining({ id: 'chatgpt' }),
       'RECENT ACTIVITY BLOCK',
       expect.any(String),
     );
+  });
+
+  it('shows the Fresh Chat Optimized badge and token estimate for Quick Start exports', async () => {
+    mockProjectStoreState.targetPlatform = 'chatgpt';
+
+    await openPreview();
+
+    expect(screen.getByText('Fresh Chat Optimized')).toBeInTheDocument();
+    expect(screen.getByText(/~\d+ tokens/)).toBeInTheDocument();
   });
 
   it('shows a compressed copy option for risky large ChatGPT exports', async () => {

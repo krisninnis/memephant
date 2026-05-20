@@ -83,7 +83,7 @@ const NAMED_PLATFORMS: Platform[] = [
   'gemini',
 ];
 
-const ALL_MODES = ['full', 'delta', 'specialist', 'smart'] as const;
+const ALL_MODES = ['quick', 'full', 'delta', 'specialist', 'smart'] as const;
 
 describe('exportFormatters - linkedFolder.path must never appear in output', () => {
   // Every named platform, full mode

@@ -432,6 +432,75 @@ function formatForChatGPT(project: ProjectMemory, task?: string, recentActivity?
   return lines.join('\n');
 }
 
+function truncateText(value: string, maxLength: number): string {
+  const clean = sanitize(value.trim());
+  if (clean.length <= maxLength) return clean;
+  return `${clean.slice(0, maxLength - 1).trimEnd()}...`;
+}
+
+function compactList(items: string[], maxItems: number, indent = ''): string {
+  const cleanItems = sanitizeList(items.map((item) => item.trim()).filter(Boolean)).slice(0, maxItems);
+  if (!cleanItems.length) return `${indent}- (none yet)`;
+  return cleanItems.map((item) => `${indent}- ${truncateText(item, 180)}`).join('\n');
+}
+
+function condensedFrontalLobeBlock(block?: string): string | null {
+  if (!block?.trim()) return null;
+
+  const usefulLines = block
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) =>
+      /^Answer Style:/i.test(line)
+      || /^Challenge Level:/i.test(line)
+      || /^Tone:/i.test(line)
+      || /^Code Instruction Style:/i.test(line),
+    )
+    .slice(0, 4);
+
+  if (!usefulLines.length) return null;
+  return usefulLines.map((line) => `- ${sanitize(line)}`).join('\n');
+}
+
+function formatQuickStart(
+  project: ProjectMemory,
+  task?: string,
+  frontalLobeBlock?: string,
+): string {
+  const lines: string[] = [];
+  const workingStyle = condensedFrontalLobeBlock(frontalLobeBlock);
+
+  lines.push(`# Quick Start Export: ${sanitize(project.name)}`);
+  lines.push('');
+  lines.push('Fresh Chat Optimized');
+  lines.push('');
+  lines.push('## Project Summary');
+  lines.push(truncateText(project.summary || '(no summary yet)', 600));
+  lines.push('');
+  lines.push('## Current State');
+  lines.push(truncateText(project.currentState || '(not set)', 500));
+  lines.push('');
+  lines.push('## Immediate Task');
+  lines.push(truncateText(task?.trim() || project.openQuestion || 'Help me continue from the current state.', 600));
+  lines.push('');
+  lines.push('## Goals');
+  lines.push(compactList(project.goals, 4));
+  lines.push('');
+  lines.push('## Important Rules');
+  lines.push(compactList(project.rules, 5));
+
+  if (workingStyle) {
+    lines.push('');
+    lines.push('## AI Working Style');
+    lines.push(workingStyle);
+  }
+
+  lines.push('');
+  lines.push('Please use this lightweight context to start the chat. Ask before assuming missing details.');
+
+  return lines.join('\n');
+}
+
 function formatForGrok(project: ProjectMemory, task?: string): string {
   const lines: string[] = [];
 
@@ -1066,6 +1135,7 @@ export function formatForPlatform(
   recentActivity?: string,
   frontalLobeBlock?: string,
 ): string {
+  if (mode === 'quick') return formatQuickStart(project, task, frontalLobeBlock);
   if (mode === 'delta') return appendFrontalLobe(formatDelta(project, task), frontalLobeBlock);
   if (mode === 'specialist') return appendFrontalLobe(formatSpecialist(project, task), frontalLobeBlock);
   if (mode === 'smart') return appendFrontalLobe(formatSmartExport(project, platform, task, platformConfig, recentActivity), frontalLobeBlock);

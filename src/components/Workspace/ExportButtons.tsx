@@ -70,7 +70,7 @@ function formatCheckpointTime(isoString: string): string {
 }
 
 type CopyOption = {
-  id: 'full' | 'delta' | 'specialist' | 'deep-state';
+  id: 'quick' | 'full' | 'delta' | 'specialist' | 'deep-state';
   label: string;
   busyLabel?: string;
   onSelect: () => Promise<void>;
@@ -96,6 +96,7 @@ type ExportPreview = {
 };
 
 function getPreviewModeLabel(mode: PreviewMode): string {
+  if (mode === 'quick') return 'Quick Start Export';
   if (mode === 'delta') return 'Essentials';
   if (mode === 'specialist') return 'Specific task';
   if (mode === 'deep-state') return 'Full context + deep state';
@@ -104,6 +105,7 @@ function getPreviewModeLabel(mode: PreviewMode): string {
 }
 
 function getCopiedModeLabel(mode: PreviewMode): string {
+  if (mode === 'quick') return 'quick start context';
   if (mode === 'delta') return 'just the essentials';
   if (mode === 'specialist') return 'a specific task';
   if (mode === 'deep-state') return 'full context and deeper project memory';
@@ -111,8 +113,12 @@ function getCopiedModeLabel(mode: PreviewMode): string {
   return 'full context';
 }
 
-function getDefaultPreviewMode(platformId: string): ExportMode {
-  return platformId === 'chatgpt' ? 'smart' : 'full';
+function getDefaultPreviewMode(
+  platformId: string,
+  project?: { platformState?: Partial<Record<string, { lastExportedAt?: string }>> } | null,
+): ExportMode {
+  const isFirstExport = !project?.platformState?.[platformId]?.lastExportedAt;
+  return platformId === 'chatgpt' || isFirstExport ? 'quick' : 'full';
 }
 
 export function ExportButtons() {
@@ -287,11 +293,13 @@ export function ExportButtons() {
       ? await getFilesChangedSince(activeProject.linkedFolder.path, lastExportAt)
       : [];
 
-    const sessionForPreamble = activeProject.lastAiSession
+    const sessionForPreamble = mode !== 'quick' && activeProject.lastAiSession
       ? { ...activeProject.lastAiSession, filesChangedSince: changedFiles }
       : undefined;
     const preamble = buildContinuityPreamble(sessionForPreamble, selectedPlatform.id);
-    const preparedExportText = prepareExportForMemoryMode(exportText);
+    const preparedExportText = mode === 'quick'
+      ? exportText
+      : prepareExportForMemoryMode(exportText);
     const finalExportText = preamble + preparedExportText;
     const aiWorkingStyleIncluded = Boolean(frontalLobeBlock)
       && finalExportText.includes('# AI Working Style');
@@ -306,7 +314,9 @@ export function ExportButtons() {
       exportText: finalExportText,
       aiWorkingStyleStatus: frontalLobeStatus,
       aiWorkingStyleIncluded,
-      recentActivityIncluded: memoryBridgeMode !== 'auto' && Boolean(recentActivity?.trim()),
+      recentActivityIncluded: mode !== 'quick'
+        && memoryBridgeMode !== 'auto'
+        && Boolean(recentActivity?.trim()),
       characterCount: finalExportText.length,
       compressedExportText: compressExportForPaste(finalExportText),
       health,
@@ -475,14 +485,19 @@ export function ExportButtons() {
   ]);
 
   const handlePrimaryCopy = useCallback(async () => {
-    await handleInspectExport(getDefaultPreviewMode(selectedPlatform.id));
-  }, [handleInspectExport, selectedPlatform.id]);
+    await handleInspectExport(getDefaultPreviewMode(selectedPlatform.id, activeProject));
+  }, [activeProject, handleInspectExport, selectedPlatform.id]);
 
   const menuOptions = useMemo<CopyOption[]>(() => {
     const options: CopyOption[] = [
       {
+        id: 'quick',
+        label: 'Quick Start Export',
+        onSelect: () => handleInspectExport('quick'),
+      },
+      {
         id: 'full',
-        label: 'Copy with full context',
+        label: 'Full Continuity Export',
         onSelect: () => handleInspectExport('full'),
       },
       {
@@ -556,7 +571,7 @@ export function ExportButtons() {
       <button
         type="button"
         className="export-inspect-btn"
-        onClick={() => void handleInspectExport(getDefaultPreviewMode(selectedPlatform.id))}
+        onClick={() => void handleInspectExport(getDefaultPreviewMode(selectedPlatform.id, activeProject))}
         disabled={!activeProject || previewLoading}
         title="Preview the exact AI handoff before copying"
       >
@@ -736,7 +751,7 @@ export function ExportButtons() {
               zIndex: 30,
             }}
           >
-            {menuOptions.slice(0, 3).map((option) => (
+            {menuOptions.slice(0, 4).map((option) => (
               <button
                 key={option.id}
                 type="button"
@@ -747,10 +762,12 @@ export function ExportButtons() {
                 }}
                 title={
                   option.id === 'full'
-                    ? `Copy full project context for ${selectedPlatform.name}`
+                    ? `Copy full continuity context for ${selectedPlatform.name}`
                     : option.id === 'delta'
                       ? `Copy essential project context for ${selectedPlatform.name}`
-                      : `Copy task-focused project context for ${selectedPlatform.name}`
+                      : option.id === 'quick'
+                        ? `Copy lightweight fresh-chat context for ${selectedPlatform.name}`
+                        : `Copy task-focused project context for ${selectedPlatform.name}`
                 }
                 style={{
                   display: 'block',
@@ -780,7 +797,7 @@ export function ExportButtons() {
                     background: 'rgba(255, 255, 255, 0.12)',
                   }}
                 />
-                {menuOptions.slice(3).map((option) => (
+                {menuOptions.slice(4).map((option) => (
                   <button
                     key={option.id}
                     type="button"
@@ -988,7 +1005,12 @@ export function ExportButtons() {
               </div>
               <div>
                 <dt>Mode</dt>
-                <dd>{exportPreview.modeLabel}</dd>
+                <dd>
+                  {exportPreview.modeLabel}
+                  {exportPreview.mode === 'quick' && (
+                    <span className="export-preview-badge">Fresh Chat Optimized</span>
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>AI Working Style</dt>
@@ -1005,7 +1027,12 @@ export function ExportButtons() {
               </div>
               <div>
                 <dt>Approx. size</dt>
-                <dd>{exportPreview.characterCount.toLocaleString()} characters</dd>
+                <dd>
+                  {exportPreview.characterCount.toLocaleString()} characters
+                  <span className="export-preview-summary__subvalue">
+                    ~{exportPreview.health.approximateTokens.toLocaleString()} tokens
+                  </span>
+                </dd>
               </div>
             </dl>
 

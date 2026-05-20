@@ -19,7 +19,7 @@ export type BuiltInPlatformId =
   | 'anythingllm';
 
 export type Platform = string;
-export type ExportMode = 'full' | 'delta' | 'specialist' | 'smart';
+export type ExportMode = 'quick' | 'full' | 'delta' | 'specialist' | 'smart';
 export type PlatformCategory = 'chat' | 'dev' | 'local' | 'custom';
 export type PlatformExportStyle = 'structured' | 'compact' | 'code-heavy';
 
