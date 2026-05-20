@@ -295,6 +295,106 @@ const FRONTAL_LOBE_MODE_OPTIONS: Array<{ value: FrontalLobeMode; label: string }
   { value: 'off', label: 'Off — never include my Working Style' },
 ];
 
+// ── Memory Vault Setup Wizard ─────────────────────────────────────────────────
+
+type WizardStep = 1 | 2 | 3 | 4 | 'review';
+
+const WIZARD_CODING_OPTIONS: Array<{
+  value: FrontalLobeCodingConfidence;
+  label: string;
+  sub: string;
+}> = [
+  { value: 'brand_new', label: 'I am brand new to coding', sub: 'Explain everything step by step' },
+  {
+    value: 'can_edit_with_exact_instructions',
+    label: 'I can edit files if told exactly where',
+    sub: 'Give me precise instructions',
+  },
+  { value: 'understands_basics', label: 'I know the basics', sub: 'Help me with structure and decisions' },
+  { value: 'builds_with_guidance', label: 'I can build features with guidance', sub: 'Point me in the right direction' },
+  { value: 'experienced', label: 'I am experienced', sub: 'Be concise and technical' },
+];
+
+type WizardAnswerChoice = {
+  value: FrontalLobeAnswerStyle;
+  label: string;
+  sub: string;
+  challengeLevel: FrontalLobeChallengeLevel;
+  codeReviewStrictness: FrontalLobeCodeReviewStrictness;
+  tone: FrontalLobeTone;
+};
+
+const WIZARD_ANSWER_OPTIONS: WizardAnswerChoice[] = [
+  {
+    value: 'straight_shooter',
+    label: 'Direct and short',
+    sub: 'Lead with the answer, skip the filler',
+    challengeLevel: 'low',
+    codeReviewStrictness: 'gentle',
+    tone: 'direct',
+  },
+  {
+    value: 'friendly_coach',
+    label: 'Friendly coach',
+    sub: 'Encourage me and celebrate progress',
+    challengeLevel: 'low',
+    codeReviewStrictness: 'gentle',
+    tone: 'friendly',
+  },
+  {
+    value: 'balanced_builder',
+    label: 'Explain why, not just what',
+    sub: 'I want to understand decisions',
+    challengeLevel: 'balanced',
+    codeReviewStrictness: 'normal',
+    tone: 'balanced',
+  },
+  {
+    value: 'red_team_mode',
+    label: 'Challenge my ideas',
+    sub: 'Find edge cases and what I missed',
+    challengeLevel: 'high',
+    codeReviewStrictness: 'strict',
+    tone: 'direct',
+  },
+  {
+    value: 'strict_code_reviewer',
+    label: 'Strict code reviewer',
+    sub: 'Flag every issue, no softening',
+    challengeLevel: 'high',
+    codeReviewStrictness: 'strict',
+    tone: 'direct',
+  },
+];
+
+const WIZARD_CODE_INSTRUCTION_OPTIONS: Array<{
+  value: FrontalLobeCodeInstructionStyle;
+  label: string;
+  sub: string;
+}> = [
+  {
+    value: 'exact_file_and_patch',
+    label: 'Tell me the exact file and where to change it',
+    sub: 'Precise file + section instructions',
+  },
+  { value: 'small_safe_steps', label: 'Give me small safe steps, one at a time', sub: 'Slower but nothing gets missed' },
+  { value: 'full_files', label: 'Give me the full file', sub: 'Replace the whole thing each time' },
+  { value: 'focused_diffs', label: 'Show me just what changed', sub: 'Focused diffs only' },
+  {
+    value: 'high_level_then_code',
+    label: 'Explain the plan first, then the code',
+    sub: 'High-level guidance before diving in',
+  },
+];
+
+const WIZARD_RULE_OPTIONS: Array<{ id: string; label: string }> = [
+  { id: 'wizard-rule-explain-changes', label: 'Explain what changed after editing code' },
+  { id: 'wizard-rule-name-file', label: 'Say which file the code goes in' },
+  { id: 'wizard-rule-small-steps', label: 'Give me small safe steps, one at a time' },
+  { id: 'wizard-rule-flag-risks', label: 'Flag any risks before making changes' },
+  { id: 'wizard-rule-ask-if-unsure', label: "If you're unsure, ask me instead of guessing" },
+];
+
 function getLabel<T extends string>(
   options: Array<{ value: T; label: string }>,
   value: T,
@@ -637,6 +737,20 @@ export function SettingsMemoryVault() {
     () => vault.frontalLobeProfile?.mode ?? DEFAULT_FRONTAL_LOBE_PROFILE.mode,
   );
 
+  // ── Wizard state ────────────────────────────────────────────────────────────
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState<WizardStep>(1);
+  const [wizardCodingConfidence, setWizardCodingConfidence] = useState<FrontalLobeCodingConfidence>(
+    DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence,
+  );
+  const [wizardAnswerStyle, setWizardAnswerStyle] = useState<FrontalLobeAnswerStyle>(
+    DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle,
+  );
+  const [wizardCodeInstruction, setWizardCodeInstruction] = useState<FrontalLobeCodeInstructionStyle>(
+    DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle,
+  );
+  const [wizardSelectedRules, setWizardSelectedRules] = useState<string[]>([]);
+
  const frontalLobePreview = buildFrontalLobePreview(
   {
       mode: frontalLobeMode,
@@ -976,6 +1090,64 @@ export function SettingsMemoryVault() {
     showToast('AI Working Style profile reset to defaults');
   };
 
+  // ── Wizard handlers ──────────────────────────────────────────────────────────
+
+  const openWizard = () => {
+    setWizardCodingConfidence(DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence);
+    setWizardAnswerStyle(DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle);
+    setWizardCodeInstruction(DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle);
+    setWizardSelectedRules([]);
+    setWizardStep(1);
+    setWizardOpen(true);
+  };
+
+  const closeWizard = () => {
+    setWizardOpen(false);
+  };
+
+  const handleWizardSave = () => {
+    const answerChoice = WIZARD_ANSWER_OPTIONS.find((o) => o.value === wizardAnswerStyle);
+    const now = new Date().toISOString();
+    const profile: FrontalLobeProfile = {
+      ...DEFAULT_FRONTAL_LOBE_PROFILE,
+      codingConfidence: wizardCodingConfidence,
+      defaultAnswerStyle: wizardAnswerStyle,
+      challengeLevel: answerChoice?.challengeLevel ?? DEFAULT_FRONTAL_LOBE_PROFILE.challengeLevel,
+      codeReviewStrictness: answerChoice?.codeReviewStrictness ?? DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness,
+      tone: answerChoice?.tone ?? DEFAULT_FRONTAL_LOBE_PROFILE.tone,
+      codeInstructionStyle: wizardCodeInstruction,
+      customRules: wizardSelectedRules,
+      updatedAt: now,
+    };
+
+    const nextVault: PersonalMemoryVault = {
+      ...vault,
+      frontalLobeProfile: profile,
+      updatedAt: now,
+    };
+
+    savePersonalMemoryVault(nextVault);
+    setVault(nextVault);
+
+    // Sync the individual frontalLobe* state so the detailed section stays consistent.
+    setFrontalLobeCodingConfidence(wizardCodingConfidence);
+    setFrontalLobeAnswerStyle(wizardAnswerStyle);
+    setFrontalLobeChallengeLevel(answerChoice?.challengeLevel ?? DEFAULT_FRONTAL_LOBE_PROFILE.challengeLevel);
+    setFrontalLobeCodeReviewStrictness(answerChoice?.codeReviewStrictness ?? DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness);
+    setFrontalLobeTone(answerChoice?.tone ?? DEFAULT_FRONTAL_LOBE_PROFILE.tone);
+    setFrontalLobeCodeInstructionStyle(wizardCodeInstruction);
+    setFrontalLobeCustomRules(wizardSelectedRules.join('\n'));
+
+    closeWizard();
+    showToast('Guided setup saved locally.');
+  };
+
+  const toggleWizardRule = (label: string) => {
+    setWizardSelectedRules((prev) =>
+      prev.includes(label) ? prev.filter((r) => r !== label) : [...prev, label],
+    );
+  };
+
   return (
     <div>
       <div className="memory-vault-hero">
@@ -1003,6 +1175,22 @@ export function SettingsMemoryVault() {
           <div>- Not included in project handoffs unless you explicitly choose that in a future feature</div>
           <div>- Not sent to any AI unless a future permission flow asks you first</div>
         </div>
+      </div>
+
+      <div className="mv-wizard-entry" aria-label="Memory Vault guided setup">
+        <div className="mv-wizard-entry__text">
+          <div className="mv-wizard-entry__title">Not sure where to start?</div>
+          <div className="mv-wizard-entry__sub">
+            Answer a few simple questions so AI knows how to help you.
+          </div>
+        </div>
+        <button
+          className="setting-btn setting-btn--primary"
+          type="button"
+          onClick={openWizard}
+        >
+          Start guided setup
+        </button>
       </div>
 
       {entries.length === 0 && (
@@ -1899,6 +2087,226 @@ export function SettingsMemoryVault() {
           onCancel={() => setEntryToDelete(null)}
           dangerous
         />
+      )}
+
+      {wizardOpen && (
+        <div
+          className="mv-wizard-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Memory Vault Setup Wizard"
+        >
+          <div className="mv-wizard-panel">
+            {/* Header */}
+            <div className="mv-wizard-header">
+              <div className="mv-wizard-progress">
+                {wizardStep === 'review'
+                  ? 'Review your setup'
+                  : `Step ${wizardStep} of 4`}
+              </div>
+              <button
+                className="mv-wizard-close"
+                type="button"
+                aria-label="Cancel guided setup"
+                onClick={closeWizard}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* ── Step 1: Coding confidence ── */}
+            {wizardStep === 1 && (
+              <div className="mv-wizard-step" aria-label="Wizard step 1">
+                <h3 className="mv-wizard-question">How much coding help do you need?</h3>
+                <p className="mv-wizard-hint">This helps AI give you instructions at the right level.</p>
+                <div className="mv-wizard-options">
+                  {WIZARD_CODING_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`mv-wizard-option${wizardCodingConfidence === opt.value ? ' is-selected' : ''}`}
+                      onClick={() => setWizardCodingConfidence(opt.value)}
+                    >
+                      <strong>{opt.label}</strong>
+                      <small>{opt.sub}</small>
+                    </button>
+                  ))}
+                </div>
+                <div className="mv-wizard-nav">
+                  <button className="setting-btn" type="button" onClick={closeWizard}>
+                    Cancel
+                  </button>
+                  <button
+                    className="setting-btn setting-btn--primary"
+                    type="button"
+                    onClick={() => setWizardStep(2)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 2: Answer style ── */}
+            {wizardStep === 2 && (
+              <div className="mv-wizard-step" aria-label="Wizard step 2">
+                <h3 className="mv-wizard-question">How should AI answer you?</h3>
+                <p className="mv-wizard-hint">Pick the style that feels right for how you like to work.</p>
+                <div className="mv-wizard-options">
+                  {WIZARD_ANSWER_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`mv-wizard-option${wizardAnswerStyle === opt.value ? ' is-selected' : ''}`}
+                      onClick={() => setWizardAnswerStyle(opt.value)}
+                    >
+                      <strong>{opt.label}</strong>
+                      <small>{opt.sub}</small>
+                    </button>
+                  ))}
+                </div>
+                <div className="mv-wizard-nav">
+                  <button className="setting-btn" type="button" onClick={() => setWizardStep(1)}>
+                    Back
+                  </button>
+                  <button
+                    className="setting-btn setting-btn--primary"
+                    type="button"
+                    onClick={() => setWizardStep(3)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 3: Code instruction style ── */}
+            {wizardStep === 3 && (
+              <div className="mv-wizard-step" aria-label="Wizard step 3">
+                <h3 className="mv-wizard-question">When AI gives you code, what helps most?</h3>
+                <p className="mv-wizard-hint">Choose how you want code changes delivered to you.</p>
+                <div className="mv-wizard-options">
+                  {WIZARD_CODE_INSTRUCTION_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`mv-wizard-option${wizardCodeInstruction === opt.value ? ' is-selected' : ''}`}
+                      onClick={() => setWizardCodeInstruction(opt.value)}
+                    >
+                      <strong>{opt.label}</strong>
+                      <small>{opt.sub}</small>
+                    </button>
+                  ))}
+                </div>
+                <div className="mv-wizard-nav">
+                  <button className="setting-btn" type="button" onClick={() => setWizardStep(2)}>
+                    Back
+                  </button>
+                  <button
+                    className="setting-btn setting-btn--primary"
+                    type="button"
+                    onClick={() => setWizardStep(4)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 4: Rules (multi-select) ── */}
+            {wizardStep === 4 && (
+              <div className="mv-wizard-step" aria-label="Wizard step 4">
+                <h3 className="mv-wizard-question">Pick rules you want AI to follow.</h3>
+                <p className="mv-wizard-hint">Select any that apply. You can change these later.</p>
+                <div className="mv-wizard-options">
+                  {WIZARD_RULE_OPTIONS.map((rule) => {
+                    const selected = wizardSelectedRules.includes(rule.label);
+                    return (
+                      <button
+                        key={rule.id}
+                        type="button"
+                        className={`mv-wizard-option mv-wizard-option--rule${selected ? ' is-selected' : ''}`}
+                        aria-pressed={selected}
+                        onClick={() => toggleWizardRule(rule.label)}
+                      >
+                        <span className="mv-wizard-option__check">{selected ? '✓' : ''}</span>
+                        <strong>{rule.label}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mv-wizard-nav">
+                  <button className="setting-btn" type="button" onClick={() => setWizardStep(3)}>
+                    Back
+                  </button>
+                  <button
+                    className="setting-btn setting-btn--primary"
+                    type="button"
+                    onClick={() => setWizardStep('review')}
+                  >
+                    Review my setup
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Review screen ── */}
+            {wizardStep === 'review' && (
+              <div className="mv-wizard-step" aria-label="Wizard review screen">
+                <h3 className="mv-wizard-question">Here is your AI Working Style.</h3>
+                <p className="mv-wizard-hint mv-wizard-hint--privacy">
+                  Saved locally on this device only. Not synced to cloud, not included in project exports.
+                </p>
+                <div className="mv-wizard-review" aria-label="Guided setup summary">
+                  <div className="mv-wizard-review__row">
+                    <span className="mv-wizard-review__label">Coding experience</span>
+                    <span className="mv-wizard-review__value">
+                      {WIZARD_CODING_OPTIONS.find((o) => o.value === wizardCodingConfidence)?.label ?? wizardCodingConfidence}
+                    </span>
+                  </div>
+                  <div className="mv-wizard-review__row">
+                    <span className="mv-wizard-review__label">Answer style</span>
+                    <span className="mv-wizard-review__value">
+                      {WIZARD_ANSWER_OPTIONS.find((o) => o.value === wizardAnswerStyle)?.label ?? wizardAnswerStyle}
+                    </span>
+                  </div>
+                  <div className="mv-wizard-review__row">
+                    <span className="mv-wizard-review__label">Code delivery</span>
+                    <span className="mv-wizard-review__value">
+                      {WIZARD_CODE_INSTRUCTION_OPTIONS.find((o) => o.value === wizardCodeInstruction)?.label ?? wizardCodeInstruction}
+                    </span>
+                  </div>
+                  <div className="mv-wizard-review__row">
+                    <span className="mv-wizard-review__label">Rules</span>
+                    <span className="mv-wizard-review__value">
+                      {wizardSelectedRules.length === 0
+                        ? 'None selected'
+                        : wizardSelectedRules.join(', ')}
+                    </span>
+                  </div>
+                  <div className="mv-wizard-review__row mv-wizard-review__row--boundary">
+                    <span className="mv-wizard-review__label">Export boundary</span>
+                    <span className="mv-wizard-review__value">
+                      This AI Working Style profile stays local. It is not included in project exports or AI handoffs unless you choose to share it.
+                    </span>
+                  </div>
+                </div>
+                <div className="mv-wizard-nav">
+                  <button className="setting-btn" type="button" onClick={() => setWizardStep(4)}>
+                    Back
+                  </button>
+                  <button
+                    className="setting-btn setting-btn--primary"
+                    type="button"
+                    onClick={handleWizardSave}
+                  >
+                    Save my AI setup
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

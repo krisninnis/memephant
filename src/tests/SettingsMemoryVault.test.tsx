@@ -1473,3 +1473,317 @@ describe('Frontal Lobe AI Working Style profile', () => {
     expect(modeSelect.value).toBe('default_on');
   });
 });
+
+describe('Memory Vault Setup Wizard', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    jest.restoreAllMocks();
+  });
+
+  it('"Start guided setup" button is visible on the Memory Vault page', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.getByRole('button', { name: 'Start guided setup' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Memory Vault guided setup')).toBeInTheDocument();
+    expect(
+      screen.getByText('Answer a few simple questions so AI knows how to help you.'),
+    ).toBeInTheDocument();
+  });
+
+  it('clicking "Start guided setup" opens the wizard dialog', () => {
+    render(<SettingsMemoryVault />);
+
+    expect(screen.queryByRole('dialog', { name: 'Memory Vault Setup Wizard' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    expect(screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Wizard step 1')).toBeInTheDocument();
+    expect(screen.getByText('How much coding help do you need?')).toBeInTheDocument();
+  });
+
+  it('wizard shows step 1 of 4 progress indicator', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
+  });
+
+  it('Cancel button on step 1 closes the wizard without saving', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+    expect(screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' })).toBeInTheDocument();
+
+    // Click Cancel on step 1
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Memory Vault Setup Wizard' })).toBeNull();
+    expect(window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY)).toBeNull();
+  });
+
+  it('close (×) button cancels the wizard without saving', () => {
+    render(<SettingsMemoryVault />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel guided setup' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Memory Vault Setup Wizard' })).toBeNull();
+    expect(window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY)).toBeNull();
+  });
+
+  it('Next advances from step 1 to step 2', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+
+    expect(within(wizard).getByLabelText('Wizard step 2')).toBeInTheDocument();
+    expect(within(wizard).getByText('How should AI answer you?')).toBeInTheDocument();
+    expect(within(wizard).getByText('Step 2 of 4')).toBeInTheDocument();
+  });
+
+  it('Next advances from step 2 to step 3', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → step 2
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → step 3
+
+    expect(within(wizard).getByLabelText('Wizard step 3')).toBeInTheDocument();
+    expect(within(wizard).getByText('When AI gives you code, what helps most?')).toBeInTheDocument();
+  });
+
+  it('Next advances from step 3 to step 4', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 2
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 3
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 4
+
+    expect(within(wizard).getByLabelText('Wizard step 4')).toBeInTheDocument();
+    expect(within(wizard).getByText('Pick rules you want AI to follow.')).toBeInTheDocument();
+  });
+
+  it('Back on step 2 returns to step 1', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 2
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Back' })); // → 1
+
+    expect(within(wizard).getByLabelText('Wizard step 1')).toBeInTheDocument();
+  });
+
+  it('step 4 advances to review screen via "Review my setup"', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 2
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 3
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 4
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+
+    expect(within(wizard).getByLabelText('Wizard review screen')).toBeInTheDocument();
+    expect(within(wizard).getByText('Here is your AI Working Style.')).toBeInTheDocument();
+    expect(within(wizard).getByText('Review your setup')).toBeInTheDocument();
+  });
+
+  it('step 1 selection appears in the review screen', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    // Step 1: pick "I am experienced"
+    fireEvent.click(within(wizard).getByRole('button', { name: /I am experienced/i }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    // Step 2: default, Next
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    // Step 3: default, Next
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    // Step 4: Review
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+
+    const review = within(wizard).getByLabelText('Guided setup summary');
+    expect(review).toHaveTextContent('I am experienced');
+  });
+
+  it('step 2 selection appears in the review screen', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    // Step 1: Next
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    // Step 2: pick "Direct and short"
+    fireEvent.click(within(wizard).getByRole('button', { name: /Direct and short/i }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    // Step 3: Next
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    // Step 4: Review
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+
+    const review = within(wizard).getByLabelText('Guided setup summary');
+    expect(review).toHaveTextContent('Direct and short');
+  });
+
+  it('step 4 rule selections appear in the review screen', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    // Navigate to step 4
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 2
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 3
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 4
+
+    // Select two rules
+    fireEvent.click(within(wizard).getByRole('button', { name: /Explain what changed after editing code/i }));
+    fireEvent.click(within(wizard).getByRole('button', { name: /Flag any risks before making changes/i }));
+
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+
+    const review = within(wizard).getByLabelText('Guided setup summary');
+    expect(review).toHaveTextContent('Explain what changed after editing code');
+    expect(review).toHaveTextContent('Flag any risks before making changes');
+  });
+
+  it('"Save my AI setup" writes frontalLobeProfile to Personal Memory Vault storage', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    // Step 1: pick brand_new
+    fireEvent.click(within(wizard).getByRole('button', { name: /I am brand new to coding/i }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+
+    // Step 2: pick "Friendly coach"
+    fireEvent.click(within(wizard).getByRole('button', { name: /Friendly coach/i }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+
+    // Step 3: pick "Give me the full file"
+    fireEvent.click(within(wizard).getByRole('button', { name: /Give me the full file/i }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+
+    // Step 4: no rules selected
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+
+    // Save
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Save my AI setup' }));
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    expect(stored).not.toBeNull();
+
+    const parsed = JSON.parse(stored ?? '{}') as { frontalLobeProfile?: Record<string, unknown> };
+    expect(parsed.frontalLobeProfile).toBeDefined();
+    expect(parsed.frontalLobeProfile?.codingConfidence).toBe('brand_new');
+    expect(parsed.frontalLobeProfile?.defaultAnswerStyle).toBe('friendly_coach');
+    expect(parsed.frontalLobeProfile?.tone).toBe('friendly');
+    expect(parsed.frontalLobeProfile?.challengeLevel).toBe('low');
+    expect(parsed.frontalLobeProfile?.codeInstructionStyle).toBe('full_files');
+    expect(parsed.frontalLobeProfile?.customRules).toEqual([]);
+  });
+
+  it('saving wizard writes rules to customRules in frontalLobeProfile', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    // Navigate to step 4
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 2
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 3
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 4
+
+    fireEvent.click(within(wizard).getByRole('button', { name: /Say which file the code goes in/i }));
+    fireEvent.click(within(wizard).getByRole('button', { name: /If you're unsure, ask me instead of guessing/i }));
+
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Save my AI setup' }));
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    const parsed = JSON.parse(stored ?? '{}') as { frontalLobeProfile?: Record<string, unknown> };
+    expect(parsed.frontalLobeProfile?.customRules).toEqual([
+      'Say which file the code goes in',
+      "If you're unsure, ask me instead of guessing",
+    ]);
+  });
+
+  it('saving wizard does not add consent ledger events', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    // Walk all 4 steps with defaults
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 2
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 3
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' })); // → 4
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Save my AI setup' }));
+
+    const stored = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+    const parsed = JSON.parse(stored ?? '{}') as { consentLedger?: unknown[] };
+    expect(parsed.consentLedger?.length ?? 0).toBe(0);
+  });
+
+  it('saving wizard closes the dialog', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Save my AI setup' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Memory Vault Setup Wizard' })).toBeNull();
+  });
+
+  it('review screen shows the export boundary disclaimer', () => {
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Next' }));
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Review my setup' }));
+
+    expect(
+      within(wizard).getByText(/not included in project exports or AI handoffs/i),
+    ).toBeInTheDocument();
+  });
+
+  it('cancel on step 1 does not mutate storage even when vault was pre-populated', () => {
+    const existingVault = createDefaultPersonalMemoryVault();
+    savePersonalMemoryVault(existingVault);
+    const snapshotBefore = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
+
+    render(<SettingsMemoryVault />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided setup' }));
+
+    const wizard = screen.getByRole('dialog', { name: 'Memory Vault Setup Wizard' });
+    fireEvent.click(within(wizard).getByRole('button', { name: 'Cancel' }));
+
+    expect(window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY)).toBe(snapshotBefore);
+  });
+});
