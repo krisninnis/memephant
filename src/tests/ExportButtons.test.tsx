@@ -3,6 +3,7 @@ import { ExportButtons } from '../components/Workspace/ExportButtons';
 import type { ProjectMemory } from '../types/memphant-types';
 import { DEFAULT_SETTINGS } from '../types/memphant-types';
 import { copyExportToClipboard } from '../services/tauriActions';
+import { formatForPlatform } from '../utils/exportFormatters';
 
 const mockProject: ProjectMemory = {
   schema_version: '1.2.0',
@@ -96,6 +97,8 @@ jest.mock('../components/Workspace/ContextPassportModal', () => ({
 describe('ExportButtons export preview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockProjectStoreState.targetPlatform = 'claude';
+    (formatForPlatform as jest.Mock).mockReturnValue('EXACT_EXPORT_TEXT');
   });
 
   async function openPreview() {
@@ -145,5 +148,39 @@ describe('ExportButtons export preview', () => {
 
     expect(screen.getByText(/Private vault contents are excluded unless explicitly included/i))
       .toBeInTheDocument();
+  });
+
+  it('uses concise smart mode by default for ChatGPT exports', async () => {
+    mockProjectStoreState.targetPlatform = 'chatgpt';
+
+    await openPreview();
+
+    expect(formatForPlatform).toHaveBeenCalledWith(
+      mockProject,
+      'chatgpt',
+      'Keep going',
+      'smart',
+      expect.objectContaining({ id: 'chatgpt' }),
+      'RECENT ACTIVITY BLOCK',
+      expect.any(String),
+    );
+  });
+
+  it('shows a compressed copy option for risky large ChatGPT exports', async () => {
+    mockProjectStoreState.targetPlatform = 'chatgpt';
+    (formatForPlatform as jest.Mock).mockReturnValue(`LARGE${'\n\n\n\n'.repeat(12000)}END`);
+
+    await openPreview();
+
+    expect(screen.getByText(/Export health: Needs a look/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /copy compressed version/i }));
+
+    await waitFor(() => {
+      expect(copyExportToClipboard).toHaveBeenCalledWith(
+        expect.not.stringContaining('\n\n\n\n'),
+        'chatgpt',
+      );
+    });
   });
 });

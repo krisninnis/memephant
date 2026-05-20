@@ -561,6 +561,27 @@ describe('smart mode', () => {
 
 // ─── Edge cases ───────────────────────────────────────────────────────────────
 
+describe('Frontal Lobe append safety', () => {
+  it('does not append a second AI Working Style block if one is already present', () => {
+    const project = makeProject({
+      aiInstructions: '# AI Working Style\nAlready included by project instructions.',
+    });
+    const block = '# AI Working Style\nUse this working style when helping me.';
+
+    const output = formatForPlatform(
+      project,
+      'chatgpt',
+      undefined,
+      'full',
+      undefined,
+      undefined,
+      block,
+    );
+
+    expect(output.match(/^# AI Working Style\s*$/gm)).toHaveLength(1);
+  });
+});
+
 describe('edge cases', () => {
   it('handles a project with all empty fields gracefully', () => {
     const project = makeProject({

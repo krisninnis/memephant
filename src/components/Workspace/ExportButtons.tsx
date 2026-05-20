@@ -33,6 +33,11 @@ import {
 import { loadPersonalMemoryVault } from '../../services/personalMemoryVaultStorage';
 import { scoreExport } from '../../utils/exportQuality';
 import {
+  analyzeExportHealth,
+  compressExportForPaste,
+  type ExportHealthResult,
+} from '../../utils/exportHealth';
+import {
   ensureValidPlatformId,
   getEnabledPlatforms,
   getPlatformConfig,
@@ -85,6 +90,8 @@ type ExportPreview = {
   aiWorkingStyleIncluded: boolean;
   recentActivityIncluded: boolean;
   characterCount: number;
+  compressedExportText: string;
+  health: ExportHealthResult;
   changedFiles: string[];
 };
 
@@ -100,7 +107,12 @@ function getCopiedModeLabel(mode: PreviewMode): string {
   if (mode === 'delta') return 'just the essentials';
   if (mode === 'specialist') return 'a specific task';
   if (mode === 'deep-state') return 'full context and deeper project memory';
+  if (mode === 'smart') return 'concise context';
   return 'full context';
+}
+
+function getDefaultPreviewMode(platformId: string): ExportMode {
+  return platformId === 'chatgpt' ? 'smart' : 'full';
 }
 
 export function ExportButtons() {
@@ -283,6 +295,7 @@ export function ExportButtons() {
     const finalExportText = preamble + preparedExportText;
     const aiWorkingStyleIncluded = Boolean(frontalLobeBlock)
       && finalExportText.includes('# AI Working Style');
+    const health = analyzeExportHealth(finalExportText);
 
     return {
       mode,
@@ -295,6 +308,8 @@ export function ExportButtons() {
       aiWorkingStyleIncluded,
       recentActivityIncluded: memoryBridgeMode !== 'auto' && Boolean(recentActivity?.trim()),
       characterCount: finalExportText.length,
+      compressedExportText: compressExportForPaste(finalExportText),
+      health,
       changedFiles,
     };
   }, [
@@ -339,6 +354,7 @@ export function ExportButtons() {
     const finalExportText = preamble + preparedExportText;
     const aiWorkingStyleIncluded = Boolean(frontalLobeBlock)
       && finalExportText.includes('# AI Working Style');
+    const health = analyzeExportHealth(finalExportText);
 
     return {
       mode: 'deep-state',
@@ -351,6 +367,8 @@ export function ExportButtons() {
       aiWorkingStyleIncluded,
       recentActivityIncluded: memoryBridgeMode !== 'auto' && Boolean(recentActivity?.trim()),
       characterCount: finalExportText.length,
+      compressedExportText: compressExportForPaste(finalExportText),
+      health,
       changedFiles,
     };
   }, [
@@ -396,18 +414,26 @@ export function ExportButtons() {
     showToast,
   ]);
 
-  const handleCopyPreview = useCallback(async () => {
+  const handleCopyPreview = useCallback(async (compressed = false) => {
     if (!activeProject || !exportPreview) return;
 
     try {
-      await copyExportToClipboard(exportPreview.exportText, exportPreview.copyPlatformId);
+      const textToCopy = compressed
+        ? exportPreview.compressedExportText
+        : exportPreview.exportText;
+
+      await copyExportToClipboard(textToCopy, exportPreview.copyPlatformId);
 
       setCopied(true);
       if (exportPreview.mode === 'deep-state') {
         setManifestCopied(true);
       }
 
-      showToast(`Copied ${getCopiedModeLabel(exportPreview.mode)} for ${exportPreview.targetPlatformName}`);
+      showToast(
+        compressed
+          ? `Copied compressed ${getCopiedModeLabel(exportPreview.mode)} for ${exportPreview.targetPlatformName}`
+          : `Copied ${getCopiedModeLabel(exportPreview.mode)} for ${exportPreview.targetPlatformName}`,
+      );
 
       updateLastAiSession(activeProject.id, {
         platform: exportPreview.targetPlatformId,
@@ -449,8 +475,8 @@ export function ExportButtons() {
   ]);
 
   const handlePrimaryCopy = useCallback(async () => {
-    await handleInspectExport('full');
-  }, [handleInspectExport]);
+    await handleInspectExport(getDefaultPreviewMode(selectedPlatform.id));
+  }, [handleInspectExport, selectedPlatform.id]);
 
   const menuOptions = useMemo<CopyOption[]>(() => {
     const options: CopyOption[] = [
@@ -530,7 +556,7 @@ export function ExportButtons() {
       <button
         type="button"
         className="export-inspect-btn"
-        onClick={() => void handleInspectExport('full')}
+        onClick={() => void handleInspectExport(getDefaultPreviewMode(selectedPlatform.id))}
         disabled={!activeProject || previewLoading}
         title="Preview the exact AI handoff before copying"
       >
@@ -988,6 +1014,26 @@ export function ExportButtons() {
               exact text that will be copied.
             </p>
 
+            {exportPreview.health.riskLevel !== 'safe' && (
+              <div
+                className={`export-preview-health export-preview-health--${exportPreview.health.riskLevel}`}
+                role="status"
+                aria-live="polite"
+              >
+                <strong>
+                  Export health: {exportPreview.health.riskLevel === 'high' ? 'High risk' : 'Needs a look'}
+                </strong>
+                <span>
+                  Approx. {exportPreview.health.approximateTokens.toLocaleString()} tokens.
+                </span>
+                <ul>
+                  {exportPreview.health.warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {activeProject && (
               <ExportDiffPanel
                 summary={getExportDiffSummary(
@@ -1013,6 +1059,16 @@ export function ExportButtons() {
               >
                 Close
               </button>
+              {exportPreview.targetPlatformId === 'chatgpt'
+                && exportPreview.health.suggestedAction === 'compress' && (
+                <button
+                  type="button"
+                  className="export-preview-actions__secondary"
+                  onClick={() => void handleCopyPreview(true)}
+                >
+                  Copy compressed version
+                </button>
+              )}
               <button
                 type="button"
                 className="export-preview-actions__primary"

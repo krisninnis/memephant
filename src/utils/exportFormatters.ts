@@ -1108,5 +1108,6 @@ export function formatForPlatform(
  */
 function appendFrontalLobe(base: string, block?: string): string {
   if (!block || !block.trim()) return base;
+  if (/^# AI Working Style\s*$/m.test(base)) return base;
   return base + '\n\n' + sanitize(block);
 }
