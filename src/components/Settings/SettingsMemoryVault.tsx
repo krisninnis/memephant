@@ -751,8 +751,8 @@ export function SettingsMemoryVault() {
   );
   const [wizardSelectedRules, setWizardSelectedRules] = useState<string[]>([]);
 
- const frontalLobePreview = buildFrontalLobePreview(
-  {
+  const frontalLobePreview = buildFrontalLobePreview(
+    {
       mode: frontalLobeMode,
       defaultAnswerStyle: frontalLobeAnswerStyle,
       challengeLevel: frontalLobeChallengeLevel,
@@ -1559,12 +1559,30 @@ export function SettingsMemoryVault() {
       <div className="settings-group">
         <div className="settings-group-title">AI Answer Style</div>
         <div className="memory-vault-answer-style">
-          <p className="memory-vault-answer-style__intro">
-            Pick a style preset to prefill the form below. Presets become private memories you
-            control — they never change project exports or AI handoffs.
-          </p>
+          <div className="memory-vault-answer-style__hero">
+            <div className="memory-vault-answer-style__badge">
+              Portable AI identity
+            </div>
+
+            <h3 className="memory-vault-answer-style__title">
+              Teach AI how to work with you once.
+            </h3>
+
+            <p className="memory-vault-answer-style__description">
+              Memephant remembers your working style locally, so you do not have to retrain every AI from scratch.
+            </p>
+
+            <p className="memory-vault-answer-style__description">
+              Your preferences, workflows, and AI collaboration style become private memories you control — a user-owned context layer that stays with you across tools.
+            </p>
+
+            <div className="memory-vault-answer-style__privacy">
+              Stored privately on your device. Included in exports only when you choose.
+            </div>
+          </div>
+
           <label className="memory-vault-field">
-            <span>Answer style preset</span>
+            <span>Choose how AIs should help you</span>
             <select
               aria-label="Answer style preset"
               className="memory-vault-input"
@@ -1586,6 +1604,7 @@ export function SettingsMemoryVault() {
               ))}
             </select>
           </label>
+
           {selectedAnswerStyleId && (() => {
             const selected = AI_ANSWER_STYLE_PRESETS.find((p) => p.id === selectedAnswerStyleId);
             return selected ? (

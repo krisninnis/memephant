@@ -2121,3 +2121,43 @@
   margin-bottom: -4px;
   text-transform: uppercase;
 }
+.memory-vault-answer-style__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 18px;
+}
+
+.memory-vault-answer-style__badge {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cfcfcf;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.memory-vault-answer-style__title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.memory-vault-answer-style__description {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+}
+
+.memory-vault-answer-style__privacy {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  padding-top: 6px;
+}
