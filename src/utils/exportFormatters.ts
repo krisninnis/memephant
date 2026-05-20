@@ -447,8 +447,14 @@ function compactList(items: string[], maxItems: number, indent = ''): string {
 const LAUNCHPAD_QUICK_START_SUMMARY =
   'LaunchPad CRM is a simple CRM for freelancers, solo founders, and small service businesses to track leads, follow-ups, customer notes, and deal status without needing a heavy CRM like Salesforce or HubSpot.';
 
-const QUICK_START_FALLBACK_TASK =
-  'Help me design the follow-up reminder flow for this CRM. Keep it simple, step-by-step, and beginner-friendly.';
+const QUICK_START_FALLBACK_TASKS = {
+  aiTooling: 'Help me continue improving onboarding, export flow, and cross-AI continuity.',
+  crm: 'Help me design the follow-up reminder flow for this CRM.',
+  gameDev: 'Help me continue gameplay, progression, and UX design.',
+  generic: 'Help me continue from the current project state. Ask before assuming missing details.',
+} as const;
+
+type QuickStartProjectCategory = keyof typeof QUICK_START_FALLBACK_TASKS;
 
 function isLaunchPadProject(project: ProjectMemory): boolean {
   return /launchpad\s+crm/i.test(project.name);
@@ -477,6 +483,39 @@ function isGenericTask(value: string | undefined | null): boolean {
   ].some((pattern) => pattern.test(clean));
 }
 
+function getProjectCategoryText(project: ProjectMemory): string {
+  const maybeTags = (project as ProjectMemory & { tags?: unknown }).tags;
+  const tags = Array.isArray(maybeTags)
+    ? maybeTags.filter((tag): tag is string => typeof tag === 'string')
+    : [];
+
+  return [
+    project.name,
+    project.summary,
+    project.currentState,
+    ...project.goals,
+    ...tags,
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+
+function getQuickStartProjectCategory(project: ProjectMemory): QuickStartProjectCategory {
+  const text = getProjectCategoryText(project);
+
+  if (/\b(memephant|ai tooling|ai handoff|handoff export|cross-ai|memory vault|context passport)\b/i.test(text)) {
+    return 'aiTooling';
+  }
+
+  if (/\b(crm|customer relationship|leads?|follow-?ups?|deal status|pipeline)\b/i.test(text)) {
+    return 'crm';
+  }
+
+  if (/\b(game|gameplay|progression|level design|player|quest|unity|godot|unreal)\b/i.test(text)) {
+    return 'gameDev';
+  }
+
+  return 'generic';
+}
+
 function getQuickStartSummary(project: ProjectMemory): string {
   if (isLaunchPadProject(project) || isGenericSummary(project.summary)) {
     return LAUNCHPAD_QUICK_START_SUMMARY;
@@ -485,8 +524,11 @@ function getQuickStartSummary(project: ProjectMemory): string {
   return project.summary;
 }
 
-function getQuickStartTask(task?: string): string {
-  if (isGenericTask(task)) return QUICK_START_FALLBACK_TASK;
+function getQuickStartTask(project: ProjectMemory, task?: string): string {
+  if (isGenericTask(task)) {
+    return QUICK_START_FALLBACK_TASKS[getQuickStartProjectCategory(project)];
+  }
+
   return task!.trim();
 }
 
@@ -516,7 +558,7 @@ function formatQuickStart(
   const lines: string[] = [];
   const workingStyle = condensedFrontalLobeBlock(frontalLobeBlock);
   const summary = getQuickStartSummary(project);
-  const immediateTask = getQuickStartTask(task);
+  const immediateTask = getQuickStartTask(project, task);
 
   lines.push(`# Quick Start Export: ${sanitize(project.name)}`);
   lines.push('');

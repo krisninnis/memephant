@@ -564,8 +564,14 @@ describe('smart mode', () => {
 describe('quick mode', () => {
   const launchPadFallbackSummary =
     'LaunchPad CRM is a simple CRM for freelancers, solo founders, and small service businesses to track leads, follow-ups, customer notes, and deal status without needing a heavy CRM like Salesforce or HubSpot.';
-  const fallbackTask =
-    'Help me design the follow-up reminder flow for this CRM. Keep it simple, step-by-step, and beginner-friendly.';
+  const aiToolingFallbackTask =
+    'Help me continue improving onboarding, export flow, and cross-AI continuity.';
+  const crmFallbackTask =
+    'Help me design the follow-up reminder flow for this CRM.';
+  const gameFallbackTask =
+    'Help me continue gameplay, progression, and UX design.';
+  const genericFallbackTask =
+    'Help me continue from the current project state. Ask before assuming missing details.';
 
   it('creates a compact fresh-chat handoff under the safe size threshold', () => {
     const project = makeProject({
@@ -605,7 +611,7 @@ describe('quick mode', () => {
     expect(output).not.toContain('Add a brief description');
   });
 
-  it('replaces generic immediate tasks in Quick Start Export', () => {
+  it('uses the CRM fallback task for LaunchPad CRM', () => {
     const output = formatForPlatform(
       makeProject({ name: 'LaunchPad CRM' }),
       'chatgpt',
@@ -613,8 +619,68 @@ describe('quick mode', () => {
       'quick',
     );
 
-    expect(output).toContain(fallbackTask);
+    expect(output).toContain(crmFallbackTask);
     expect(output).not.toContain('Help me continue from the current state.');
+  });
+
+  it('uses the AI-tooling fallback task for Memephant', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'memephant-desktop',
+        summary: 'Local-first AI memory and handoff tooling for cross-AI continuity.',
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(aiToolingFallbackTask);
+    expect(output).not.toContain(crmFallbackTask);
+  });
+
+  it('uses the game/dev fallback task for game projects', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'Dungeon Runner',
+        summary: 'A browser game with progression, quests, and player upgrades.',
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(gameFallbackTask);
+  });
+
+  it('does not leak CRM fallback tasks into unrelated projects', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'InvoicePilot',
+        summary: 'A lightweight invoicing workflow for designers.',
+        goals: ['Improve payment reminders'],
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(genericFallbackTask);
+    expect(output).not.toContain(crmFallbackTask);
+  });
+
+  it('keeps a safe generic fallback for uncategorised projects', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'Notebook Cleaner',
+        summary: 'Organises scattered research notes into a calmer review queue.',
+        goals: ['Improve capture flow'],
+      }),
+      'chatgpt',
+      '',
+      'quick',
+    );
+
+    expect(output).toContain(genericFallbackTask);
   });
 
   it('preserves non-placeholder custom summaries', () => {
@@ -642,7 +708,7 @@ describe('quick mode', () => {
     );
 
     expect(output).toContain(task);
-    expect(output).not.toContain(fallbackTask);
+    expect(output).not.toContain(crmFallbackTask);
   });
 
   it('includes AI Working Style only once', () => {
