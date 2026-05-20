@@ -572,6 +572,14 @@ describe('quick mode', () => {
     'Help me continue gameplay, progression, and UX design.';
   const genericFallbackTask =
     'Help me continue from the current project state. Ask before assuming missing details.';
+  const placeholderCurrentState =
+    'Write 1-2 sentences describing what is true right now after this session. What was built, fixed, or decided?';
+  const memephantCurrentState =
+    'Memephant Desktop is live as a local-first cross-AI project handoff app. Recent work improved Memory Vault, Quick Start exports, export reliability, and fresh ChatGPT handoff compatibility.';
+  const launchPadCurrentState =
+    'LaunchPad CRM is at the early MVP design stage, focused on lead tracking, follow-up reminders, notes, and deal status.';
+  const genericCurrentState =
+    'The project is ready to continue from the available saved context.';
 
   it('creates a compact fresh-chat handoff under the safe size threshold', () => {
     const project = makeProject({
@@ -609,6 +617,52 @@ describe('quick mode', () => {
 
     expect(output).toContain(launchPadFallbackSummary);
     expect(output).not.toContain('Add a brief description');
+  });
+
+  it('removes placeholder currentState from Quick Start Export', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'Notebook Cleaner',
+        summary: 'Organises scattered research notes into a calmer review queue.',
+        currentState: placeholderCurrentState,
+      }),
+      'chatgpt',
+      'Review the next interaction.',
+      'quick',
+    );
+
+    expect(output).toContain(genericCurrentState);
+    expect(output).not.toContain('Write 1-2 sentences');
+    expect(output).not.toContain('What was built, fixed, or decided');
+  });
+
+  it('uses the Memephant currentState fallback for Memephant projects', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'memephant-desktop',
+        summary: 'Local-first AI memory and handoff tooling for cross-AI continuity.',
+        currentState: placeholderCurrentState,
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(memephantCurrentState);
+  });
+
+  it('uses the LaunchPad CRM currentState fallback for LaunchPad CRM', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'LaunchPad CRM',
+        currentState: placeholderCurrentState,
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(launchPadCurrentState);
   });
 
   it('uses the CRM fallback task for LaunchPad CRM', () => {
@@ -709,6 +763,61 @@ describe('quick mode', () => {
 
     expect(output).toContain(task);
     expect(output).not.toContain(crmFallbackTask);
+  });
+
+  it('filters placeholder goals and rules while preserving real items', () => {
+    const output = formatForPlatform(
+      makeProject({
+        goals: [
+          'Only include if a genuinely new goal emerged this session',
+          'Ship a calm Quick Start export',
+        ],
+        rules: [
+          'List only things actively being worked on right now — not done, not future',
+          'Keep exports beginner-friendly',
+        ],
+      }),
+      'chatgpt',
+      'Review the export shape.',
+      'quick',
+    );
+
+    expect(output).toContain('Ship a calm Quick Start export');
+    expect(output).toContain('Keep exports beginner-friendly');
+    expect(output).not.toContain('Only include if');
+    expect(output).not.toContain('not done, not future');
+  });
+
+  it('uses a safe rule fallback when all rules are placeholders', () => {
+    const output = formatForPlatform(
+      makeProject({
+        rules: [
+          'Only include genuinely new decisions made this session',
+          'List only things actively being worked on right now — not done, not future',
+        ],
+      }),
+      'chatgpt',
+      'Review the export shape.',
+      'quick',
+    );
+
+    expect(output).toContain('- Ask before assuming missing details.');
+    expect(output).not.toContain('Only include genuinely');
+  });
+
+  it('does not mutate saved project data while filtering placeholders', () => {
+    const project = makeProject({
+      currentState: placeholderCurrentState,
+      goals: ['Only include if a genuinely new goal emerged this session', 'Real goal'],
+      rules: ['Only include genuinely new decisions made this session', 'Real rule'],
+      nextSteps: ['List the immediate next actions that should happen after this session'],
+      decisions: [{ decision: 'Only include genuinely new decisions made this session' }],
+    });
+    const before = JSON.stringify(project);
+
+    formatForPlatform(project, 'chatgpt', undefined, 'quick');
+
+    expect(JSON.stringify(project)).toBe(before);
   });
 
   it('includes AI Working Style only once', () => {

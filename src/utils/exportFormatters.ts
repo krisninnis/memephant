@@ -9,8 +9,10 @@ import type {
   Platform,
   ExportMode,
   GitCommit,
+  Decision,
 } from '../types/memphant-types';
 import { getPlatformConfig } from './platformRegistry';
+import { isMemphantPlaceholderValue } from './memphantPlaceholders';
 
 const STANDARD_PATTERNS = [
   // OpenAI
@@ -438,9 +440,14 @@ function truncateText(value: string, maxLength: number): string {
   return `${clean.slice(0, maxLength - 1).trimEnd()}...`;
 }
 
-function compactList(items: string[], maxItems: number, indent = ''): string {
+function compactList(
+  items: string[],
+  maxItems: number,
+  indent = '',
+  emptyLabel = '(none yet)',
+): string {
   const cleanItems = sanitizeList(items.map((item) => item.trim()).filter(Boolean)).slice(0, maxItems);
-  if (!cleanItems.length) return `${indent}- (none yet)`;
+  if (!cleanItems.length) return `${indent}- ${emptyLabel}`;
   return cleanItems.map((item) => `${indent}- ${truncateText(item, 180)}`).join('\n');
 }
 
@@ -455,6 +462,23 @@ const QUICK_START_FALLBACK_TASKS = {
 } as const;
 
 type QuickStartProjectCategory = keyof typeof QUICK_START_FALLBACK_TASKS;
+
+const MEMEPHANT_QUICK_START_CURRENT_STATE =
+  'Memephant Desktop is live as a local-first cross-AI project handoff app. Recent work improved Memory Vault, Quick Start exports, export reliability, and fresh ChatGPT handoff compatibility.';
+
+const LAUNCHPAD_QUICK_START_CURRENT_STATE =
+  'LaunchPad CRM is at the early MVP design stage, focused on lead tracking, follow-up reminders, notes, and deal status.';
+
+const GENERIC_QUICK_START_CURRENT_STATE =
+  'The project is ready to continue from the available saved context.';
+
+const QUICK_START_EXTRA_PLACEHOLDER_PATTERNS = [
+  /add a brief description/i,
+  /what was built, fixed, or decided/i,
+  /only include if/i,
+  /only include genuinely/i,
+  /not done, not future/i,
+];
 
 function isLaunchPadProject(project: ProjectMemory): boolean {
   return /launchpad\s+crm/i.test(project.name);
@@ -481,6 +505,16 @@ function isGenericTask(value: string | undefined | null): boolean {
     /\(not set\)/i,
     /\(none\)/i,
   ].some((pattern) => pattern.test(clean));
+}
+
+function isQuickStartPlaceholder(value: string | undefined | null): boolean {
+  const clean = value?.trim() ?? '';
+  if (!clean) return true;
+
+  return (
+    isMemphantPlaceholderValue(clean)
+    || QUICK_START_EXTRA_PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(clean))
+  );
 }
 
 function getProjectCategoryText(project: ProjectMemory): string {
@@ -532,6 +566,30 @@ function getQuickStartTask(project: ProjectMemory, task?: string): string {
   return task!.trim();
 }
 
+function getQuickStartCurrentState(project: ProjectMemory): string {
+  if (!isQuickStartPlaceholder(project.currentState) && project.currentState.trim().length >= 12) {
+    return project.currentState;
+  }
+
+  if (getQuickStartProjectCategory(project) === 'aiTooling') {
+    return MEMEPHANT_QUICK_START_CURRENT_STATE;
+  }
+
+  if (isLaunchPadProject(project)) {
+    return LAUNCHPAD_QUICK_START_CURRENT_STATE;
+  }
+
+  return GENERIC_QUICK_START_CURRENT_STATE;
+}
+
+function filterQuickStartStrings(items: string[]): string[] {
+  return items.map((item) => item.trim()).filter((item) => !isQuickStartPlaceholder(item));
+}
+
+function filterQuickStartDecisions(decisions: Decision[]): Decision[] {
+  return decisions.filter((decision) => !isQuickStartPlaceholder(decision.decision));
+}
+
 function condensedFrontalLobeBlock(block?: string): string | null {
   if (!block?.trim()) return null;
 
@@ -559,6 +617,11 @@ function formatQuickStart(
   const workingStyle = condensedFrontalLobeBlock(frontalLobeBlock);
   const summary = getQuickStartSummary(project);
   const immediateTask = getQuickStartTask(project, task);
+  const currentState = getQuickStartCurrentState(project);
+  const goals = filterQuickStartStrings(project.goals);
+  const rules = filterQuickStartStrings(project.rules);
+  filterQuickStartStrings(project.nextSteps);
+  filterQuickStartDecisions(project.decisions);
 
   lines.push(`# Quick Start Export: ${sanitize(project.name)}`);
   lines.push('');
@@ -568,16 +631,16 @@ function formatQuickStart(
   lines.push(truncateText(summary, 600));
   lines.push('');
   lines.push('## Current State');
-  lines.push(truncateText(project.currentState || '(not set)', 500));
+  lines.push(truncateText(currentState, 500));
   lines.push('');
   lines.push('## Immediate Task');
   lines.push(truncateText(immediateTask, 600));
   lines.push('');
   lines.push('## Goals');
-  lines.push(compactList(project.goals, 4));
+  lines.push(compactList(goals, 4));
   lines.push('');
   lines.push('## Important Rules');
-  lines.push(compactList(project.rules, 5));
+  lines.push(compactList(rules, 5, '', 'Ask before assuming missing details.'));
 
   if (workingStyle) {
     lines.push('');
