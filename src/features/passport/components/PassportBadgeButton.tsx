@@ -1,16 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Memephant — Passport Badge Button + Panel
+// Memephant -- Passport Badge Button + Panel
 //
-// Shows a compact passport entry point in the sidebar. Clicking opens a
-// popover panel with profile details, a one-click "Copy Passport" action, and
-// secondary actions for attaching/editing.
+// Two render states:
+//
+//   PASSPORT EXISTS  -> compact badge in sidebar, click opens the detail panel
+//                       with "Copy Passport", "Edit Passport", Pro teaser.
+//
+//   NO PASSPORT YET  -> "Create AI Passport" CTA that launches the creation
+//                       flow via startPassportEdit() / PassportGate.
 //
 // Design rules:
-//  - Copy uses the same Passport Attachment v0.1 text format as the export inspector.
+//  - Copy uses the same Passport Attachment v0.1 text as the export inspector.
 //  - Does NOT sync to cloud. Does NOT silently attach.
-//  - "Edit Passport" re-opens the creation flow via startPassportEdit().
-//  - "Attach to next export" is disabled — users open Export Inspector manually.
-//  - Only renders when a passport exists (null → returns null).
+//  - "Attach to next export" is intentionally disabled -- users open Export
+//    Inspector from the project workspace.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -21,7 +24,7 @@ import { COMMUNICATION_LABELS, FOCUS_LABELS, TONE_LABELS } from '../passport.uti
 import '../passport.badge.css';
 
 export function PassportBadgeButton() {
-  const passport         = usePassportStore((s) => s.passport);
+  const passport          = usePassportStore((s) => s.passport);
   const startPassportEdit = usePassportStore((s) => s.startPassportEdit);
 
   const [panelOpen, setPanelOpen] = useState(false);
@@ -31,7 +34,7 @@ export function PassportBadgeButton() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef   = useRef<HTMLDivElement>(null);
 
-  // Position panel vertically next to the trigger button
+  // Position panel vertically beside the trigger button
   useLayoutEffect(() => {
     if (panelOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
@@ -39,13 +42,13 @@ export function PassportBadgeButton() {
     }
   }, [panelOpen]);
 
-  // Close on click-outside
+  // Close panel on click-outside
   useEffect(() => {
     if (!panelOpen) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        panelRef.current  && !panelRef.current.contains(target) &&
+        panelRef.current   && !panelRef.current.contains(target) &&
         triggerRef.current && !triggerRef.current.contains(target)
       ) {
         setPanelOpen(false);
@@ -55,7 +58,7 @@ export function PassportBadgeButton() {
     return () => document.removeEventListener('mousedown', handler);
   }, [panelOpen]);
 
-  // Close on Escape
+  // Close panel on Escape
   useEffect(() => {
     if (!panelOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -68,8 +71,28 @@ export function PassportBadgeButton() {
     return () => document.removeEventListener('keydown', handler);
   }, [panelOpen]);
 
-  // Only render when a passport has been created
-  if (!passport) return null;
+  // ── No passport: show a CTA that launches the creation flow ──────────────
+
+  if (!passport) {
+    return (
+      <button
+        type="button"
+        className="passport-create-cta"
+        onClick={startPassportEdit}
+        title="Set up your AI working identity"
+        aria-label="Create AI Passport"
+      >
+        <span className="passport-create-cta__icon" aria-hidden="true">🛂</span>
+        <span className="passport-create-cta__body">
+          <span className="passport-create-cta__label">Create AI Passport</span>
+          <span className="passport-create-cta__hint">Set your AI working style</span>
+        </span>
+        <span className="passport-create-cta__arrow" aria-hidden="true">+</span>
+      </button>
+    );
+  }
+
+  // ── Passport exists: show badge + detail panel ────────────────────────────
 
   const shortId = passport.id.split('-').slice(1, 3).join('-');
 
@@ -81,7 +104,7 @@ export function PassportBadgeButton() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2400);
     } catch {
-      // Clipboard unavailable (e.g. in tests) — fail silently
+      // Clipboard unavailable (e.g. in tests) -- fail silently
     }
   };
 
@@ -92,7 +115,8 @@ export function PassportBadgeButton() {
 
   return (
     <div className="passport-badge-root">
-      {/* ── Trigger ──────────────────────────────────────────────────────── */}
+
+      {/* ── Trigger ────────────────────────────────────────────────────────── */}
       <button
         ref={triggerRef}
         type="button"
@@ -111,7 +135,7 @@ export function PassportBadgeButton() {
         <span className="passport-badge-btn__chevron" aria-hidden="true">›</span>
       </button>
 
-      {/* ── Panel ────────────────────────────────────────────────────────── */}
+      {/* ── Panel ──────────────────────────────────────────────────────────── */}
       {panelOpen && (
         <div
           ref={panelRef}
