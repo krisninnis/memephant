@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Memephant Passport — Calibration Screen (Steps Q1 → Q2 → Q3)
 // Handles all three questions in one component with animated transitions.
-// One screen = one decision. No back button — answers are forward-only.
+// One screen = one decision, with safe back/cancel controls.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -9,8 +9,6 @@ import { usePassportStore } from '../usePassportStore'
 import { CALIBRATION_QUESTIONS } from '../passport.utils'
 import type { PassportProfile, PassportFlowStep } from '../passport.types'
 import { ProgressDots } from './PassportIcons'
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -78,6 +76,25 @@ const OPTIONS_GRID: React.CSSProperties = {
   gap: '10px',
 }
 
+const NAV_ACTIONS: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '12px',
+  marginTop: '28px',
+}
+
+const SECONDARY_BUTTON: React.CSSProperties = {
+  background: 'transparent',
+  border: '1px solid rgba(255, 170, 40, 0.25)',
+  color: 'rgba(255, 255, 255, 0.8)',
+  borderRadius: '12px',
+  padding: '10px 16px',
+  fontSize: '14px',
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+  transition: 'border-color 160ms ease, background 160ms ease, color 160ms ease',
+}
+
 // ─── Sub-component: Option Pill ───────────────────────────────────────────────
 
 interface OptionPillProps {
@@ -104,13 +121,13 @@ function OptionPill({ label, selected, onSelect, animDelay = 0 }: OptionPillProp
     border: selected
       ? '1px solid rgba(245,158,11,0.65)'
       : hovered
-      ? '1px solid rgba(255,255,255,0.2)'
-      : '1px solid rgba(255,255,255,0.08)',
+        ? '1px solid rgba(255,255,255,0.2)'
+        : '1px solid rgba(255,255,255,0.08)',
     background: selected
       ? 'rgba(245,158,11,0.1)'
       : hovered
-      ? 'rgba(255,255,255,0.05)'
-      : 'rgba(255,255,255,0.03)',
+        ? 'rgba(255,255,255,0.05)'
+        : 'rgba(255,255,255,0.03)',
     color: selected ? '#fbbf24' : hovered ? '#e2e8f0' : '#94a3b8',
     fontSize: '14px',
     fontWeight: selected ? 600 : 400,
@@ -148,13 +165,17 @@ interface PassportCalibrationProps {
 }
 
 export function PassportCalibration({ questionIndex }: PassportCalibrationProps) {
-  const setFlowStep    = usePassportStore(s => s.setFlowStep)
+  const setFlowStep = usePassportStore(s => s.setFlowStep)
   const setDraftAnswer = usePassportStore(s => s.setDraftAnswer)
   const generatePassport = usePassportStore(s => s.generatePassport)
-  const draft          = usePassportStore(s => s.draft)
+  const finishPassportFlow = usePassportStore(s => s.finishPassportFlow)
+  const isReeditingPassport = usePassportStore(s => s.isReeditingPassport)
+  const draft = usePassportStore(s => s.draft)
 
   const question = CALIBRATION_QUESTIONS[questionIndex]
   const currentValue = draft[question.profileKey as keyof PassportProfile] as string | undefined
+
+  const [navHovered, setNavHovered] = useState<'back' | 'cancel' | null>(null)
 
   // Animate in when question changes
   const [animKey, setAnimKey] = useState(0)
@@ -185,7 +206,29 @@ export function PassportCalibration({ questionIndex }: PassportCalibrationProps)
     }, 380)
   }
 
+  function handleBack() {
+    const previous = (['q1', 'q2', 'q3'] as PassportFlowStep[])[Math.max(0, questionIndex - 1)]
+    setFlowStep(previous)
+  }
+
+  function handleCancel() {
+    finishPassportFlow()
+  }
+
+  function getSecondaryButtonStyle(kind: 'back' | 'cancel'): React.CSSProperties {
+    const hovered = navHovered === kind
+
+    return {
+      ...SECONDARY_BUTTON,
+      borderColor: hovered ? 'rgba(255, 170, 40, 0.5)' : 'rgba(255, 170, 40, 0.25)',
+      background: hovered ? 'rgba(255, 170, 40, 0.08)' : SECONDARY_BUTTON.background,
+      color: hovered ? '#f8fafc' : SECONDARY_BUTTON.color,
+    }
+  }
+
   const currentStep = questionIndex + 1
+  const showBack = questionIndex > 0
+  const showCancel = questionIndex === 0 && isReeditingPassport
 
   return (
     <div style={ROOT}>
@@ -221,6 +264,38 @@ export function PassportCalibration({ questionIndex }: PassportCalibrationProps)
             ))}
           </div>
         </div>
+
+        {(showBack || showCancel) && (
+          <div style={NAV_ACTIONS}>
+            {showBack && (
+              <button
+                type="button"
+                style={getSecondaryButtonStyle('back')}
+                onClick={handleBack}
+                onMouseEnter={() => setNavHovered('back')}
+                onMouseLeave={() => setNavHovered(null)}
+                onFocus={() => setNavHovered('back')}
+                onBlur={() => setNavHovered(null)}
+              >
+                Back
+              </button>
+            )}
+
+            {showCancel && (
+              <button
+                type="button"
+                style={getSecondaryButtonStyle('cancel')}
+                onClick={handleCancel}
+                onMouseEnter={() => setNavHovered('cancel')}
+                onMouseLeave={() => setNavHovered(null)}
+                onFocus={() => setNavHovered('cancel')}
+                onBlur={() => setNavHovered(null)}
+              >
+                Return to app
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
