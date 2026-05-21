@@ -2247,6 +2247,17 @@ select {
   accent-color: #38bdf8;
 }
 
+.passport-attachment-nudge {
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(15, 23, 42, 0.26));
+  color: rgba(224, 242, 254, 0.92);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .export-inspect-btn {
   width: 100%;
   padding: 8px 10px;
@@ -2484,6 +2495,84 @@ select {
   text-transform: uppercase;
 }
 
+.passport-attachment-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.passport-attachment-steps li {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  color: rgba(226, 232, 240, 0.82);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.passport-attachment-steps li::before {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.13);
+  color: rgba(186, 230, 253, 0.96);
+  font-size: 0.66rem;
+  font-weight: 900;
+  content: counter(list-item);
+}
+
+.passport-attachment-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+}
+
+.passport-attachment-controls__primary,
+.passport-attachment-controls__secondary {
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.passport-attachment-controls__primary {
+  border: 1px solid rgba(56, 189, 248, 0.36);
+  background: rgba(14, 165, 233, 0.18);
+  color: #e0f2fe;
+}
+
+.passport-attachment-controls__secondary {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(226, 232, 240, 0.86);
+}
+
+.passport-attachment-controls__primary:hover:not(:disabled),
+.passport-attachment-controls__secondary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.passport-attachment-controls__primary:disabled,
+.passport-attachment-controls__secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .passport-attachment-toggle {
   display: flex;
   gap: 8px;
@@ -2560,6 +2649,27 @@ select {
   font-size: 0.75rem;
   line-height: 1.5;
   resize: vertical;
+}
+
+@media (max-width: 640px) {
+  .passport-attachment-panel__header,
+  .passport-attachment-unlock div {
+    flex-direction: column;
+  }
+
+  .passport-attachment-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .passport-attachment-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .passport-attachment-controls__primary,
+  .passport-attachment-controls__secondary {
+    width: 100%;
+  }
 }
 
 .export-preview-textarea {

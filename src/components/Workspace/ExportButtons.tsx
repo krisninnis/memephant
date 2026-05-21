@@ -136,6 +136,18 @@ function getDefaultPreviewMode(
   return platformId === 'chatgpt' || isFirstExport ? 'quick' : 'full';
 }
 
+function getPassportAttachmentExplanation(status: PassportAttachmentStatus): string {
+  if (status === 'included') {
+    return 'Your AI working identity will be included in this handoff.';
+  }
+
+  if (status === 'locked') {
+    return 'Unlock Passport to attach it.';
+  }
+
+  return 'Your project context will be copied without your AI working identity.';
+}
+
 export function ExportButtons() {
   const [copied, setCopied] = useState(false);
   const [manifestCopied, setManifestCopied] = useState(false);
@@ -147,6 +159,7 @@ export function ExportButtons() {
   const [passportUnlocked, setPassportUnlocked] = useState(false);
   const [passportUnlockInput, setPassportUnlockInput] = useState('');
   const [passportUnlockError, setPassportUnlockError] = useState('');
+  const [passportPreviewVisible, setPassportPreviewVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [handoffMode, setHandoffMode] = useState<HandoffMode>('continue');
   const [contextOpen, setContextOpen] = useState(false);
@@ -458,6 +471,7 @@ export function ExportButtons() {
         : await buildExportPreview(mode);
 
       setExportPreview(preview);
+      setPassportPreviewVisible(false);
       setMenuOpen(false);
     } catch (err) {
       console.error('Export preview failed:', err);
@@ -676,6 +690,10 @@ export function ExportButtons() {
 
       <div className="frontal-lobe-export-status" aria-live="polite">
         {frontalLobeStatus}
+      </div>
+
+      <div className="passport-attachment-nudge">
+        Attach your AI Passport to help the next AI understand how you like to work.
       </div>
 
       <button
@@ -1167,10 +1185,9 @@ export function ExportButtons() {
             >
               <div className="passport-attachment-panel__header">
                 <div>
-                  <h3 id="passport-attachment-title">Passport Attachment</h3>
+                  <h3 id="passport-attachment-title">AI Passport</h3>
                   <p>
-                    Attach your Passport Profile only when you want this AI handoff to include
-                    your working preferences.
+                    {getPassportAttachmentExplanation(exportPreview.passportAttachmentStatus)}
                   </p>
                 </div>
                 <span className="passport-attachment-panel__state">
@@ -1184,15 +1201,40 @@ export function ExportButtons() {
 
               {exportPreview.passportAttachment ? (
                 <>
-                  <label className="passport-attachment-toggle">
-                    <input
-                      type="checkbox"
-                      checked={exportPreview.passportAttachmentIncluded}
+                  <ol className="passport-attachment-steps" aria-label="Passport Attachment steps">
+                    <li>Preview what will be shared</li>
+                    <li>Attach Passport</li>
+                    <li>Copy handoff</li>
+                  </ol>
+
+                  <div className="passport-attachment-controls">
+                    <button
+                      type="button"
+                      className="passport-attachment-controls__primary"
                       disabled={exportPreview.passportAttachmentStatus === 'locked'}
-                      onChange={(event) => handleTogglePassportAttachment(event.target.checked)}
-                    />
-                    Include Passport Attachment in this export
-                  </label>
+                      onClick={() => handleTogglePassportAttachment(!exportPreview.passportAttachmentIncluded)}
+                    >
+                      {exportPreview.passportAttachmentIncluded ? 'Remove Passport' : 'Attach Passport'}
+                    </button>
+                    <button
+                      type="button"
+                      className="passport-attachment-controls__secondary"
+                      onClick={() => setPassportPreviewVisible((visible) => !visible)}
+                      aria-expanded={passportPreviewVisible}
+                      aria-controls="passport-attachment-preview"
+                    >
+                      Preview Passport
+                    </button>
+                    <label className="passport-attachment-toggle">
+                      <input
+                        type="checkbox"
+                        checked={exportPreview.passportAttachmentIncluded}
+                        disabled={exportPreview.passportAttachmentStatus === 'locked'}
+                        onChange={(event) => handleTogglePassportAttachment(event.target.checked)}
+                      />
+                      Include in this export
+                    </label>
+                  </div>
 
                   {exportPreview.passportAttachmentStatus === 'locked' && (
                     <div className="passport-attachment-unlock">
@@ -1218,12 +1260,15 @@ export function ExportButtons() {
                     </div>
                   )}
 
-                  <textarea
-                    className="passport-attachment-preview"
-                    readOnly
-                    value={exportPreview.passportAttachment.text}
-                    aria-label="Passport Attachment preview text"
-                  />
+                  {passportPreviewVisible && (
+                    <textarea
+                      id="passport-attachment-preview"
+                      className="passport-attachment-preview"
+                      readOnly
+                      value={exportPreview.passportAttachment.text}
+                      aria-label="Passport Attachment preview text"
+                    />
+                  )}
                 </>
               ) : (
                 <p className="passport-attachment-panel__empty">

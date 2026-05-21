@@ -145,6 +145,14 @@ describe('ExportButtons export preview', () => {
     expect(within(dialog).getByText('Claude')).toBeInTheDocument();
   });
 
+  it('explains Passport Attachment near the export controls', () => {
+    render(<ExportButtons />);
+
+    expect(screen.getByText(
+      'Attach your AI Passport to help the next AI understand how you like to work.',
+    )).toBeInTheDocument();
+  });
+
   it('preview contains the exact export text', async () => {
     await openPreview();
 
@@ -182,8 +190,17 @@ describe('ExportButtons export preview', () => {
   it('shows Passport Attachment as excluded by default with an exact preview', async () => {
     const dialog = await openPreview();
 
-    expect(within(dialog).getAllByText('Passport Attachment')[0]).toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: 'AI Passport' })).toBeInTheDocument();
     expect(within(dialog).getAllByText('Excluded')).toHaveLength(2);
+    expect(within(dialog).getByText(
+      'Your project context will be copied without your AI working identity.',
+    )).toBeInTheDocument();
+    expect(within(dialog).getByText('Preview what will be shared')).toBeInTheDocument();
+    expect(within(dialog).getAllByText('Attach Passport')).toHaveLength(2);
+    expect(within(dialog).getByText('Copy handoff')).toBeInTheDocument();
+
+    expect(screen.queryByLabelText('Passport Attachment preview text')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Preview Passport' }));
 
     const passportPreview = screen.getByLabelText(
       'Passport Attachment preview text',
@@ -201,12 +218,14 @@ describe('ExportButtons export preview', () => {
   it('appends Passport Attachment only after explicit user toggle', async () => {
     await openPreview();
 
-    fireEvent.click(screen.getByLabelText('Include Passport Attachment in this export'));
+    fireEvent.click(screen.getByRole('button', { name: 'Attach Passport' }));
 
     const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
     expect(preview.value).toContain('PREAMBLE\nEXACT_EXPORT_TEXT');
     expect(preview.value).toContain('# Memephant Passport Attachment v0.1');
     expect(screen.getAllByText('Included')).toHaveLength(2);
+    expect(screen.getByText('Your AI working identity will be included in this handoff.'))
+      .toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /copy export/i }));
 
@@ -224,9 +243,10 @@ describe('ExportButtons export preview', () => {
     await openPreview();
 
     expect(screen.getAllByText('Locked')).toHaveLength(2);
-    expect(screen.getByText('Unlock Passport to attach')).toBeInTheDocument();
-    expect(screen.getByLabelText('Include Passport Attachment in this export'))
+    expect(screen.getByText('Unlock Passport to attach it.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Include in this export'))
       .toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Attach Passport' })).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText('Unlock Passport to attach'), {
       target: { value: '123456' },
@@ -237,7 +257,7 @@ describe('ExportButtons export preview', () => {
       expect(verifyPassportPasscode).toHaveBeenCalledWith('123456');
     });
 
-    fireEvent.click(screen.getByLabelText('Include Passport Attachment in this export'));
+    fireEvent.click(screen.getByLabelText('Include in this export'));
     const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
     expect(preview.value).toContain('# Memephant Passport Attachment v0.1');
   });
