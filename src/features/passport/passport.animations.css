@@ -145,3 +145,9 @@
     transform: none !important;
   }
 }
+
+@media (max-width: 640px) {
+  .passport-config-step-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

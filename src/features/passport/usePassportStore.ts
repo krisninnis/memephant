@@ -42,7 +42,7 @@ export const usePassportStore = create<PassportStore>()(
         }));
       },
 
-      generatePassport: () => {
+      generatePassport: (configuration) => {
         const { draft } = get();
         const profile = draft as PassportProfile;
 
@@ -56,7 +56,7 @@ export const usePassportStore = create<PassportStore>()(
         // The 2-second pause is the emotional beat between answering and receiving.
         // It creates anticipation. Do not replace with instant state change.
         setTimeout(() => {
-          const passport = createPassportData(profile);
+          const passport = createPassportData(profile, configuration);
           set({
             passport,
             draft: {},

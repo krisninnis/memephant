@@ -167,7 +167,6 @@ interface PassportCalibrationProps {
 export function PassportCalibration({ questionIndex }: PassportCalibrationProps) {
   const setFlowStep = usePassportStore(s => s.setFlowStep)
   const setDraftAnswer = usePassportStore(s => s.setDraftAnswer)
-  const generatePassport = usePassportStore(s => s.generatePassport)
   const finishPassportFlow = usePassportStore(s => s.finishPassportFlow)
   const isReeditingPassport = usePassportStore(s => s.isReeditingPassport)
   const draft = usePassportStore(s => s.draft)
@@ -200,8 +199,8 @@ export function PassportCalibration({ questionIndex }: PassportCalibrationProps)
         const next = (['q1', 'q2', 'q3'] as PassportFlowStep[])[questionIndex + 1]
         setFlowStep(next)
       } else {
-        // Final question — trigger generation
-        generatePassport()
+        // Final calibration question -- optional Passport details come next.
+        setFlowStep('configure')
       }
     }, 380)
   }

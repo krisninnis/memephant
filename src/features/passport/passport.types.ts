@@ -61,12 +61,13 @@ export const DEFAULT_PASSPORT_CONFIGURATION_V2: PassportConfigurationV2 = {
   ],
 }
 
-/** The six steps of the passport creation flow */
+/** The passport creation flow: 3 quick calibration questions, optional details, card. */
 export type PassportFlowStep =
   | 'welcome'
   | 'q1'
   | 'q2'
   | 'q3'
+  | 'configure'
   | 'generating'
   | 'complete'
 
@@ -119,7 +120,7 @@ export interface PassportStoreActions {
     key: K,
     value: PassportProfile[K]
   ) => void
-  generatePassport: () => void
+  generatePassport: (configuration?: Partial<PassportConfigurationV2>) => void
   updatePassportConfiguration: (updates: Partial<PassportConfigurationV2>) => void
   resetPassport: () => void
   /** Re-enter the passport creation flow for an existing user. */

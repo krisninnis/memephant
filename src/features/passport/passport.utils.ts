@@ -69,13 +69,16 @@ export function getFingerprintValues(fingerprint: string): number[] {
  * Creates a complete PassportData record from a finished profile.
  * The only place PassportData is instantiated.
  */
-export function createPassportData(profile: PassportProfile): PassportData {
+export function createPassportData(
+  profile: PassportProfile,
+  configuration?: Partial<PassportConfigurationV2>,
+): PassportData {
   const fingerprint = deriveFingerprint(profile)
   return {
     id: formatPassportId(fingerprint),
     fingerprint,
     profile,
-    configuration: getPassportConfiguration(),
+    configuration: getPassportConfiguration(configuration),
     createdAt: new Date().toISOString(),
     schemaVersion: '1.0',
   }

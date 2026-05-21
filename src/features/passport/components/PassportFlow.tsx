@@ -9,6 +9,7 @@ import '../passport.animations.css'
 import { usePassportStore } from '../usePassportStore'
 import { PassportWelcome }    from './PassportWelcome'
 import { PassportCalibration } from './PassportCalibration'
+import { PassportConfigurationStep } from './PassportConfigurationStep'
 import { PassportGeneration }  from './PassportGeneration'
 import { PassportCard }       from './PassportCard'
 
@@ -27,6 +28,9 @@ export function PassportFlow() {
 
     case 'q3':
       return <PassportCalibration questionIndex={2} />
+
+    case 'configure':
+      return <PassportConfigurationStep />
 
     case 'generating':
       return <PassportGeneration />
