@@ -1,6 +1,15 @@
 import { toCloudProjectData } from '../services/toCloudProjectData';
 import type { ProjectMemory } from '../types/memphant-types';
 
+const OPENAI_KEY = `sk-${'a'.repeat(30)}`;
+const STRIPE_SECRET_KEY = ['sk', 'live', 'b'.repeat(30)].join('_');
+const GITHUB_TOKEN = `ghp_${'c'.repeat(36)}`;
+const SUPABASE_SERVICE_ROLE_JWT = [
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+  'eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UifQ',
+  'signaturepart1234567890abcdef',
+].join('.');
+
 function makeProject(overrides: Partial<ProjectMemory> = {}): ProjectMemory {
   return {
     schema_version: '1.2.0',
@@ -149,5 +158,92 @@ describe('toCloudProjectData', () => {
 
     expect(cloudData.goals).toEqual(['Review [local-path-redacted] after launch']);
     expect(JSON.stringify(cloudData)).not.toContain(fileUrl);
+  });
+
+  it('redacts secrets inside summary, currentState, goals, rules, and decisions', () => {
+    const cloudData = toCloudProjectData(makeProject({
+      summary: `OpenAI key ${OPENAI_KEY}`,
+      currentState: `Stripe key ${STRIPE_SECRET_KEY}`,
+      goals: [`Remove GitHub token ${GITHUB_TOKEN}`],
+      rules: [`Never store service role ${SUPABASE_SERVICE_ROLE_JWT}`],
+      decisions: [{
+        decision: 'Rotate leaked credential',
+        rationale: 'api_key=abcdef1234567890abcdef',
+      }],
+    }));
+    const serialized = JSON.stringify(cloudData);
+
+    expect(serialized).not.toContain(OPENAI_KEY);
+    expect(serialized).not.toContain(STRIPE_SECRET_KEY);
+    expect(serialized).not.toContain(GITHUB_TOKEN);
+    expect(serialized).not.toContain(SUPABASE_SERVICE_ROLE_JWT);
+    expect(serialized).not.toContain('abcdef1234567890abcdef');
+    expect(serialized).toContain('[secret-redacted]');
+  });
+
+  it('redacts .env-style multiline strings', () => {
+    const cloudData = toCloudProjectData(makeProject({
+      projectCharter: [
+        'PUBLIC_APP_NAME=Memephant',
+        'SUPABASE_SERVICE_ROLE_KEY=service-role-secret-value',
+        `STRIPE_SECRET_KEY=${['sk', 'live', '123456789012345678901234'].join('_')}`,
+        'NEXT_PUBLIC_SAFE_LABEL=visible',
+      ].join('\n'),
+    }));
+
+    expect(cloudData.projectCharter).toBe([
+      'PUBLIC_APP_NAME=Memephant',
+      'SUPABASE_SERVICE_ROLE_KEY=[secret-redacted]',
+      'STRIPE_SECRET_KEY=[secret-redacted]',
+      'NEXT_PUBLIC_SAFE_LABEL=visible',
+    ].join('\n'));
+  });
+
+  it('preserves normal non-secret text', () => {
+    const normalSummary = 'Use a token bucket design pattern in the docs, not an actual token value.';
+    const normalGoal = 'Document API design choices without including credentials.';
+    const cloudData = toCloudProjectData(makeProject({
+      summary: normalSummary,
+      goals: [normalGoal],
+    }));
+
+    expect(cloudData.summary).toBe(normalSummary);
+    expect(cloudData.goals).toEqual([normalGoal]);
+  });
+
+  it('does not mutate the saved local project object while redacting cloud payloads', () => {
+    const project = makeProject({
+      summary: `Keep local value ${OPENAI_KEY}`,
+      currentState: 'Ready for sync.',
+    });
+    const before = JSON.stringify(project);
+
+    const cloudData = toCloudProjectData(project);
+
+    expect(project.summary).toContain(OPENAI_KEY);
+    expect(JSON.stringify(project)).toBe(before);
+    expect(JSON.stringify(cloudData)).not.toContain(OPENAI_KEY);
+  });
+
+  it('redacts paths and secrets in the same cloud payload', () => {
+    const localPath = 'C:\\Users\\Kris\\Desktop\\Secret';
+    const cloudData = toCloudProjectData(makeProject({
+      summary: `Path ${localPath} used key ${OPENAI_KEY}`,
+      linkedFolder: {
+        path: localPath,
+        scanHash: 'scan-safe',
+        lastScannedAt: '2026-05-20T09:00:00.000Z',
+      },
+    }));
+    const serialized = JSON.stringify(cloudData);
+
+    expect(serialized).not.toContain(localPath);
+    expect(serialized).not.toContain(OPENAI_KEY);
+    expect(serialized).toContain('[local-path-redacted]');
+    expect(serialized).toContain('[secret-redacted]');
+    expect(cloudData.linkedFolder).toEqual({
+      scanHash: 'scan-safe',
+      lastScannedAt: '2026-05-20T09:00:00.000Z',
+    });
   });
 });
