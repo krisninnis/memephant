@@ -2329,7 +2329,7 @@ select {
 
 .export-preview-summary {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   gap: 8px;
   margin: 0;
 }
@@ -2425,6 +2425,141 @@ select {
 .export-preview-health ul {
   margin: 0;
   padding-left: 18px;
+}
+
+.passport-attachment-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(15, 23, 42, 0.12)),
+    rgba(2, 6, 23, 0.46);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.passport-attachment-panel:hover {
+  border-color: rgba(125, 211, 252, 0.28);
+  box-shadow: 0 10px 30px rgba(8, 47, 73, 0.18);
+}
+
+.passport-attachment-panel--included {
+  border-color: rgba(52, 211, 153, 0.34);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.08) inset;
+}
+
+.passport-attachment-panel--locked {
+  border-color: rgba(251, 191, 36, 0.28);
+}
+
+.passport-attachment-panel__header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.passport-attachment-panel__header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.94rem;
+}
+
+.passport-attachment-panel__header p,
+.passport-attachment-panel__empty {
+  margin: 4px 0 0;
+  color: rgba(203, 213, 225, 0.72);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.passport-attachment-panel__state {
+  padding: 4px 8px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  color: rgba(226, 232, 240, 0.9);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.passport-attachment-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: rgba(241, 245, 249, 0.92);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.passport-attachment-toggle input {
+  accent-color: #38bdf8;
+}
+
+.passport-attachment-toggle:has(input:disabled) {
+  color: rgba(148, 163, 184, 0.68);
+}
+
+.passport-attachment-unlock {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.07);
+}
+
+.passport-attachment-unlock label {
+  color: rgba(254, 243, 199, 0.96);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.passport-attachment-unlock div {
+  display: flex;
+  gap: 8px;
+}
+
+.passport-attachment-unlock input {
+  min-width: 0;
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.74);
+  color: #f8fafc;
+}
+
+.passport-attachment-unlock button {
+  padding: 8px 12px;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fef3c7;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.passport-attachment-unlock p {
+  margin: 0;
+  color: #fecaca;
+  font-size: 0.76rem;
+}
+
+.passport-attachment-preview {
+  width: 100%;
+  min-height: 150px;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.78);
+  color: #dbeafe;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  resize: vertical;
 }
 
 .export-preview-textarea {

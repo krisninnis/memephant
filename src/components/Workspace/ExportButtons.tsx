@@ -37,6 +37,17 @@ import {
   compressExportForPaste,
   type ExportHealthResult,
 } from '../../utils/exportHealth';
+import { usePassportStore } from '../../features/passport/usePassportStore';
+import {
+  appendPassportAttachment,
+  buildPassportAttachmentPreview,
+  type PassportAttachmentPreview,
+  type PassportAttachmentStatus,
+} from '../../features/passport/passportAttachment';
+import {
+  isPassportLockEnabled,
+  verifyPassportPasscode,
+} from '../../services/passportLockStorage';
 import {
   ensureValidPlatformId,
   getEnabledPlatforms,
@@ -85,6 +96,7 @@ type ExportPreview = {
   targetPlatformId: string;
   targetPlatformName: string;
   copyPlatformId: string;
+  baseExportText: string;
   exportText: string;
   aiWorkingStyleStatus: string;
   aiWorkingStyleIncluded: boolean;
@@ -93,6 +105,9 @@ type ExportPreview = {
   compressedExportText: string;
   health: ExportHealthResult;
   changedFiles: string[];
+  passportAttachment: PassportAttachmentPreview | null;
+  passportAttachmentIncluded: boolean;
+  passportAttachmentStatus: PassportAttachmentStatus;
 };
 
 function getPreviewModeLabel(mode: PreviewMode): string {
@@ -129,6 +144,9 @@ export function ExportButtons() {
   const [passportOpen, setPassportOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [passportUnlocked, setPassportUnlocked] = useState(false);
+  const [passportUnlockInput, setPassportUnlockInput] = useState('');
+  const [passportUnlockError, setPassportUnlockError] = useState('');
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [handoffMode, setHandoffMode] = useState<HandoffMode>('continue');
   const [contextOpen, setContextOpen] = useState(false);
@@ -139,6 +157,12 @@ export function ExportButtons() {
   const frontalLobeMode = vault.frontalLobeProfile?.mode ?? 'default_on';
   const [includeFrontalLobe, setIncludeFrontalLobe] = useState(false);
   const hasFrontalLobeProfile = Boolean(vault.frontalLobeProfile);
+  const passportProfile = usePassportStore((s) => s.passport);
+  const passportLockEnabled = isPassportLockEnabled();
+  const passportLocked = passportLockEnabled && !passportUnlocked;
+  const passportAttachmentPreview = passportProfile
+    ? buildPassportAttachmentPreview(passportProfile, vault.frontalLobeProfile)
+    : null;
   const frontalLobeStatus = getFrontalLobeExportStatus(
     frontalLobeMode,
     hasFrontalLobeProfile,
@@ -271,6 +295,37 @@ export function ExportButtons() {
     return buildMemoryBridgeBlock(activeProject, selectedPlatform.id);
   }, [activeProject, memoryBridgeMode, selectedPlatform.id]);
 
+  const createPreviewResult = useCallback((
+    preview: Omit<
+      ExportPreview,
+      | 'baseExportText'
+      | 'exportText'
+      | 'characterCount'
+      | 'compressedExportText'
+      | 'health'
+      | 'passportAttachment'
+      | 'passportAttachmentIncluded'
+      | 'passportAttachmentStatus'
+    > & { exportText: string },
+  ): ExportPreview => {
+    const passportAttachmentStatus: PassportAttachmentStatus = passportLocked
+      ? 'locked'
+      : 'excluded';
+    const health = analyzeExportHealth(preview.exportText);
+
+    return {
+      ...preview,
+      baseExportText: preview.exportText,
+      exportText: preview.exportText,
+      characterCount: preview.exportText.length,
+      compressedExportText: compressExportForPaste(preview.exportText),
+      health,
+      passportAttachment: passportAttachmentPreview,
+      passportAttachmentIncluded: false,
+      passportAttachmentStatus,
+    };
+  }, [passportAttachmentPreview, passportLocked]);
+
   const buildExportPreview = useCallback(async (mode: ExportMode): Promise<ExportPreview> => {
     if (!activeProject) {
       throw new Error('Open a project first');
@@ -303,9 +358,8 @@ export function ExportButtons() {
     const finalExportText = preamble + preparedExportText;
     const aiWorkingStyleIncluded = Boolean(frontalLobeBlock)
       && finalExportText.includes('# AI Working Style');
-    const health = analyzeExportHealth(finalExportText);
 
-    return {
+    return createPreviewResult({
       mode,
       modeLabel: getPreviewModeLabel(mode),
       targetPlatformId: selectedPlatform.id,
@@ -317,13 +371,11 @@ export function ExportButtons() {
       recentActivityIncluded: mode !== 'quick'
         && memoryBridgeMode !== 'auto'
         && Boolean(recentActivity?.trim()),
-      characterCount: finalExportText.length,
-      compressedExportText: compressExportForPaste(finalExportText),
-      health,
       changedFiles,
-    };
+    });
   }, [
     activeProject,
+    createPreviewResult,
     currentTask,
     frontalLobeBlock,
     frontalLobeStatus,
@@ -364,9 +416,8 @@ export function ExportButtons() {
     const finalExportText = preamble + preparedExportText;
     const aiWorkingStyleIncluded = Boolean(frontalLobeBlock)
       && finalExportText.includes('# AI Working Style');
-    const health = analyzeExportHealth(finalExportText);
 
-    return {
+    return createPreviewResult({
       mode: 'deep-state',
       modeLabel: getPreviewModeLabel('deep-state'),
       targetPlatformId: selectedPlatform.id,
@@ -376,13 +427,11 @@ export function ExportButtons() {
       aiWorkingStyleStatus: frontalLobeStatus,
       aiWorkingStyleIncluded,
       recentActivityIncluded: memoryBridgeMode !== 'auto' && Boolean(recentActivity?.trim()),
-      characterCount: finalExportText.length,
-      compressedExportText: compressExportForPaste(finalExportText),
-      health,
       changedFiles,
-    };
+    });
   }, [
     activeProject,
+    createPreviewResult,
     currentTask,
     frontalLobeBlock,
     frontalLobeStatus,
@@ -423,6 +472,67 @@ export function ExportButtons() {
     buildExportPreview,
     showToast,
   ]);
+
+  const updatePassportAttachment = useCallback((include: boolean) => {
+    setExportPreview((preview) => {
+      if (!preview) return preview;
+      const canAttach = include
+        && preview.passportAttachment
+        && preview.passportAttachmentStatus !== 'locked';
+      const exportText = canAttach
+        ? appendPassportAttachment(preview.baseExportText, preview.passportAttachment?.text)
+        : preview.baseExportText;
+      const health = analyzeExportHealth(exportText);
+
+      return {
+        ...preview,
+        exportText,
+        characterCount: exportText.length,
+        compressedExportText: compressExportForPaste(exportText),
+        health,
+        passportAttachmentIncluded: Boolean(canAttach),
+        passportAttachmentStatus: canAttach ? 'included' : 'excluded',
+      };
+    });
+  }, []);
+
+  const handleTogglePassportAttachment = useCallback((include: boolean) => {
+    if (!exportPreview?.passportAttachment) {
+      showToast('Create your Passport Profile before attaching it.', 'error');
+      return;
+    }
+
+    if (passportLocked) {
+      setExportPreview((preview) => preview
+        ? { ...preview, passportAttachmentStatus: 'locked' }
+        : preview);
+      setPassportUnlockError('');
+      return;
+    }
+
+    updatePassportAttachment(include);
+  }, [exportPreview?.passportAttachment, passportLocked, showToast, updatePassportAttachment]);
+
+  const handleUnlockPassport = useCallback(async () => {
+    setPassportUnlockError('');
+
+    try {
+      const verified = await verifyPassportPasscode(passportUnlockInput);
+      if (!verified) {
+        setPassportUnlockError('Passport Lock could not be unlocked.');
+        return;
+      }
+
+      setPassportUnlocked(true);
+      setPassportUnlockInput('');
+      setExportPreview((preview) => preview
+        ? { ...preview, passportAttachmentStatus: 'excluded' }
+        : preview);
+    } catch (err) {
+      console.error('Passport unlock failed:', err);
+      setPassportUnlockError('Passport Lock could not be unlocked.');
+    }
+  }, [passportUnlockInput]);
 
   const handleCopyPreview = useCallback(async (compressed = false) => {
     if (!activeProject || !exportPreview) return;
@@ -1026,6 +1136,21 @@ export function ExportButtons() {
                 <dd>{exportPreview.recentActivityIncluded ? 'Included' : 'Not included'}</dd>
               </div>
               <div>
+                <dt>Passport Attachment</dt>
+                <dd>
+                  {exportPreview.passportAttachmentStatus === 'included'
+                    ? 'Included'
+                    : exportPreview.passportAttachmentStatus === 'locked'
+                      ? 'Locked'
+                      : 'Excluded'}
+                  <span className="export-preview-summary__subvalue">
+                    {exportPreview.passportAttachment
+                      ? 'Passport Profile available'
+                      : 'No Passport Profile found'}
+                  </span>
+                </dd>
+              </div>
+              <div>
                 <dt>Approx. size</dt>
                 <dd>
                   {exportPreview.characterCount.toLocaleString()} characters
@@ -1035,6 +1160,77 @@ export function ExportButtons() {
                 </dd>
               </div>
             </dl>
+
+            <section
+              className={`passport-attachment-panel passport-attachment-panel--${exportPreview.passportAttachmentStatus}`}
+              aria-labelledby="passport-attachment-title"
+            >
+              <div className="passport-attachment-panel__header">
+                <div>
+                  <h3 id="passport-attachment-title">Passport Attachment</h3>
+                  <p>
+                    Attach your Passport Profile only when you want this AI handoff to include
+                    your working preferences.
+                  </p>
+                </div>
+                <span className="passport-attachment-panel__state">
+                  {exportPreview.passportAttachmentStatus === 'included'
+                    ? 'Included'
+                    : exportPreview.passportAttachmentStatus === 'locked'
+                      ? 'Locked'
+                      : 'Excluded'}
+                </span>
+              </div>
+
+              {exportPreview.passportAttachment ? (
+                <>
+                  <label className="passport-attachment-toggle">
+                    <input
+                      type="checkbox"
+                      checked={exportPreview.passportAttachmentIncluded}
+                      disabled={exportPreview.passportAttachmentStatus === 'locked'}
+                      onChange={(event) => handleTogglePassportAttachment(event.target.checked)}
+                    />
+                    Include Passport Attachment in this export
+                  </label>
+
+                  {exportPreview.passportAttachmentStatus === 'locked' && (
+                    <div className="passport-attachment-unlock">
+                      <label htmlFor="passport-unlock-input">Unlock Passport to attach</label>
+                      <div>
+                        <input
+                          id="passport-unlock-input"
+                          type="password"
+                          value={passportUnlockInput}
+                          onChange={(event) => setPassportUnlockInput(event.target.value)}
+                          autoComplete="current-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleUnlockPassport()}
+                        >
+                          Unlock
+                        </button>
+                      </div>
+                      {passportUnlockError && (
+                        <p role="alert">{passportUnlockError}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <textarea
+                    className="passport-attachment-preview"
+                    readOnly
+                    value={exportPreview.passportAttachment.text}
+                    aria-label="Passport Attachment preview text"
+                  />
+                </>
+              ) : (
+                <p className="passport-attachment-panel__empty">
+                  Create your Passport Profile before attaching it to a handoff.
+                </p>
+              )}
+            </section>
 
             <p className="export-preview-warning">
               Private vault contents are excluded unless explicitly included. This preview shows the

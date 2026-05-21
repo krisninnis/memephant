@@ -4,6 +4,7 @@ import type { ProjectMemory } from '../types/memphant-types';
 import { DEFAULT_SETTINGS } from '../types/memphant-types';
 import { copyExportToClipboard } from '../services/tauriActions';
 import { formatForPlatform } from '../utils/exportFormatters';
+import { verifyPassportPasscode } from '../services/passportLockStorage';
 
 const mockProject: ProjectMemory = {
   schema_version: '1.2.0',
@@ -40,6 +41,22 @@ const mockProjectStoreState = {
   updateProject: jest.fn(),
 };
 
+const mockPassportState = {
+  passport: {
+    id: 'MPH-1111-2222-3333',
+    fingerprint: '1111222233334444',
+    profile: {
+      communicationStyle: 'structured' as const,
+      tone: 'friendly' as const,
+      focusArea: 'app' as const,
+    },
+    createdAt: '2026-05-21T10:00:00.000Z',
+    schemaVersion: '1.0' as const,
+  },
+};
+
+let mockPassportLockEnabled = false;
+
 jest.mock('../store/projectStore', () => ({
   useProjectStore: (selector: (state: typeof mockProjectStoreState) => unknown) =>
     selector(mockProjectStoreState),
@@ -61,6 +78,7 @@ jest.mock('../services/personalMemoryVaultStorage', () => ({
       codeReviewStrictness: 'normal',
       explanationDepth: 'explain_why',
       tone: 'balanced',
+      languagePreference: 'british_english',
       codingConfidence: 'can_edit_with_exact_instructions',
       codeInstructionStyle: 'exact_file_and_patch',
       debuggingSupport: 'plain_english_error',
@@ -69,6 +87,16 @@ jest.mock('../services/personalMemoryVaultStorage', () => ({
       customRules: [],
     },
   }),
+}));
+
+jest.mock('../features/passport/usePassportStore', () => ({
+  usePassportStore: (selector: (state: typeof mockPassportState) => unknown) =>
+    selector(mockPassportState),
+}));
+
+jest.mock('../services/passportLockStorage', () => ({
+  isPassportLockEnabled: () => mockPassportLockEnabled,
+  verifyPassportPasscode: jest.fn(async () => true),
 }));
 
 jest.mock('../utils/exportFormatters', () => ({
@@ -98,6 +126,7 @@ describe('ExportButtons export preview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockProjectStoreState.targetPlatform = 'claude';
+    mockPassportLockEnabled = false;
     (formatForPlatform as jest.Mock).mockReturnValue('EXACT_EXPORT_TEXT');
   });
 
@@ -148,6 +177,69 @@ describe('ExportButtons export preview', () => {
 
     expect(screen.getByText(/Private vault contents are excluded unless explicitly included/i))
       .toBeInTheDocument();
+  });
+
+  it('shows Passport Attachment as excluded by default with an exact preview', async () => {
+    const dialog = await openPreview();
+
+    expect(within(dialog).getAllByText('Passport Attachment')[0]).toBeInTheDocument();
+    expect(within(dialog).getAllByText('Excluded')).toHaveLength(2);
+
+    const passportPreview = screen.getByLabelText(
+      'Passport Attachment preview text',
+    ) as HTMLTextAreaElement;
+    expect(passportPreview.value).toContain('# Memephant Passport Attachment v0.1');
+    expect(passportPreview.value).toContain('- Tone: Friendly');
+    expect(passportPreview.value).toContain('- Style: Structured');
+    expect(passportPreview.value).toContain('- Language: British English');
+    expect(passportPreview.value).toContain('Integrity fingerprint: MPH-1111-2222-3333');
+
+    const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
+    expect(preview.value).toBe('PREAMBLE\nEXACT_EXPORT_TEXT');
+  });
+
+  it('appends Passport Attachment only after explicit user toggle', async () => {
+    await openPreview();
+
+    fireEvent.click(screen.getByLabelText('Include Passport Attachment in this export'));
+
+    const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
+    expect(preview.value).toContain('PREAMBLE\nEXACT_EXPORT_TEXT');
+    expect(preview.value).toContain('# Memephant Passport Attachment v0.1');
+    expect(screen.getAllByText('Included')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: /copy export/i }));
+
+    await waitFor(() => {
+      expect(copyExportToClipboard).toHaveBeenCalledWith(
+        expect.stringContaining('# Memephant Passport Attachment v0.1'),
+        'claude',
+      );
+    });
+  });
+
+  it('shows locked Passport Attachment state and requires unlock before attaching', async () => {
+    mockPassportLockEnabled = true;
+
+    await openPreview();
+
+    expect(screen.getAllByText('Locked')).toHaveLength(2);
+    expect(screen.getByText('Unlock Passport to attach')).toBeInTheDocument();
+    expect(screen.getByLabelText('Include Passport Attachment in this export'))
+      .toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Unlock Passport to attach'), {
+      target: { value: '123456' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+
+    await waitFor(() => {
+      expect(verifyPassportPasscode).toHaveBeenCalledWith('123456');
+    });
+
+    fireEvent.click(screen.getByLabelText('Include Passport Attachment in this export'));
+    const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
+    expect(preview.value).toContain('# Memephant Passport Attachment v0.1');
   });
 
   it('uses Quick Start mode by default for ChatGPT exports', async () => {
