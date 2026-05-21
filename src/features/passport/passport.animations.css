@@ -1,0 +1,147 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Memephant Passport — CSS Keyframe Animations
+   These cannot be done with inline styles.
+   Import this file once in PassportFlow.tsx.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Fade in ── */
+@keyframes passport-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Slide up + fade (passport card reveal) ── */
+@keyframes passport-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Slide in from right (question entrance) ── */
+@keyframes passport-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Slide out to left (question exit) ── */
+@keyframes passport-slide-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+
+/* ── CTA button ambient pulse ── */
+@keyframes passport-pulse-amber {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(245, 158, 11, 0),
+      0 1px 24px rgba(245, 158, 11, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(245, 158, 11, 0.06),
+      0 1px 24px rgba(245, 158, 11, 0.08);
+  }
+}
+
+/* ── Background ambient glow breathe ── */
+@keyframes passport-ambient-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.04); }
+}
+
+/* ── Generating dots ── */
+@keyframes passport-dot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.5);
+    opacity: 0.25;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── Passport card section stagger ── */
+@keyframes passport-section-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Option selected pop ── */
+@keyframes passport-option-select {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.035); }
+  100% { transform: scale(1); }
+}
+
+/* ── Hash char appear (staggered in JS) ── */
+@keyframes passport-char-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Card shimmer after reveal ── */
+@keyframes passport-shimmer {
+  0%   { background-position: -400% center; }
+  100% { background-position: 400% center; }
+}
+
+/* ─── Utility classes ──────────────────────────────────────────────────────── */
+
+.passport-fade-in {
+  animation: passport-fade-in 0.6s ease both;
+}
+
+.passport-slide-up {
+  animation: passport-slide-up 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.passport-slide-in-right {
+  animation: passport-slide-in-right 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.passport-section-in {
+  animation: passport-section-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ─── Reduced motion override ─────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .passport-fade-in,
+  .passport-slide-up,
+  .passport-slide-in-right,
+  .passport-section-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
