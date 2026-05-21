@@ -26,6 +26,41 @@ export type FocusArea =
   | 'writing'
   | 'other'
 
+export interface PassportConfigurationV2 {
+  preferredName: string
+  region: string
+  timezone: string
+  dateFormat: string
+  currency: string
+  directness: string
+  technicalLevel: string
+  riskTolerance: string
+  alwaysRules: string[]
+  neverRules: string[]
+  updatedAt?: string
+}
+
+export const DEFAULT_PASSPORT_CONFIGURATION_V2: PassportConfigurationV2 = {
+  preferredName: '',
+  region: 'United Kingdom',
+  timezone: 'Europe/London',
+  dateFormat: 'DD/MM/YYYY',
+  currency: 'GBP / £',
+  directness: 'Honest but supportive',
+  technicalLevel: 'Learning builder',
+  riskTolerance: 'Prefer small safe patches',
+  alwaysRules: [
+    'Ask before assuming missing details.',
+    'Be honest when unsure.',
+    'Give exact next steps.',
+  ],
+  neverRules: [
+    'Do not ask for passwords, API keys, or secrets.',
+    'Do not invent files or code that have not been shown.',
+    'Do not suggest broad rewrites before small safe fixes.',
+  ],
+}
+
 /** The six steps of the passport creation flow */
 export type PassportFlowStep =
   | 'welcome'
@@ -50,6 +85,8 @@ export interface PassportData {
   fingerprint: string
   /** The three calibration answers */
   profile: PassportProfile
+  /** Richer local-only working preferences configured after onboarding */
+  configuration?: PassportConfigurationV2
   /** ISO 8601 creation timestamp */
   createdAt: string
   /** Schema version -- increment on breaking changes */
@@ -83,6 +120,7 @@ export interface PassportStoreActions {
     value: PassportProfile[K]
   ) => void
   generatePassport: () => void
+  updatePassportConfiguration: (updates: Partial<PassportConfigurationV2>) => void
   resetPassport: () => void
   /** Re-enter the passport creation flow for an existing user. */
   startPassportEdit: () => void

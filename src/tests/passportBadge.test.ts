@@ -13,9 +13,16 @@
  */
 
 import { usePassportStore, PASSPORT_STORAGE_KEY } from '../features/passport/usePassportStore';
-import { createPassportData } from '../features/passport/passport.utils';
+import {
+  createPassportData,
+  getPassportConfiguration,
+} from '../features/passport/passport.utils';
 import { buildPassportAttachmentPreview } from '../features/passport/passportAttachment';
-import type { PassportProfile } from '../features/passport/passport.types';
+import {
+  DEFAULT_PASSPORT_CONFIGURATION_V2,
+  type PassportData,
+  type PassportProfile,
+} from '../features/passport/passport.types';
 import { DEFAULT_FRONTAL_LOBE_PROFILE } from '../types/personalMemoryVault';
 import { PERSONAL_MEMORY_VAULT_STORAGE_KEY } from '../services/personalMemoryVaultStorage';
 
@@ -47,6 +54,7 @@ describe('Test 1 -- badge visibility', () => {
     const { passport } = usePassportStore.getState();
     expect(passport).not.toBeNull();
     expect(passport?.id).toMatch(/^MPH-/);
+    expect(passport?.configuration?.region).toBe('United Kingdom');
   });
 
   it('store returns null when no passport created', () => {
@@ -87,10 +95,53 @@ describe('Test 2 -- copy text: Passport Attachment v0.1 format', () => {
     expect(attachment.text).toContain(data.id);
   });
 
-  it('text is under 700 characters', () => {
+  it('text is under 1,500 characters', () => {
     const data       = createPassportData(FULL_PROFILE);
     const attachment = buildPassportAttachmentPreview(data, DEFAULT_FRONTAL_LOBE_PROFILE);
-    expect(attachment.text.length).toBeLessThan(700);
+    expect(attachment.text.length).toBeLessThan(1500);
+  });
+
+  it('text includes richer Passport Configuration v2 fields', () => {
+    const data: PassportData = {
+      ...createPassportData(FULL_PROFILE),
+      configuration: {
+        ...DEFAULT_PASSPORT_CONFIGURATION_V2,
+        preferredName: 'Kris',
+        directness: 'Honest but supportive',
+        technicalLevel: 'Learning builder',
+        riskTolerance: 'Prefer small safe patches',
+        alwaysRules: ['Ask before assuming missing details.'],
+        neverRules: ['Do not invent files or code that have not been shown.'],
+      },
+    };
+    const attachment = buildPassportAttachmentPreview(data, DEFAULT_FRONTAL_LOBE_PROFILE);
+
+    expect(attachment.text).toContain('Preferred name: Kris');
+    expect(attachment.text).toContain('Region: United Kingdom');
+    expect(attachment.text).toContain('Language: British English');
+    expect(attachment.text).toContain('Directness: Honest but supportive');
+    expect(attachment.text).toContain('Technical level: Learning builder');
+    expect(attachment.text).toContain('Risk tolerance: Prefer small safe patches');
+    expect(attachment.text).toContain('Ask before assuming missing details.');
+    expect(attachment.text).toContain('Do not invent files or code that have not been shown.');
+  });
+
+  it('legacy passports without configuration still use safe defaults', () => {
+    const data = createPassportData(FULL_PROFILE);
+    const legacyPassport: PassportData = {
+      id: data.id,
+      fingerprint: data.fingerprint,
+      profile: data.profile,
+      createdAt: data.createdAt,
+      schemaVersion: data.schemaVersion,
+    };
+    const config = getPassportConfiguration(legacyPassport);
+    const attachment = buildPassportAttachmentPreview(legacyPassport, DEFAULT_FRONTAL_LOBE_PROFILE);
+
+    expect(config.region).toBe('United Kingdom');
+    expect(config.directness).toBe('Honest but supportive');
+    expect(attachment.text).toContain('Region: United Kingdom');
+    expect(attachment.text).toContain('Directness: Honest but supportive');
   });
 });
 
@@ -255,5 +306,54 @@ describe('Test 7 -- no-passport CTA: startPassportEdit launches flow for existin
     expect(usePassportStore.getState().isReeditingPassport).toBe(true);
     usePassportStore.getState().finishPassportFlow();
     expect(usePassportStore.getState().isReeditingPassport).toBe(false);
+  });
+});
+
+// ── Test 8: Passport Configuration v2 ─────────────────────────────────────
+
+describe('Test 8 -- Passport Configuration v2', () => {
+  beforeEach(resetStore);
+
+  it('new Passport Configuration v2 fields persist locally', () => {
+    usePassportStore.setState({ passport: createPassportData(FULL_PROFILE) });
+
+    usePassportStore.getState().updatePassportConfiguration({
+      preferredName: 'Kris',
+      region: 'United Kingdom',
+      directness: 'Honest but supportive',
+      technicalLevel: 'Learning builder',
+      riskTolerance: 'Prefer small safe patches',
+      alwaysRules: ['Give exact next steps.'],
+      neverRules: ['Do not suggest broad rewrites before small safe fixes.'],
+    });
+
+    const passport = usePassportStore.getState().passport;
+    expect(passport?.configuration?.preferredName).toBe('Kris');
+    expect(passport?.configuration?.alwaysRules).toEqual(['Give exact next steps.']);
+
+    const raw = localStorage.getItem(PASSPORT_STORAGE_KEY);
+    expect(raw).toContain('Kris');
+    expect(raw).toContain('Prefer small safe patches');
+  });
+
+  it('existing users can configure Passport after creation without re-running onboarding', () => {
+    usePassportStore.setState({
+      passport: createPassportData(FULL_PROFILE),
+      flowStep: 'welcome',
+    });
+
+    usePassportStore.getState().updatePassportConfiguration({ preferredName: 'Kris' });
+
+    const state = usePassportStore.getState();
+    expect(state.passport?.configuration?.preferredName).toBe('Kris');
+    expect(state.flowStep).toBe('welcome');
+    expect(state.isReeditingPassport).toBe(false);
+  });
+
+  it('configuration field names do not introduce secret storage fields', () => {
+    const keys = Object.keys(DEFAULT_PASSPORT_CONFIGURATION_V2);
+    for (const key of keys) {
+      expect(key).not.toMatch(/password|api|secret|token|credential/i);
+    }
   });
 });

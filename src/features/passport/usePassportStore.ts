@@ -12,7 +12,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PassportStore, PassportFlowStep, PassportProfile } from './passport.types';
-import { createPassportData } from './passport.utils';
+import { createPassportData, getPassportConfiguration } from './passport.utils';
 
 /** Duration of the "generating" animation beat (ms). Intentional -- do not remove. */
 const GENERATION_DELAY_MS = 2000;
@@ -64,6 +64,27 @@ export const usePassportStore = create<PassportStore>()(
             flowStep: 'complete',
           });
         }, GENERATION_DELAY_MS);
+      },
+
+      updatePassportConfiguration: (updates) => {
+        set((state) => {
+          if (!state.passport) return state;
+
+          const current = getPassportConfiguration(state.passport);
+
+          return {
+            passport: {
+              ...state.passport,
+              configuration: {
+                ...current,
+                ...updates,
+                alwaysRules: updates.alwaysRules ?? current.alwaysRules,
+                neverRules: updates.neverRules ?? current.neverRules,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          };
+        });
       },
 
       resetPassport: () => {

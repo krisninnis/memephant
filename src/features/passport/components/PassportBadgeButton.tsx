@@ -16,18 +16,77 @@
 //    Inspector from the project workspace.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { usePassportStore } from '../usePassportStore';
 import { buildPassportAttachmentPreview } from '../passportAttachment';
 import { loadPersonalMemoryVault } from '../../../services/personalMemoryVaultStorage';
-import { COMMUNICATION_LABELS, FOCUS_LABELS, TONE_LABELS } from '../passport.utils';
+import {
+  COMMUNICATION_LABELS,
+  FOCUS_LABELS,
+  TONE_LABELS,
+  getPassportConfiguration,
+} from '../passport.utils';
+import {
+  DEFAULT_FRONTAL_LOBE_PROFILE,
+  getFrontalLobeLanguageLabel,
+} from '../../../types/personalMemoryVault';
 import '../passport.badge.css';
+
+type PassportConfigDraft = {
+  preferredName: string;
+  region: string;
+  timezone: string;
+  dateFormat: string;
+  currency: string;
+  directness: string;
+  technicalLevel: string;
+  riskTolerance: string;
+  alwaysRulesText: string;
+  neverRulesText: string;
+};
+
+function rulesToText(rules: string[]): string {
+  return rules.join('\n');
+}
+
+function textToRules(value: string): string[] {
+  return value
+    .split('\n')
+    .map((rule) => rule.trim())
+    .filter(Boolean);
+}
+
+function toConfigDraft(
+  configuration: ReturnType<typeof getPassportConfiguration>,
+): PassportConfigDraft {
+  return {
+    preferredName: configuration.preferredName,
+    region: configuration.region,
+    timezone: configuration.timezone,
+    dateFormat: configuration.dateFormat,
+    currency: configuration.currency,
+    directness: configuration.directness,
+    technicalLevel: configuration.technicalLevel,
+    riskTolerance: configuration.riskTolerance,
+    alwaysRulesText: rulesToText(configuration.alwaysRules),
+    neverRulesText: rulesToText(configuration.neverRules),
+  };
+}
 
 export function PassportBadgeButton() {
   const passport          = usePassportStore((s) => s.passport);
   const startPassportEdit = usePassportStore((s) => s.startPassportEdit);
+  const updatePassportConfiguration = usePassportStore((s) => s.updatePassportConfiguration);
+  const configuration = getPassportConfiguration(passport);
+  const [vaultSnapshot] = useState(() => loadPersonalMemoryVault());
+  const languageLabel = getFrontalLobeLanguageLabel(
+    vaultSnapshot.frontalLobeProfile?.languagePreference
+      ?? DEFAULT_FRONTAL_LOBE_PROFILE.languagePreference,
+  );
 
   const [panelOpen, setPanelOpen] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [configDraft, setConfigDraft] = useState(() => toConfigDraft(configuration));
   const [copied, setCopied]       = useState(false);
   const [panelTop, setPanelTop]   = useState(120);
 
@@ -63,13 +122,22 @@ export function PassportBadgeButton() {
     if (!panelOpen) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setPanelOpen(false);
-        triggerRef.current?.focus();
+        if (configOpen) {
+          setConfigOpen(false);
+        } else {
+          setPanelOpen(false);
+          triggerRef.current?.focus();
+        }
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [panelOpen]);
+  }, [configOpen, panelOpen]);
+
+  useEffect(() => {
+    if (!panelOpen || configOpen) return;
+    setConfigDraft(toConfigDraft(getPassportConfiguration(passport)));
+  }, [configOpen, panelOpen, passport]);
 
   // ── No passport: show a CTA that launches the creation flow ──────────────
 
@@ -110,7 +178,44 @@ export function PassportBadgeButton() {
 
   const handleEditPassport = () => {
     setPanelOpen(false);
+    setConfigOpen(false);
     startPassportEdit();
+  };
+
+  const handleOpenConfiguration = () => {
+    setConfigDraft(toConfigDraft(getPassportConfiguration(passport)));
+    setConfigOpen(true);
+    setCopied(false);
+  };
+
+  const handleCancelConfiguration = () => {
+    setConfigDraft(toConfigDraft(getPassportConfiguration(passport)));
+    setConfigOpen(false);
+  };
+
+  const handleConfigFieldChange = (
+    field: keyof PassportConfigDraft,
+    value: string,
+  ) => {
+    setConfigDraft((draft) => ({ ...draft, [field]: value }));
+  };
+
+  const handleSaveConfiguration = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    updatePassportConfiguration({
+      preferredName: configDraft.preferredName.trim(),
+      region: configDraft.region.trim() || configuration.region,
+      timezone: configDraft.timezone.trim() || configuration.timezone,
+      dateFormat: configDraft.dateFormat.trim() || configuration.dateFormat,
+      currency: configDraft.currency.trim() || configuration.currency,
+      directness: configDraft.directness.trim() || configuration.directness,
+      technicalLevel: configDraft.technicalLevel.trim() || configuration.technicalLevel,
+      riskTolerance: configDraft.riskTolerance.trim() || configuration.riskTolerance,
+      alwaysRules: textToRules(configDraft.alwaysRulesText),
+      neverRules: textToRules(configDraft.neverRulesText),
+    });
+    setConfigOpen(false);
+    setCopied(false);
   };
 
   return (
@@ -163,76 +268,210 @@ export function PassportBadgeButton() {
             </button>
           </div>
 
-          {/* Profile fields */}
-          <div className="passport-panel__fields">
-            <div className="passport-panel__field">
-              <span className="passport-panel__field-label">Style</span>
-              <span className="passport-panel__field-value">
-                {COMMUNICATION_LABELS[passport.profile.communicationStyle]}
-              </span>
-            </div>
-            <div className="passport-panel__field">
-              <span className="passport-panel__field-label">Tone</span>
-              <span className="passport-panel__field-value">
-                {TONE_LABELS[passport.profile.tone]}
-              </span>
-            </div>
-            <div className="passport-panel__field">
-              <span className="passport-panel__field-label">Focus</span>
-              <span className="passport-panel__field-value">
-                {FOCUS_LABELS[passport.profile.focusArea]}
-              </span>
-            </div>
-          </div>
+          {configOpen ? (
+            <form className="passport-config" onSubmit={handleSaveConfiguration}>
+              <section className="passport-config__section" aria-labelledby="passport-config-identity">
+                <h4 id="passport-config-identity">Identity</h4>
+                <label>
+                  Preferred name
+                  <input
+                    type="text"
+                    value={configDraft.preferredName}
+                    onChange={(event) => handleConfigFieldChange('preferredName', event.target.value)}
+                    placeholder="Kris"
+                  />
+                </label>
+              </section>
 
-          {/* Primary action */}
-          <button
-            type="button"
-            className={`passport-panel__copy-btn${copied ? ' passport-panel__copy-btn--copied' : ''}`}
-            onClick={() => void handleCopy()}
-          >
-            {copied ? '✓ Copied to clipboard' : 'Copy Passport'}
-          </button>
+              <section className="passport-config__section" aria-labelledby="passport-config-region">
+                <h4 id="passport-config-region">Region & language</h4>
+                <div className="passport-config__grid">
+                  <label>
+                    Region
+                    <input
+                      type="text"
+                      value={configDraft.region}
+                      onChange={(event) => handleConfigFieldChange('region', event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Timezone
+                    <input
+                      type="text"
+                      value={configDraft.timezone}
+                      onChange={(event) => handleConfigFieldChange('timezone', event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Date format
+                    <input
+                      type="text"
+                      value={configDraft.dateFormat}
+                      onChange={(event) => handleConfigFieldChange('dateFormat', event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Currency
+                    <input
+                      type="text"
+                      value={configDraft.currency}
+                      onChange={(event) => handleConfigFieldChange('currency', event.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="passport-config__readonly">
+                  <span>Language</span>
+                  <strong>{languageLabel}</strong>
+                </div>
+              </section>
 
-          {/* Secondary actions */}
-          <div className="passport-panel__secondary-actions">
-            <button
-              type="button"
-              className="passport-panel__secondary-btn passport-panel__secondary-btn--disabled"
-              disabled
-              title="Open Export Inspector from any project export to attach your Passport"
-              aria-disabled="true"
-            >
-              Attach to next export
-            </button>
-            <button
-              type="button"
-              className="passport-panel__secondary-btn"
-              onClick={handleEditPassport}
-            >
-              Edit Passport
-            </button>
-          </div>
+              <section className="passport-config__section" aria-labelledby="passport-config-style">
+                <h4 id="passport-config-style">Answer style</h4>
+                <label>
+                  Directness
+                  <input
+                    type="text"
+                    value={configDraft.directness}
+                    onChange={(event) => handleConfigFieldChange('directness', event.target.value)}
+                  />
+                </label>
+              </section>
 
-          {/* Notes */}
-          <div className="passport-panel__notes">
-            <p className="passport-panel__privacy-note">
-              🔒 This is not a login credential. Your Passport stays on this device.
-            </p>
-            <p className="passport-panel__compat-note">
-              Works by pasting into ChatGPT, Claude, Grok, Gemini, Perplexity, and local LLMs.
-              Helps AI follow your preferences.
-            </p>
-          </div>
+              <section className="passport-config__section" aria-labelledby="passport-config-technical">
+                <h4 id="passport-config-technical">Technical help</h4>
+                <label>
+                  Technical level
+                  <input
+                    type="text"
+                    value={configDraft.technicalLevel}
+                    onChange={(event) => handleConfigFieldChange('technicalLevel', event.target.value)}
+                  />
+                </label>
+                <label>
+                  Risk tolerance
+                  <input
+                    type="text"
+                    value={configDraft.riskTolerance}
+                    onChange={(event) => handleConfigFieldChange('riskTolerance', event.target.value)}
+                  />
+                </label>
+              </section>
 
-          {/* Pro teaser */}
-          <div className="passport-panel__pro-teaser">
-            <span className="passport-panel__pro-label">Pro idea</span>
-            <span>
-              Auto-attach Passport through the Memephant browser extension —
-              always with your approval.
-            </span>
-          </div>
+              <section className="passport-config__section" aria-labelledby="passport-config-boundaries">
+                <h4 id="passport-config-boundaries">Boundaries</h4>
+                <label>
+                  Always
+                  <textarea
+                    value={configDraft.alwaysRulesText}
+                    onChange={(event) => handleConfigFieldChange('alwaysRulesText', event.target.value)}
+                    rows={3}
+                  />
+                </label>
+                <label>
+                  Never
+                  <textarea
+                    value={configDraft.neverRulesText}
+                    onChange={(event) => handleConfigFieldChange('neverRulesText', event.target.value)}
+                    rows={3}
+                  />
+                </label>
+              </section>
+
+              <div className="passport-config__actions">
+                <button type="button" onClick={handleCancelConfiguration}>
+                  Cancel
+                </button>
+                <button type="submit">
+                  Save Passport
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              {/* Profile fields */}
+              <div className="passport-panel__fields">
+                <div className="passport-panel__field">
+                  <span className="passport-panel__field-label">Style</span>
+                  <span className="passport-panel__field-value">
+                    {COMMUNICATION_LABELS[passport.profile.communicationStyle]}
+                  </span>
+                </div>
+                <div className="passport-panel__field">
+                  <span className="passport-panel__field-label">Tone</span>
+                  <span className="passport-panel__field-value">
+                    {TONE_LABELS[passport.profile.tone]}
+                  </span>
+                </div>
+                <div className="passport-panel__field">
+                  <span className="passport-panel__field-label">Focus</span>
+                  <span className="passport-panel__field-value">
+                    {FOCUS_LABELS[passport.profile.focusArea]}
+                  </span>
+                </div>
+                <div className="passport-panel__field">
+                  <span className="passport-panel__field-label">Region</span>
+                  <span className="passport-panel__field-value">{configuration.region}</span>
+                </div>
+                <div className="passport-panel__field">
+                  <span className="passport-panel__field-label">Language</span>
+                  <span className="passport-panel__field-value">{languageLabel}</span>
+                </div>
+              </div>
+
+              <div className="passport-panel__guidance">
+                <span>{configuration.directness}</span>
+                <span>{configuration.technicalLevel}</span>
+                <span>{configuration.riskTolerance}</span>
+              </div>
+
+              {/* Primary action */}
+              <button
+                type="button"
+                className={`passport-panel__copy-btn${copied ? ' passport-panel__copy-btn--copied' : ''}`}
+                onClick={() => void handleCopy()}
+              >
+                {copied ? '✓ Copied to clipboard' : 'Copy Passport'}
+              </button>
+
+              {/* Secondary actions */}
+              <div className="passport-panel__secondary-actions">
+                <button
+                  type="button"
+                  className="passport-panel__secondary-btn"
+                  onClick={handleOpenConfiguration}
+                >
+                  Configure Passport
+                </button>
+                <button
+                  type="button"
+                  className="passport-panel__secondary-btn"
+                  onClick={handleEditPassport}
+                >
+                  Edit Passport
+                </button>
+              </div>
+
+              {/* Notes */}
+              <div className="passport-panel__notes">
+                <p className="passport-panel__privacy-note">
+                  This is not a password or sign-in method. Your Passport stays on this device.
+                </p>
+                <p className="passport-panel__compat-note">
+                  Works by pasting into ChatGPT, Claude, Grok, Gemini, Perplexity, and local LLMs.
+                  Helps AI follow your preferences.
+                </p>
+              </div>
+
+              {/* Pro teaser */}
+              <div className="passport-panel__pro-teaser">
+                <span className="passport-panel__pro-label">Pro idea</span>
+                <span>
+                  Auto-attach Passport through the Memephant browser extension —
+                  always with your approval.
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -3,13 +3,15 @@
 // Pure functions. No side-effects. No imports from React or Zustand.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type {
-  PassportProfile,
-  PassportData,
-  CommunicationStyle,
-  WorkingTone,
-  FocusArea,
-  CalibrationQuestion,
+import {
+  DEFAULT_PASSPORT_CONFIGURATION_V2,
+  type CalibrationQuestion,
+  type CommunicationStyle,
+  type FocusArea,
+  type PassportConfigurationV2,
+  type PassportData,
+  type PassportProfile,
+  type WorkingTone,
 } from './passport.types'
 
 // ─── Fingerprint derivation ───────────────────────────────────────────────────
@@ -73,8 +75,54 @@ export function createPassportData(profile: PassportProfile): PassportData {
     id: formatPassportId(fingerprint),
     fingerprint,
     profile,
+    configuration: getPassportConfiguration(),
     createdAt: new Date().toISOString(),
     schemaVersion: '1.0',
+  }
+}
+
+type PassportConfigurationSource =
+  | PassportData
+  | Partial<PassportConfigurationV2>
+  | null
+  | undefined
+
+function isPassportData(
+  source: PassportConfigurationSource,
+): source is PassportData {
+  return Boolean(source && typeof source === 'object' && 'profile' in source)
+}
+
+function normaliseRules(
+  value: unknown,
+  fallback: string[],
+): string[] {
+  if (!Array.isArray(value)) return fallback
+
+  const rules = value
+    .filter((rule): rule is string => typeof rule === 'string')
+    .map((rule) => rule.trim())
+    .filter(Boolean)
+
+  return rules.length > 0 ? rules : fallback
+}
+
+export function getPassportConfiguration(
+  source?: PassportConfigurationSource,
+): PassportConfigurationV2 {
+  const config = isPassportData(source) ? source.configuration : source
+
+  return {
+    ...DEFAULT_PASSPORT_CONFIGURATION_V2,
+    ...(config ?? {}),
+    alwaysRules: normaliseRules(
+      config?.alwaysRules,
+      DEFAULT_PASSPORT_CONFIGURATION_V2.alwaysRules,
+    ),
+    neverRules: normaliseRules(
+      config?.neverRules,
+      DEFAULT_PASSPORT_CONFIGURATION_V2.neverRules,
+    ),
   }
 }
 
