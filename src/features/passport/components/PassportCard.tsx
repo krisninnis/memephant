@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Memephant Passport — The Generated Passport Card
+// Memephant Passport -- The Generated Passport Card
 // This is the hero moment. Everything in the flow leads here.
 // Design goal: screenshot-worthy, premium, unmistakably yours.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,9 +19,8 @@ import passportStampBronze from '../../../assets/passport/tiers/passport-stamp-b
 import passportStampGold from '../../../assets/passport/tiers/passport-stamp-gold.png'
 import passportStampSilver from '../../../assets/passport/tiers/passport-stamp-silver.png'
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ── Styles ────────────────────────────────────────────────────────────────────
 
-/** Outer wrapper — full-screen dark stage */
 const STAGE: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
@@ -34,8 +33,7 @@ const STAGE: React.CSSProperties = {
   overflowX: 'hidden',
   overflowY: 'auto',
   padding: '32px 0',
-  fontFamily:
-    '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif',
   animation: 'passport-fade-in 0.4s ease both',
 }
 
@@ -46,8 +44,7 @@ const AMBIENT_1: React.CSSProperties = {
   width: '700px',
   height: '500px',
   borderRadius: '50%',
-  background:
-    'radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 65%)',
+  background: 'radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 65%)',
   pointerEvents: 'none',
   animation: 'passport-ambient-pulse 8s ease-in-out infinite',
 }
@@ -59,13 +56,11 @@ const AMBIENT_2: React.CSSProperties = {
   width: '600px',
   height: '400px',
   borderRadius: '50%',
-  background:
-    'radial-gradient(ellipse, rgba(245,158,11,0.045) 0%, transparent 65%)',
+  background: 'radial-gradient(ellipse, rgba(245,158,11,0.045) 0%, transparent 65%)',
   pointerEvents: 'none',
   animation: 'passport-ambient-pulse 10s ease-in-out infinite 3s',
 }
 
-/** The card itself */
 const CARD: React.CSSProperties = {
   position: 'relative',
   width: 'calc(100% - 48px)',
@@ -77,13 +72,11 @@ const CARD: React.CSSProperties = {
   backdropFilter: 'blur(20px)',
   overflow: 'hidden',
   animation: 'passport-slide-up 0.75s cubic-bezier(0.22, 1, 0.36, 1) both',
-  // Subtle inner glow
   boxShadow:
     '0 0 0 1px rgba(245,158,11,0.06) inset, 0 24px 80px rgba(0,0,0,0.6), 0 2px 0 rgba(255,255,255,0.04) inset',
   margin: '0 auto',
 }
 
-/** Subtle angular gradient overlay on the card face */
 const CARD_OVERLAY: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
@@ -105,7 +98,6 @@ const INTEGRITY_WATERMARK: React.CSSProperties = {
   filter: 'drop-shadow(0 0 42px rgba(56,189,248,0.2))',
 }
 
-/** Top header bar of the card */
 const CARD_HEADER: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -142,7 +134,6 @@ const PASSPORT_ID_LABEL: React.CSSProperties = {
   textTransform: 'uppercase',
 }
 
-/** The card body — seal on left, facets on right */
 const CARD_BODY: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: '120px 1fr',
@@ -182,7 +173,6 @@ const FACETS_COLUMN: React.CSSProperties = {
   gap: '16px',
 }
 
-/** Single facet row: LABEL / Value */
 interface FacetRowProps {
   label: string
   value: string
@@ -191,11 +181,7 @@ interface FacetRowProps {
 
 function FacetRow({ label, value, delay }: FacetRowProps) {
   return (
-    <div
-      style={{
-        animation: `passport-section-in 0.5s ease both ${delay}ms`,
-      }}
-    >
+    <div style={{ animation: `passport-section-in 0.5s ease both ${delay}ms` }}>
       <div
         style={{
           fontSize: '9px',
@@ -222,7 +208,6 @@ function FacetRow({ label, value, delay }: FacetRowProps) {
   )
 }
 
-/** Animated hash display — characters reveal one by one */
 function AnimatedHash({ hash, style }: { hash: string; style?: React.CSSProperties }) {
   const [revealed, setRevealed] = useState(0)
 
@@ -258,7 +243,6 @@ function AnimatedHash({ hash, style }: { hash: string; style?: React.CSSProperti
   )
 }
 
-/** The bottom footer bar */
 const CARD_FOOTER: React.CSSProperties = {
   borderTop: '1px solid rgba(255,255,255,0.05)',
   padding: '13px 24px',
@@ -304,17 +288,8 @@ function FooterDot() {
   )
 }
 
-function ProgressStamp({
-  src,
-  alt,
-  active,
-}: {
-  src: string
-  alt: string
-  active: boolean
-}) {
+function ProgressStamp({ src, alt, active }: { src: string; alt: string; active: boolean }) {
   const [hovered, setHovered] = useState(false)
-
   return (
     <img
       src={src}
@@ -337,7 +312,6 @@ function ProgressStamp({
   )
 }
 
-/** The "Done" action below the card */
 const DONE_BUTTON_BASE: React.CSSProperties = {
   padding: '11px 28px',
   borderRadius: '8px',
@@ -353,42 +327,36 @@ const DONE_BUTTON_BASE: React.CSSProperties = {
   animation: 'passport-section-in 0.5s ease both 0.85s',
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ── Main Component ─────────────────────────────────────────────────────────────
 
 export function PassportCard() {
-  const passport      = usePassportStore(s => s.passport)
-  const setFlowStep   = usePassportStore(s => s.setFlowStep)
+  const passport           = usePassportStore(s => s.passport)
+  const finishPassportFlow = usePassportStore(s => s.finishPassportFlow)
   const [doneHovered, setDoneHovered] = useState(false)
 
-  // "Enter Memephant" — reset flowStep to 'welcome' so PassportGate
-  // switches to the main app. The persisted passport remains intact.
+  // "Enter Memephant" -- releases the gate and clears any re-editing flag so
+  // PassportGate switches back to the main app. The persisted passport is intact.
   function handleEnter() {
-    setFlowStep('welcome')
+    finishPassportFlow()
   }
 
-  // This component only renders when passport is not null (guaranteed by PassportFlow)
   if (!passport) return null
 
   const { id, fingerprint, profile, createdAt } = passport
 
   const doneStyle: React.CSSProperties = {
     ...DONE_BUTTON_BASE,
-    borderColor: doneHovered
-      ? 'rgba(255,255,255,0.2)'
-      : 'rgba(255,255,255,0.1)',
+    borderColor: doneHovered ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)',
     color: doneHovered ? '#e2e8f0' : '#94a3b8',
     background: doneHovered ? 'rgba(255,255,255,0.04)' : 'transparent',
   }
 
   return (
     <div style={STAGE}>
-      {/* Background glows */}
       <div style={AMBIENT_1} />
       <div style={AMBIENT_2} />
 
-      {/* Card */}
       <div style={CARD}>
-        {/* Angular gradient overlay */}
         <div style={CARD_OVERLAY} />
         <img
           src={passportShieldIntegrity}
@@ -399,7 +367,6 @@ export function PassportCard() {
           style={INTEGRITY_WATERMARK}
         />
 
-        {/* Header */}
         <div style={CARD_HEADER}>
           <div style={HEADER_LEFT}>
             <ShieldIcon size={14} opacity={0.65} />
@@ -411,9 +378,7 @@ export function PassportCard() {
           </div>
         </div>
 
-        {/* Body: seal + facets */}
         <div style={CARD_BODY}>
-          {/* Seal column */}
           <div style={SEAL_COLUMN}>
             <PassportSeal fingerprint={fingerprint} size={80} />
             <div style={STAMP_ROW} aria-label="Passport progression">
@@ -435,27 +400,13 @@ export function PassportCard() {
             </div>
           </div>
 
-          {/* Facets column */}
           <div style={FACETS_COLUMN}>
-            <FacetRow
-              label="Communication"
-              value={COMMUNICATION_LABELS[profile.communicationStyle]}
-              delay={200}
-            />
-            <FacetRow
-              label="Tone"
-              value={TONE_LABELS[profile.tone]}
-              delay={300}
-            />
-            <FacetRow
-              label="Focus"
-              value={FOCUS_LABELS[profile.focusArea]}
-              delay={400}
-            />
+            <FacetRow label="Communication" value={COMMUNICATION_LABELS[profile.communicationStyle]} delay={200} />
+            <FacetRow label="Tone" value={TONE_LABELS[profile.tone]} delay={300} />
+            <FacetRow label="Focus" value={FOCUS_LABELS[profile.focusArea]} delay={400} />
           </div>
         </div>
 
-        {/* Footer */}
         <div style={CARD_FOOTER}>
           <div style={FOOTER_TAGS}>
             <FooterTag>Local-first</FooterTag>
@@ -478,7 +429,6 @@ export function PassportCard() {
         </div>
       </div>
 
-      {/* Privacy note */}
       <p
         style={{
           fontSize: '11px',
@@ -492,7 +442,6 @@ export function PassportCard() {
         Stored locally on your device · Never shared without your consent
       </p>
 
-      {/* Done CTA */}
       <button
         style={doneStyle}
         onMouseEnter={() => setDoneHovered(true)}

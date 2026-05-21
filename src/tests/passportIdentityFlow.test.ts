@@ -46,6 +46,7 @@ function resetStore(): void {
     flowStep: 'welcome',
     draft: {},
     isGenerating: false,
+    isReeditingPassport: false,
   });
   localStorage.clear();
 }

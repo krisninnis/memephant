@@ -17,6 +17,7 @@ import {
 import ProjectCard from './ProjectCard';
 import ConfirmDialog from '../Shared/ConfirmDialog';
 import LaunchpadWizard from '../Launchpad/LaunchpadWizard';
+import { PassportBadgeButton } from '../../features/passport/components/PassportBadgeButton';
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -235,6 +236,9 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           <span className="sidebar-nav-card__label">Memory Vault</span>
           <span className="sidebar-nav-card__hint">Private personal memory</span>
         </button>
+
+        {/* AI Passport entry point — only renders when a passport exists */}
+        <PassportBadgeButton />
       </div>
 
       <div className="sidebar-actions">

@@ -44,7 +44,7 @@ export interface PassportProfile {
 
 /** The complete, persisted passport record */
 export interface PassportData {
-  /** Branded ID — e.g. "MPH-A4F2-19C8-7BE1" */
+  /** Branded ID -- e.g. "MPH-A4F2-19C8-7BE1" */
   id: string
   /** 16-character uppercase hex, deterministic from profile */
   fingerprint: string
@@ -52,21 +52,28 @@ export interface PassportData {
   profile: PassportProfile
   /** ISO 8601 creation timestamp */
   createdAt: string
-  /** Schema version — increment on breaking changes */
+  /** Schema version -- increment on breaking changes */
   schemaVersion: '1.0'
 }
 
-// ─── Store shape ─────────────────────────────────────────────────────────────
+// ── Store shape ───────────────────────────────────────────────────────────────
 
 export interface PassportStoreState {
   /** null = passport not yet created */
   passport: PassportData | null
-  /** Current step in the creation flow (not persisted — restarts fresh) */
+  /** Current step in the creation flow (not persisted -- restarts fresh) */
   flowStep: PassportFlowStep
   /** Partial answers accumulating during calibration */
   draft: Partial<PassportProfile>
   /** True during the artificial generation delay */
   isGenerating: boolean
+  /**
+   * True when an existing user has chosen to re-edit their passport from the
+   * PassportBadgeButton. Forces PassportGate to show the flow even for users
+   * who have hasSeenOnboarding = true. Cleared when "Enter Memephant" is clicked.
+   * Not persisted -- resets to false on every app launch.
+   */
+  isReeditingPassport: boolean
 }
 
 export interface PassportStoreActions {
@@ -77,11 +84,15 @@ export interface PassportStoreActions {
   ) => void
   generatePassport: () => void
   resetPassport: () => void
+  /** Re-enter the passport creation flow for an existing user. */
+  startPassportEdit: () => void
+  /** Called by "Enter Memephant" -- clears the re-editing flag and releases the gate. */
+  finishPassportFlow: () => void
 }
 
 export type PassportStore = PassportStoreState & PassportStoreActions
 
-// ─── Question data ────────────────────────────────────────────────────────────
+// ── Question data ─────────────────────────────────────────────────────────────
 
 export interface CalibrationOption<T extends string> {
   value: T

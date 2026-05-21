@@ -9,6 +9,9 @@ export { PassportGate } from './components/PassportGate'
 // Full flow — used internally by PassportGate
 export { PassportFlow } from './components/PassportFlow'
 
+// Sidebar entry point — visible badge + one-click copy panel
+export { PassportBadgeButton } from './components/PassportBadgeButton'
+
 // Individual screens — export for deep-linking if needed later
 export { PassportWelcome }    from './components/PassportWelcome'
 export { PassportCalibration } from './components/PassportCalibration'

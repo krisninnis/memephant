@@ -18,9 +18,8 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@tauri-apps/(.*)$': '<rootDir>/src/tests/__mocks__/tauri.ts',
-    // CSS imports are handled by Vite at build time; stub them in Jest.
     '\\.(css|less|scss|sass)$': '<rootDir>/src/tests/__mocks__/styles.ts',
-    '\\.(png|jpg|jpeg|gif|webp|avif)$': '<rootDir>/src/tests/__mocks__/file.ts',
+    '\\.(png|jpg|jpeg|gif|svg|webp|avif)$': '<rootDir>/src/tests/__mocks__/file.ts',
   },
   testPathIgnorePatterns: [
     '/node_modules/',

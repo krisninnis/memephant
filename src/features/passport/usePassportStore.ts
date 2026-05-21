@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Memephant — Passport Identity Store
+// Memephant -- Passport Identity Store
 //
 // Independent Zustand store. Does NOT touch projectStore, PersonalMemoryVault,
 // FrontalLobeProfile, or any cloud-synced data.
@@ -14,22 +14,23 @@ import { persist } from 'zustand/middleware';
 import type { PassportStore, PassportFlowStep, PassportProfile } from './passport.types';
 import { createPassportData } from './passport.utils';
 
-/** Duration of the "generating" animation beat (ms). Intentional — do not remove. */
+/** Duration of the "generating" animation beat (ms). Intentional -- do not remove. */
 const GENERATION_DELAY_MS = 2000;
 
-/** localStorage key. Never referenced by cloudSync.ts — local-only by design. */
+/** localStorage key. Never referenced by cloudSync.ts -- local-only by design. */
 export const PASSPORT_STORAGE_KEY = 'mph_passport_v1';
 
 export const usePassportStore = create<PassportStore>()(
   persist(
     (set, get) => ({
-      // ─── State ──────────────────────────────────────────────────────────────
+      // ── State ──────────────────────────────────────────────────────────────
       passport: null,
       flowStep: 'welcome',
       draft: {},
       isGenerating: false,
+      isReeditingPassport: false,
 
-      // ─── Actions ────────────────────────────────────────────────────────────
+      // ── Actions ────────────────────────────────────────────────────────────
 
       setFlowStep: (step: PassportFlowStep) => {
         set({ flowStep: step });
@@ -71,7 +72,25 @@ export const usePassportStore = create<PassportStore>()(
           flowStep: 'welcome',
           draft: {},
           isGenerating: false,
+          isReeditingPassport: false,
         });
+      },
+
+      startPassportEdit: () => {
+        // Clears the existing passport and re-opens the creation flow, even for
+        // users with hasSeenOnboarding = true. The gate checks isReeditingPassport.
+        set({
+          passport: null,
+          flowStep: 'welcome',
+          draft: {},
+          isGenerating: false,
+          isReeditingPassport: true,
+        });
+      },
+
+      finishPassportFlow: () => {
+        // Called by "Enter Memephant". Releases the gate and clears re-editing flag.
+        set({ flowStep: 'welcome', isReeditingPassport: false });
       },
     }),
 
@@ -79,7 +98,7 @@ export const usePassportStore = create<PassportStore>()(
       name: PASSPORT_STORAGE_KEY,
 
       // Only persist the completed passport. Flow state + draft reset on every launch.
-      // If a user closes the app mid-flow, they start fresh — intentional.
+      // If a user closes the app mid-flow, they start fresh -- intentional.
       partialize: (state) => ({
         passport: state.passport,
       }),
@@ -87,7 +106,7 @@ export const usePassportStore = create<PassportStore>()(
   )
 );
 
-// ─── Selectors ────────────────────────────────────────────────────────────────
+// ── Selectors ─────────────────────────────────────────────────────────────────
 
 /** True if a completed passport has been persisted. */
 export const selectPassportExists = (s: PassportStore): boolean => s.passport !== null;
