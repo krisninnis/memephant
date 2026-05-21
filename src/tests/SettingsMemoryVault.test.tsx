@@ -1487,6 +1487,47 @@ describe('Frontal Lobe AI Working Style profile', () => {
 
     expect(modeSelect.value).toBe('default_on');
   });
+
+  it('renders the Memephant Passport card with status, completion, and fingerprint', () => {
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Memephant Passport');
+
+    expect(within(passport).getByRole('heading', { name: 'Memephant Passport' })).toBeInTheDocument();
+    expect(within(passport).getByText('AI Passport: Portable')).toBeInTheDocument();
+    expect(within(passport).getByText('Passport 86% complete')).toBeInTheDocument();
+    expect(
+      within(passport).getByText(
+        'British English · Balanced Builder · Balanced · Slow and guided · Privacy-first',
+      ),
+    ).toBeInTheDocument();
+    expect(within(passport).getByText('Local only, user controlled')).toBeInTheDocument();
+    expect(within(passport).getByText('Ready for handoff')).toBeInTheDocument();
+  });
+
+  it('Passport card exposes professional CTA buttons', () => {
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Memephant Passport');
+
+    expect(within(passport).getByRole('button', { name: 'Complete Passport' })).toBeInTheDocument();
+    expect(within(passport).getByRole('button', { name: 'Review Passport' })).toBeInTheDocument();
+    expect(within(passport).getByRole('button', { name: 'Copy Passport Summary' })).toBeInTheDocument();
+  });
+
+  it('Copy Passport Summary copies the local passport summary only', () => {
+    render(<SettingsMemoryVault />);
+
+    const passport = screen.getByLabelText('Memephant Passport');
+    fireEvent.click(within(passport).getByRole('button', { name: 'Copy Passport Summary' }));
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining('AI Passport: Portable'),
+    );
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining('Fingerprint: British English'),
+    );
+  });
 });
 
 describe('Memory Vault Setup Wizard', () => {

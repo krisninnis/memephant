@@ -4,6 +4,8 @@ import {
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
   DEFAULT_FRONTAL_LOBE_PROFILE,
+  getMemephantPassportStatus,
+  getMemephantPassportSummary,
   isPersonalMemoryVault,
   mergeAppendOnlyConsentLedger,
   normalizePersonalMemoryVault,
@@ -364,6 +366,73 @@ describe('Personal Memory Vault foundation', () => {
 
     // Old vaults without frontalLobeProfile must still be valid
     expect(isPersonalMemoryVault(oldVault)).toBe(true);
+  });
+});
+
+describe('Memephant Passport summary', () => {
+  it('calculates completion percentage from the seven passport fields', () => {
+    const summary = getMemephantPassportSummary({
+      defaultAnswerStyle: 'balanced_builder',
+      tone: 'friendly',
+      languagePreference: 'british_english',
+      codingConfidence: 'experienced',
+      codeInstructionStyle: 'focused_diffs',
+      customRules: ['Ask before assuming missing details.'],
+      mode: 'ask_each_time',
+    });
+
+    expect(summary.completedItems).toBe(7);
+    expect(summary.totalItems).toBe(7);
+    expect(summary.completionPercentage).toBe(100);
+    expect(summary.status).toBe('Trusted');
+  });
+
+  it('maps professional badge statuses from completion percentages', () => {
+    expect(getMemephantPassportStatus(0)).toBe('Starter');
+    expect(getMemephantPassportStatus(50)).toBe('Calibrated');
+    expect(getMemephantPassportStatus(85)).toBe('Portable');
+    expect(getMemephantPassportStatus(100)).toBe('Trusted');
+  });
+
+  it('reports missing fields without overwriting profile defaults', () => {
+    const summary = getMemephantPassportSummary({
+      defaultAnswerStyle: 'balanced_builder',
+      languagePreference: 'british_english',
+    });
+
+    expect(summary.completionPercentage).toBe(29);
+    expect(summary.status).toBe('Starter');
+    expect(summary.missingItems).toEqual([
+      'Tone',
+      'Coding confidence',
+      'Code instruction style',
+      'Custom working rules',
+      'Export inclusion mode',
+    ]);
+    expect(summary.workingStyleSummary).toContain('Balanced Builder');
+  });
+
+  it('works with existing normalized profiles that predate language preference', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-21T10:00:00.000Z');
+    const profileWithoutLanguage = { ...vault.frontalLobeProfile! };
+    delete (profileWithoutLanguage as Partial<typeof profileWithoutLanguage>).languagePreference;
+    const normalized = normalizePersonalMemoryVault({
+      ...vault,
+      frontalLobeProfile: profileWithoutLanguage,
+    });
+
+    const summary = getMemephantPassportSummary(normalized?.frontalLobeProfile);
+
+    expect(summary.languagePreference).toBe('British English');
+    expect(summary.fingerprint).toContain('British English');
+  });
+
+  it('includes British English in the passport fingerprint by default', () => {
+    const summary = getMemephantPassportSummary(DEFAULT_FRONTAL_LOBE_PROFILE);
+
+    expect(summary.fingerprint).toContain('British English');
+    expect(summary.fingerprint).toContain('Balanced Builder');
+    expect(summary.fingerprint).toContain('Privacy-first');
   });
 });
 

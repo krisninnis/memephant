@@ -5,6 +5,7 @@ import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import { PWAProvider } from './hooks/usePWA';
 import { useProjectStore } from './store/projectStore';
 import { syncGitCommits } from './services/tauriActions';
+import { PassportGate } from './features/passport';
 import './styles/app-shell.css';
 
 interface ErrorBoundaryState {
@@ -146,11 +147,13 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <PWAProvider>
-        <AppShell />
-        <PWAUpdatePrompt />
-        {!isLoading && !settings.general.hasSeenOnboarding && <OnboardingModal />}
-      </PWAProvider>
+      <PassportGate>
+        <PWAProvider>
+          <AppShell />
+          <PWAUpdatePrompt />
+          {!isLoading && !settings.general.hasSeenOnboarding && <OnboardingModal />}
+        </PWAProvider>
+      </PassportGate>
     </ErrorBoundary>
   );
 }

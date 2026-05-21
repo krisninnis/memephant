@@ -58,6 +58,7 @@ export type FrontalLobePreferredPace =
 // ── Default inclusion mode ───────────────────────────────────────────────────
 
 export type FrontalLobeMode = 'default_on' | 'ask_each_time' | 'manual_only' | 'off';
+export type MemephantPassportStatus = 'Starter' | 'Calibrated' | 'Portable' | 'Trusted';
 
 export interface FrontalLobeProfile {
   defaultAnswerStyle: FrontalLobeAnswerStyle;
@@ -106,12 +107,126 @@ export const FRONTAL_LOBE_LANGUAGE_INSTRUCTIONS: Record<FrontalLobeLanguagePrefe
   neutral_english: 'Use clear, neutral English and avoid region-specific idioms where possible.',
 };
 
+export const FRONTAL_LOBE_ANSWER_STYLE_LABELS: Record<FrontalLobeAnswerStyle, string> = {
+  straight_shooter: 'Straight Shooter',
+  strict_code_reviewer: 'Strict Code Reviewer',
+  balanced_builder: 'Balanced Builder',
+  friendly_coach: 'Friendly Coach',
+  red_team_mode: 'Red Team Mode',
+};
+
+export const FRONTAL_LOBE_TONE_LABELS: Record<FrontalLobeTone, string> = {
+  direct: 'Direct',
+  balanced: 'Balanced',
+  friendly: 'Friendly',
+};
+
+export const FRONTAL_LOBE_PACE_LABELS: Record<FrontalLobePreferredPace, string> = {
+  slow_guided: 'Slow and guided',
+  normal: 'Normal pace',
+  fast_with_risks: 'Fast, with risks explained',
+  expert: 'Expert mode',
+};
+
+export interface MemephantPassportSummary {
+  status: MemephantPassportStatus;
+  completionPercentage: number;
+  completedItems: number;
+  totalItems: number;
+  missingItems: string[];
+  workingStyleSummary: string;
+  languagePreference: string;
+  privacyStatus: string;
+  exportReadiness: string;
+  fingerprint: string;
+  copyText: string;
+}
+
 export function getFrontalLobeLanguageLabel(value: FrontalLobeLanguagePreference): string {
   return FRONTAL_LOBE_LANGUAGE_LABELS[value] ?? value;
 }
 
 export function getFrontalLobeLanguageInstruction(value: FrontalLobeLanguagePreference): string {
   return FRONTAL_LOBE_LANGUAGE_INSTRUCTIONS[value] ?? FRONTAL_LOBE_LANGUAGE_INSTRUCTIONS.british_english;
+}
+
+function hasPassportValue(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some((item) => typeof item === 'string' && item.trim().length > 0);
+  }
+
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+export function getMemephantPassportStatus(percentage: number): MemephantPassportStatus {
+  if (percentage >= 100) return 'Trusted';
+  if (percentage >= 85) return 'Portable';
+  if (percentage >= 50) return 'Calibrated';
+  return 'Starter';
+}
+
+export function getMemephantPassportSummary(
+  profileInput?: Partial<FrontalLobeProfile> | null,
+): MemephantPassportSummary {
+  const profile = {
+    ...DEFAULT_FRONTAL_LOBE_PROFILE,
+    ...(profileInput ?? {}),
+  };
+
+  const checks: Array<{ label: string; complete: boolean }> = [
+    { label: 'Answer style', complete: hasPassportValue(profileInput?.defaultAnswerStyle) },
+    { label: 'Tone', complete: hasPassportValue(profileInput?.tone) },
+    { label: 'Language preference', complete: hasPassportValue(profileInput?.languagePreference) },
+    { label: 'Coding confidence', complete: hasPassportValue(profileInput?.codingConfidence) },
+    { label: 'Code instruction style', complete: hasPassportValue(profileInput?.codeInstructionStyle) },
+    { label: 'Custom working rules', complete: hasPassportValue(profileInput?.customRules) },
+    { label: 'Export inclusion mode', complete: hasPassportValue(profileInput?.mode) },
+  ];
+  const completedItems = checks.filter((check) => check.complete).length;
+  const totalItems = checks.length;
+  const completionPercentage = Math.round((completedItems / totalItems) * 100);
+  const status = getMemephantPassportStatus(completionPercentage);
+  const languagePreference = getFrontalLobeLanguageLabel(profile.languagePreference);
+  const answerStyle = FRONTAL_LOBE_ANSWER_STYLE_LABELS[profile.defaultAnswerStyle];
+  const tone = FRONTAL_LOBE_TONE_LABELS[profile.tone];
+  const pace = FRONTAL_LOBE_PACE_LABELS[profile.preferredPace];
+  const exportReadiness = profile.mode === 'off'
+    ? 'Export disabled'
+    : profile.mode === 'manual_only'
+      ? 'Manual only'
+      : profile.mode === 'ask_each_time'
+        ? 'Ready with confirmation'
+        : 'Ready for handoff';
+  const privacyStatus = 'Local only, user controlled';
+  const fingerprint = [
+    languagePreference,
+    answerStyle,
+    tone,
+    pace,
+    'Privacy-first',
+  ].join(' · ');
+
+  return {
+    status,
+    completionPercentage,
+    completedItems,
+    totalItems,
+    missingItems: checks.filter((check) => !check.complete).map((check) => check.label),
+    workingStyleSummary: `${answerStyle} · ${tone} · ${pace}`,
+    languagePreference,
+    privacyStatus,
+    exportReadiness,
+    fingerprint,
+    copyText: [
+      `AI Passport: ${status}`,
+      `Completion: ${completionPercentage}%`,
+      `Fingerprint: ${fingerprint}`,
+      `Language: ${languagePreference}`,
+      `Working style: ${answerStyle}, ${tone}, ${pace}`,
+      `Privacy: ${privacyStatus}`,
+      `Export readiness: ${exportReadiness}`,
+    ].join('\n'),
+  };
 }
 
 export type PersonalMemorySensitivity = 'standard' | 'private' | 'never_share';

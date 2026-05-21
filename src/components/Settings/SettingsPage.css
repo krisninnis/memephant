@@ -2068,6 +2068,143 @@
 }
 
 /* ── Frontal Lobe / AI Working Style profile ────────────────── */
+.memory-vault-ai-passport {
+  background: linear-gradient(180deg, #141727 0%, #11131f 100%);
+  border: 1px solid #2a3047;
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+  padding: 18px;
+}
+
+.memory-vault-ai-passport__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.memory-vault-ai-passport__eyebrow {
+  color: #8ca2c7;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.memory-vault-ai-passport h3 {
+  color: #f2f5ff;
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.memory-vault-ai-passport__badge {
+  background: rgba(91, 141, 239, 0.16);
+  border: 1px solid rgba(130, 165, 245, 0.35);
+  border-radius: 999px;
+  color: #dce7ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.memory-vault-ai-passport__progress {
+  display: grid;
+  gap: 8px;
+}
+
+.memory-vault-ai-passport__progress-row {
+  align-items: center;
+  color: #8ca2c7;
+  display: flex;
+  font-size: 0.82rem;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.memory-vault-ai-passport__progress-row strong {
+  color: #f2f5ff;
+}
+
+.memory-vault-ai-passport__progress-track {
+  accent-color: #7aa2ff;
+  background: #090b13;
+  border: 0;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.memory-vault-ai-passport__progress-track::-webkit-progress-bar {
+  background: #090b13;
+  border-radius: 999px;
+}
+
+.memory-vault-ai-passport__progress-track::-webkit-progress-value {
+  background: linear-gradient(90deg, #7aa2ff, #70d6b3);
+  border-radius: 999px;
+}
+
+.memory-vault-ai-passport__progress-track::-moz-progress-bar {
+  background: linear-gradient(90deg, #7aa2ff, #70d6b3);
+  border-radius: 999px;
+}
+
+.memory-vault-ai-passport__fingerprint {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  color: #f2f5ff;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  padding: 12px;
+}
+
+.memory-vault-ai-passport__grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.memory-vault-ai-passport__grid > div {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+}
+
+.memory-vault-ai-passport__grid span {
+  color: #8ca2c7;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.memory-vault-ai-passport__grid strong {
+  color: #f2f5ff;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.memory-vault-ai-passport__missing {
+  color: #c8d5ef;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.memory-vault-ai-passport__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .memory-vault-frontal-lobe {
   background: #12121f;
   border: 1px solid #24243a;
@@ -2160,4 +2297,16 @@
   font-size: 13px;
   color: rgba(255, 255, 255, 0.55);
   padding-top: 6px;
+}
+
+@media (max-width: 760px) {
+  .memory-vault-ai-passport__header,
+  .memory-vault-ai-passport__progress-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .memory-vault-ai-passport__grid {
+    grid-template-columns: 1fr;
+  }
 }

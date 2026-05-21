@@ -13,6 +13,7 @@ import {
   DEFAULT_FRONTAL_LOBE_PROFILE,
   getFrontalLobeLanguageInstruction,
   getFrontalLobeLanguageLabel,
+  getMemephantPassportSummary,
   type ConsentLedgerAction,
   type ConsentLedgerScope,
   type FrontalLobeAnswerStyle,
@@ -785,6 +786,24 @@ export function SettingsMemoryVault() {
     },
     frontalLobeCustomRules,
   );
+  const currentPassportProfile: FrontalLobeProfile = {
+    mode: frontalLobeMode,
+    defaultAnswerStyle: frontalLobeAnswerStyle,
+    challengeLevel: frontalLobeChallengeLevel,
+    codeReviewStrictness: frontalLobeCodeReviewStrictness,
+    explanationDepth: frontalLobeExplanationDepth,
+    tone: frontalLobeTone,
+    languagePreference: frontalLobeLanguagePreference,
+    codingConfidence: frontalLobeCodingConfidence,
+    codeInstructionStyle: frontalLobeCodeInstructionStyle,
+    debuggingSupport: frontalLobeDebuggingSupport,
+    preferredPace: frontalLobePreferredPace,
+    customRules: frontalLobeCustomRules
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean),
+  };
+  const passportSummary = getMemephantPassportSummary(currentPassportProfile);
 
   const licensingDisabled = !vault.dataLicensingPreferences.allowLicensing;
   const entries = getVaultEntries(vault);
@@ -1060,6 +1079,23 @@ export function SettingsMemoryVault() {
     }
   };
 
+  const handleCopyPassportSummary = async () => {
+    try {
+      await navigator.clipboard.writeText(passportSummary.copyText);
+      showToast('Passport summary copied');
+    } catch (err) {
+      console.warn('[Memephant] Failed to copy Passport summary:', err);
+      showToast('Could not copy Passport summary.', 'error');
+    }
+  };
+
+  const handleReviewPassport = () => {
+    document.getElementById('memory-vault-frontal-lobe-section')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
   const handleSaveFrontalLobe = () => {
     const rules = frontalLobeCustomRules
       .split('\n')
@@ -1197,6 +1233,87 @@ export function SettingsMemoryVault() {
           <div>- Not sent to any AI unless a future permission flow asks you first</div>
         </div>
       </div>
+
+      <section className="memory-vault-ai-passport" aria-label="Memephant Passport">
+        <div className="memory-vault-ai-passport__header">
+          <div>
+            <p className="memory-vault-ai-passport__eyebrow">Portable AI working identity</p>
+            <h3>Memephant Passport</h3>
+          </div>
+          <span className="memory-vault-ai-passport__badge">
+            AI Passport: {passportSummary.status}
+          </span>
+        </div>
+
+        <div className="memory-vault-ai-passport__progress" aria-label="Passport completion">
+          <div className="memory-vault-ai-passport__progress-row">
+            <strong>Passport {passportSummary.completionPercentage}% complete</strong>
+            <span>
+              {passportSummary.completedItems}/{passportSummary.totalItems} signals set
+            </span>
+          </div>
+          <progress
+            className="memory-vault-ai-passport__progress-track"
+            max={100}
+            value={passportSummary.completionPercentage}
+          >
+            {passportSummary.completionPercentage}%
+          </progress>
+        </div>
+
+        <div className="memory-vault-ai-passport__fingerprint">
+          {passportSummary.fingerprint}
+        </div>
+
+        <div className="memory-vault-ai-passport__grid">
+          <div>
+            <span>Working style</span>
+            <strong>{passportSummary.workingStyleSummary}</strong>
+          </div>
+          <div>
+            <span>Language</span>
+            <strong>{passportSummary.languagePreference}</strong>
+          </div>
+          <div>
+            <span>Privacy</span>
+            <strong>{passportSummary.privacyStatus}</strong>
+          </div>
+          <div>
+            <span>Export readiness</span>
+            <strong>{passportSummary.exportReadiness}</strong>
+          </div>
+        </div>
+
+        {passportSummary.missingItems.length > 0 && (
+          <p className="memory-vault-ai-passport__missing">
+            Missing: {passportSummary.missingItems.join(', ')}
+          </p>
+        )}
+
+        <div className="memory-vault-ai-passport__actions">
+          <button
+            className="setting-btn setting-btn--primary"
+            type="button"
+            onClick={openWizard}
+          >
+            Complete Passport
+          </button>
+          <button
+            className="setting-btn"
+            type="button"
+            onClick={handleReviewPassport}
+          >
+            Review Passport
+          </button>
+          <button
+            className="setting-btn"
+            type="button"
+            onClick={() => void handleCopyPassportSummary()}
+          >
+            Copy Passport Summary
+          </button>
+        </div>
+      </section>
 
       <div className="mv-wizard-entry" aria-label="Memory Vault guided setup">
         <div className="mv-wizard-entry__text">
@@ -1753,7 +1870,11 @@ export function SettingsMemoryVault() {
 
       <div className="settings-group">
         <div className="settings-group-title">Frontal Lobe</div>
-        <section className="memory-vault-frontal-lobe" aria-label="Frontal Lobe AI Working Style section">
+        <section
+          id="memory-vault-frontal-lobe-section"
+          className="memory-vault-frontal-lobe"
+          aria-label="Frontal Lobe AI Working Style section"
+        >
           <div className="memory-vault-frontal-lobe__intro">
             <h3>AI Working Style</h3>
             <p>
