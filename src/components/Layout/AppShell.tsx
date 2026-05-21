@@ -42,6 +42,9 @@ export function AppShell() {
     setCurrentView('projects');
     setMobileDrawerOpen(true);
   };
+  const openSearch = () => {
+    window.dispatchEvent(new Event('memephant:open-search'));
+  };
 
   return (
     <div className="app-shell">
@@ -63,10 +66,21 @@ export function AppShell() {
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
+            gap: '0.5rem',
             padding: '0.75rem 1rem 0',
             flexShrink: 0,
           }}
         >
+          <button
+            type="button"
+            className="app-search-button"
+            onClick={openSearch}
+            aria-label="Search Memephant"
+            title="Search Memephant (Ctrl+K / Cmd+K)"
+          >
+            <span aria-hidden="true">⌕</span>
+            <span>Search</span>
+          </button>
           <PWAInstallButton variant="header" />
         </div>
 

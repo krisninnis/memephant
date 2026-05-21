@@ -1,74 +1,64 @@
-/**
- * ⌘K Command Palette
- *
- * Trigger: ⌘K (macOS) / Ctrl+K (Windows/Linux) from anywhere in the app.
- *
- * Features:
- *  - Fuzzy project search
- *  - Quick actions: New project, Settings tabs, Export, Sync
- *  - Keyboard navigation (↑↓ Enter Esc) via cmdk
- */
-
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { useProjectStore } from '../../store/projectStore';
 import { createProject } from '../../services/tauriActions';
+import { searchProjectMemory } from '../../utils/searchProjectMemory';
 import './CommandPalette.css';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PaletteAction {
   id: string;
   label: string;
-  group: string;
   icon: string;
   run: () => void;
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const projects       = useProjectStore((s) => s.projects);
+  const projects = useProjectStore((s) => s.projects);
   const setActiveProject = useProjectStore((s) => s.setActiveProject);
   const setCurrentView = useProjectStore((s) => s.setCurrentView);
   const setSettingsTab = useProjectStore((s) => s.setSettingsTab);
-  const showToast      = useProjectStore((s) => s.showToast);
-  const cloudUser      = useProjectStore((s) => s.cloudUser);
-
-  // ── Open / close on ⌘K / Ctrl+K ─────────────────────────────────────────
+  const showToast = useProjectStore((s) => s.showToast);
+  const cloudUser = useProjectStore((s) => s.cloudUser);
 
   useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setOpen((o) => !o);
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === 'k') {
+        event.preventDefault();
+        setOpen((current) => !current);
       }
-      if (e.key === 'Escape') {
+
+      if (event.key === 'Escape') {
         setOpen(false);
       }
     }
+
+    function onOpenSearch() {
+      setOpen(true);
+    }
+
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('memephant:open-search', onOpenSearch);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('memephant:open-search', onOpenSearch);
+    };
   }, []);
 
-  // Reset search when closed
   useEffect(() => {
     if (!open) setSearch('');
   }, [open]);
 
   const close = useCallback(() => setOpen(false), []);
 
-  // ── Actions ──────────────────────────────────────────────────────────────
-
   const actions: PaletteAction[] = [
     {
       id: 'new-project',
       label: 'New project',
-      group: 'Actions',
-      icon: '✚',
+      icon: '+',
       run: async () => {
         close();
         const name = window.prompt('Project name:');
@@ -77,44 +67,38 @@ export function CommandPalette() {
     },
     {
       id: 'goto-settings-general',
-      label: 'Settings → General',
-      group: 'Actions',
-      icon: '⚙️',
+      label: 'Settings - General',
+      icon: 'G',
       run: () => { close(); setSettingsTab('general'); setCurrentView('settings'); },
     },
     {
       id: 'goto-settings-sync',
-      label: 'Settings → Cloud Backup',
-      group: 'Actions',
-      icon: '☁️',
+      label: 'Settings - Cloud Backup',
+      icon: 'C',
       run: () => { close(); setSettingsTab('sync'); setCurrentView('settings'); },
     },
     {
       id: 'goto-memory-vault',
       label: 'Open Memory Vault',
-      group: 'Actions',
       icon: 'V',
       run: () => { close(); setCurrentView('memory-vault'); },
     },
     {
       id: 'goto-settings-privacy',
-      label: 'Settings → Privacy',
-      group: 'Actions',
-      icon: '🔒',
+      label: 'Settings - Privacy',
+      icon: 'P',
       run: () => { close(); setSettingsTab('privacy'); setCurrentView('settings'); },
     },
     {
       id: 'goto-settings-platforms',
-      label: 'Settings → AI Platforms',
-      group: 'Actions',
-      icon: '🤖',
+      label: 'Settings - AI Platforms',
+      icon: 'AI',
       run: () => { close(); setSettingsTab('platforms'); setCurrentView('settings'); },
     },
     {
       id: 'goto-settings-about',
-      label: 'Settings → About',
-      group: 'Actions',
-      icon: 'ℹ️',
+      label: 'Settings - About',
+      icon: 'i',
       run: () => { close(); setSettingsTab('about'); setCurrentView('settings'); },
     },
     ...(cloudUser
@@ -122,36 +106,41 @@ export function CommandPalette() {
           {
             id: 'sync-now',
             label: 'Sync with cloud now',
-            group: 'Actions',
-            icon: '🔄',
+            icon: 'S',
             run: () => {
               close();
               setSettingsTab('sync');
               setCurrentView('settings');
-              showToast('Opening Cloud Backup — click Sync now.');
+              showToast('Opening Cloud Backup - click Sync now.');
             },
           },
         ]
       : []),
   ];
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  const trimmedSearch = search.trim();
+  const searchResults = searchProjectMemory(projects, trimmedSearch, 18);
+  const filteredActions = trimmedSearch
+    ? actions.filter((action) =>
+        action.label.toLocaleLowerCase().includes(trimmedSearch.toLocaleLowerCase()))
+    : actions;
 
   if (!open) return null;
 
   return (
-    <div className="cmd-overlay" onClick={close} role="dialog" aria-modal="true" aria-label="Command palette">
+    <div className="cmd-overlay" onClick={close} role="dialog" aria-modal="true" aria-label="Search Memephant">
       <div
         className="cmd-wrapper"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
         role="presentation"
       >
-        <Command label="Command palette" shouldFilter loop>
+        <Command label="Search Memephant" shouldFilter={false} loop>
           <div className="cmd-input-row">
-            <span className="cmd-input-icon">⌘</span>
+            <span className="cmd-input-icon" aria-hidden="true">⌕</span>
             <Command.Input
               className="cmd-input"
-              placeholder="Search projects or type a command…"
+              aria-label="Search Memephant"
+              placeholder="Search projects, decisions, files..."
               value={search}
               onValueChange={setSearch}
               autoFocus
@@ -161,11 +150,34 @@ export function CommandPalette() {
 
           <Command.List className="cmd-list">
             <Command.Empty className="cmd-empty">
-              No results for &ldquo;{search}&rdquo;
+              No local project memory matched &ldquo;{search}&rdquo;.
             </Command.Empty>
 
-            {/* Projects */}
-            {projects.length > 0 && (
+            {trimmedSearch && searchResults.length > 0 && (
+              <Command.Group heading="Project memory" className="cmd-group">
+                {searchResults.map((result) => (
+                  <Command.Item
+                    key={result.id}
+                    value={`${result.projectName} ${result.section} ${result.snippet}`}
+                    className="cmd-item"
+                    onSelect={() => {
+                      setActiveProject(result.projectId);
+                      setCurrentView('projects');
+                      close();
+                    }}
+                  >
+                    <span className="cmd-item-icon" aria-hidden="true">⌕</span>
+                    <span className="cmd-item-main">
+                      <span className="cmd-item-label">{result.projectName}</span>
+                      <span className="cmd-item-hint">{result.snippet}</span>
+                    </span>
+                    <span className="cmd-item-section">{result.section}</span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
+
+            {!trimmedSearch && projects.length > 0 && (
               <Command.Group heading="Projects" className="cmd-group">
                 {projects.map((project) => (
                   <Command.Item
@@ -178,33 +190,36 @@ export function CommandPalette() {
                       close();
                     }}
                   >
-                    <span className="cmd-item-icon">📁</span>
-                    <span className="cmd-item-label">{project.name}</span>
-                    {project.currentState && (
-                      <span className="cmd-item-hint">
-                        {project.currentState.slice(0, 60)}
-                        {project.currentState.length > 60 ? '…' : ''}
-                      </span>
-                    )}
+                    <span className="cmd-item-icon" aria-hidden="true">P</span>
+                    <span className="cmd-item-main">
+                      <span className="cmd-item-label">{project.name}</span>
+                      {project.currentState && (
+                        <span className="cmd-item-hint">
+                          {project.currentState.slice(0, 72)}
+                          {project.currentState.length > 72 ? '...' : ''}
+                        </span>
+                      )}
+                    </span>
                   </Command.Item>
                 ))}
               </Command.Group>
             )}
 
-            {/* Actions */}
-            <Command.Group heading="Actions" className="cmd-group">
-              {actions.map((action) => (
-                <Command.Item
-                  key={action.id}
-                  value={action.label}
-                  className="cmd-item"
-                  onSelect={() => void action.run()}
-                >
-                  <span className="cmd-item-icon">{action.icon}</span>
-                  <span className="cmd-item-label">{action.label}</span>
-                </Command.Item>
-              ))}
-            </Command.Group>
+            {filteredActions.length > 0 && (
+              <Command.Group heading="Actions" className="cmd-group">
+                {filteredActions.map((action) => (
+                  <Command.Item
+                    key={action.id}
+                    value={action.label}
+                    className="cmd-item"
+                    onSelect={() => void action.run()}
+                  >
+                    <span className="cmd-item-icon" aria-hidden="true">{action.icon}</span>
+                    <span className="cmd-item-label">{action.label}</span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
           </Command.List>
         </Command>
       </div>

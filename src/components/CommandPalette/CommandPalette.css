@@ -14,7 +14,7 @@
 
 .cmd-wrapper {
   width: 100%;
-  max-width: 580px;
+  max-width: 680px;
   background: #1a1f2e;
   border: 1px solid #2a3348;
   border-radius: 14px;
@@ -133,7 +133,6 @@
 }
 
 .cmd-item-label {
-  flex: 1;
   font-size: 14px;
   color: #e8eaf0;
   font-weight: 500;
@@ -142,14 +141,30 @@
   text-overflow: ellipsis;
 }
 
+.cmd-item-main {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
 .cmd-item-hint {
   font-size: 12px;
   color: #5a6480;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+}
+
+.cmd-item-section {
   flex-shrink: 0;
+  padding: 3px 7px;
+  border: 1px solid rgba(79, 142, 247, 0.2);
+  border-radius: 999px;
+  background: rgba(79, 142, 247, 0.08);
+  color: #9dbbf5;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* ── Mobile ────────────────────────────────────────────────────────────────── */
@@ -157,5 +172,10 @@
 @media (max-width: 640px) {
   .cmd-overlay { padding-top: 10vh; }
   .cmd-wrapper { max-width: calc(100vw - 32px); }
-  .cmd-item-hint { display: none; }
+  .cmd-item {
+    align-items: flex-start;
+  }
+  .cmd-item-section {
+    display: none;
+  }
 }
