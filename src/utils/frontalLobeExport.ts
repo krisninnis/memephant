@@ -13,7 +13,12 @@
  *     (exportFormatters.ts) runs the block through the secret sanitiser before appending.
  */
 
-import type { FrontalLobeMode, FrontalLobeProfile } from '../types/personalMemoryVault';
+import {
+  getFrontalLobeLanguageInstruction,
+  getFrontalLobeLanguageLabel,
+  type FrontalLobeMode,
+  type FrontalLobeProfile,
+} from '../types/personalMemoryVault';
 
 // ── Label maps (mirrors SettingsMemoryVault.tsx — kept separate to avoid circular deps) ──
 
@@ -108,6 +113,8 @@ export function buildFrontalLobeExportBlock(profile: FrontalLobeProfile): string
     `Code Review Strictness: ${label(REVIEW_STRICTNESS_LABELS, profile.codeReviewStrictness)}`,
     `Explanation Depth: ${label(DEPTH_LABELS, profile.explanationDepth)}`,
     `Tone: ${label(TONE_LABELS, profile.tone)}`,
+    `Language: ${getFrontalLobeLanguageLabel(profile.languagePreference)}`,
+    getFrontalLobeLanguageInstruction(profile.languagePreference),
     '',
     '## Builder Skill Profile',
     `Coding Confidence: ${label(CONFIDENCE_LABELS, profile.codingConfidence)}`,

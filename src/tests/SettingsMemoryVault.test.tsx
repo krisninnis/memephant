@@ -1158,6 +1158,7 @@ describe('Frontal Lobe AI Working Style profile', () => {
     expect(within(section).getByRole('heading', { name: 'AI Working Style' })).toBeInTheDocument();
     expect(within(section).getByText(/Your AI Working Style profile/)).toBeInTheDocument();
     expect(within(section).getByLabelText('Default answer style')).toBeInTheDocument();
+    expect(within(section).getByLabelText('Language preference')).toBeInTheDocument();
     expect(within(section).getByLabelText('Coding confidence')).toBeInTheDocument();
     expect(within(section).getByText('Builder Skill Profile')).toBeInTheDocument();
   });
@@ -1181,6 +1182,7 @@ describe('Frontal Lobe AI Working Style profile', () => {
     expect(within(section).getByLabelText('Code review strictness')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness);
     expect(within(section).getByLabelText('Explanation depth')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.explanationDepth);
     expect(within(section).getByLabelText('Tone')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.tone);
+    expect(within(section).getByLabelText('Language preference')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.languagePreference);
     expect(within(section).getByLabelText('Coding confidence')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence);
     expect(within(section).getByLabelText('Code instruction style')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle);
     expect(within(section).getByLabelText('Debugging support')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.debuggingSupport);
@@ -1196,6 +1198,8 @@ describe('Frontal Lobe AI Working Style profile', () => {
     expect(preview.value).toContain('Tell me the exact file and whether to replace or patch');
     expect(preview.value).toContain('Explain the error in plain English');
     expect(preview.value).toContain('Slow and guided');
+    expect(preview.value).toContain('Language: British English');
+    expect(preview.value).toContain('Use British spelling and phrasing, e.g. centre, colour, organise, behaviour.');
   });
 
   // Test 4: changing controls updates the preview
@@ -1234,6 +1238,12 @@ describe('Frontal Lobe AI Working Style profile', () => {
       target: { value: 'expert' },
     });
     expect(preview.value).toContain('Expert mode');
+
+    fireEvent.change(within(section).getByLabelText('Language preference'), {
+      target: { value: 'canadian_english' },
+    });
+    expect(preview.value).toContain('Language: Canadian English');
+    expect(preview.value).toContain('Use Canadian English spelling and phrasing.');
   });
 
   // Test 5: custom working rules appear as bullets
@@ -1299,6 +1309,9 @@ describe('Frontal Lobe AI Working Style profile', () => {
     fireEvent.change(within(section).getByLabelText('Coding confidence'), {
       target: { value: 'brand_new' },
     });
+    fireEvent.change(within(section).getByLabelText('Language preference'), {
+      target: { value: 'american_english' },
+    });
     fireEvent.change(within(section).getByLabelText('Custom working rules'), {
       target: { value: FRONTAL_LOBE_RULE_SENTINEL },
     });
@@ -1312,6 +1325,7 @@ describe('Frontal Lobe AI Working Style profile', () => {
     expect(parsed.frontalLobeProfile).toBeDefined();
     expect(parsed.frontalLobeProfile?.defaultAnswerStyle).toBe('strict_code_reviewer');
     expect(parsed.frontalLobeProfile?.codingConfidence).toBe('brand_new');
+    expect(parsed.frontalLobeProfile?.languagePreference).toBe('american_english');
     expect(parsed.frontalLobeProfile?.customRules).toContain(FRONTAL_LOBE_RULE_SENTINEL);
   });
 
@@ -1335,6 +1349,7 @@ describe('Frontal Lobe AI Working Style profile', () => {
 
     expect(within(section).getByLabelText('Default answer style')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.defaultAnswerStyle);
     expect(within(section).getByLabelText('Coding confidence')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence);
+    expect(within(section).getByLabelText('Language preference')).toHaveValue(DEFAULT_FRONTAL_LOBE_PROFILE.languagePreference);
     expect(within(section).getByLabelText('Custom working rules')).toHaveValue('');
 
     const preview = within(section).getByLabelText('Frontal Lobe preview') as HTMLTextAreaElement;

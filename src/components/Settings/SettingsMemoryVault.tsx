@@ -11,6 +11,8 @@ import {
   createDefaultPersonalMemoryVault,
   createPersonalMemoryEntry,
   DEFAULT_FRONTAL_LOBE_PROFILE,
+  getFrontalLobeLanguageInstruction,
+  getFrontalLobeLanguageLabel,
   type ConsentLedgerAction,
   type ConsentLedgerScope,
   type FrontalLobeAnswerStyle,
@@ -20,6 +22,7 @@ import {
   type FrontalLobeCodingConfidence,
   type FrontalLobeDebuggingSupport,
   type FrontalLobeExplanationDepth,
+  type FrontalLobeLanguagePreference,
   type FrontalLobeMode,
   type FrontalLobePreferredPace,
   type FrontalLobeProfile,
@@ -246,6 +249,14 @@ const FRONTAL_LOBE_TONE_OPTIONS: Array<{ value: FrontalLobeTone; label: string }
   { value: 'friendly', label: 'Friendly' },
 ];
 
+const FRONTAL_LOBE_LANGUAGE_OPTIONS: Array<{ value: FrontalLobeLanguagePreference; label: string }> = [
+  { value: 'british_english', label: 'British English' },
+  { value: 'american_english', label: 'American English' },
+  { value: 'australian_english', label: 'Australian English' },
+  { value: 'canadian_english', label: 'Canadian English' },
+  { value: 'neutral_english', label: 'Neutral English' },
+];
+
 // ── Builder Skill Profile ─────────────────────────────────────────────────────
 
 const FRONTAL_LOBE_CODING_CONFIDENCE_OPTIONS: Array<{
@@ -416,7 +427,9 @@ function buildFrontalLobePreview(profile: FrontalLobeProfile, customRulesText: s
       `Challenge Level: ${getLabel(FRONTAL_LOBE_CHALLENGE_OPTIONS, profile.challengeLevel)}\n` +
       `Code Review Strictness: ${getLabel(FRONTAL_LOBE_STRICTNESS_OPTIONS, profile.codeReviewStrictness)}\n` +
       `Explanation Depth: ${getLabel(FRONTAL_LOBE_DEPTH_OPTIONS, profile.explanationDepth)}\n` +
-      `Tone: ${getLabel(FRONTAL_LOBE_TONE_OPTIONS, profile.tone)}`,
+      `Tone: ${getLabel(FRONTAL_LOBE_TONE_OPTIONS, profile.tone)}\n` +
+      `Language: ${getFrontalLobeLanguageLabel(profile.languagePreference)}\n` +
+      getFrontalLobeLanguageInstruction(profile.languagePreference),
     '## Builder Skill Profile\n' +
       `Coding Confidence: ${getLabel(FRONTAL_LOBE_CODING_CONFIDENCE_OPTIONS, profile.codingConfidence)}\n` +
       `Code Instruction Style: ${getLabel(FRONTAL_LOBE_CODE_INSTRUCTION_OPTIONS, profile.codeInstructionStyle)}\n` +
@@ -714,6 +727,10 @@ export function SettingsMemoryVault() {
   const [frontalLobeTone, setFrontalLobeTone] = useState<FrontalLobeTone>(
     () => vault.frontalLobeProfile?.tone ?? DEFAULT_FRONTAL_LOBE_PROFILE.tone,
   );
+  const [frontalLobeLanguagePreference, setFrontalLobeLanguagePreference] =
+    useState<FrontalLobeLanguagePreference>(
+      () => vault.frontalLobeProfile?.languagePreference ?? DEFAULT_FRONTAL_LOBE_PROFILE.languagePreference,
+    );
   // ── Builder Skill Profile state ───────────────────────────────────────────
   const [frontalLobeCodingConfidence, setFrontalLobeCodingConfidence] =
     useState<FrontalLobeCodingConfidence>(
@@ -759,6 +776,7 @@ export function SettingsMemoryVault() {
       codeReviewStrictness: frontalLobeCodeReviewStrictness,
       explanationDepth: frontalLobeExplanationDepth,
       tone: frontalLobeTone,
+      languagePreference: frontalLobeLanguagePreference,
       codingConfidence: frontalLobeCodingConfidence,
       codeInstructionStyle: frontalLobeCodeInstructionStyle,
       debuggingSupport: frontalLobeDebuggingSupport,
@@ -1055,6 +1073,7 @@ export function SettingsMemoryVault() {
       codeReviewStrictness: frontalLobeCodeReviewStrictness,
       explanationDepth: frontalLobeExplanationDepth,
       tone: frontalLobeTone,
+      languagePreference: frontalLobeLanguagePreference,
       codingConfidence: frontalLobeCodingConfidence,
       codeInstructionStyle: frontalLobeCodeInstructionStyle,
       debuggingSupport: frontalLobeDebuggingSupport,
@@ -1081,6 +1100,7 @@ export function SettingsMemoryVault() {
     setFrontalLobeCodeReviewStrictness(DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness);
     setFrontalLobeExplanationDepth(DEFAULT_FRONTAL_LOBE_PROFILE.explanationDepth);
     setFrontalLobeTone(DEFAULT_FRONTAL_LOBE_PROFILE.tone);
+    setFrontalLobeLanguagePreference(DEFAULT_FRONTAL_LOBE_PROFILE.languagePreference);
     setFrontalLobeCodingConfidence(DEFAULT_FRONTAL_LOBE_PROFILE.codingConfidence);
     setFrontalLobeCodeInstructionStyle(DEFAULT_FRONTAL_LOBE_PROFILE.codeInstructionStyle);
     setFrontalLobeDebuggingSupport(DEFAULT_FRONTAL_LOBE_PROFILE.debuggingSupport);
@@ -1135,6 +1155,7 @@ export function SettingsMemoryVault() {
     setFrontalLobeChallengeLevel(answerChoice?.challengeLevel ?? DEFAULT_FRONTAL_LOBE_PROFILE.challengeLevel);
     setFrontalLobeCodeReviewStrictness(answerChoice?.codeReviewStrictness ?? DEFAULT_FRONTAL_LOBE_PROFILE.codeReviewStrictness);
     setFrontalLobeTone(answerChoice?.tone ?? DEFAULT_FRONTAL_LOBE_PROFILE.tone);
+    setFrontalLobeLanguagePreference(DEFAULT_FRONTAL_LOBE_PROFILE.languagePreference);
     setFrontalLobeCodeInstructionStyle(wizardCodeInstruction);
     setFrontalLobeCustomRules(wizardSelectedRules.join('\n'));
 
@@ -1833,6 +1854,21 @@ export function SettingsMemoryVault() {
                 ))}
               </select>
             </label>
+
+            <label className="memory-vault-field">
+              <span>Language preference</span>
+              <select
+                aria-label="Language preference"
+                className="memory-vault-input"
+                value={frontalLobeLanguagePreference}
+                onChange={(event) =>
+                  setFrontalLobeLanguagePreference(event.target.value as FrontalLobeLanguagePreference)}
+              >
+                {FRONTAL_LOBE_LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <div className="memory-vault-frontal-lobe__group-label">Builder Skill Profile</div>
@@ -2332,4 +2368,3 @@ export function SettingsMemoryVault() {
 }
 
 export default SettingsMemoryVault;
-

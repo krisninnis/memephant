@@ -73,6 +73,19 @@ describe('buildFrontalLobeExportBlock', () => {
     expect(block).toContain('Code Review Strictness:');
     expect(block).toContain('Explanation Depth:');
     expect(block).toContain('Tone:');
+    expect(block).toContain('Language:');
+  });
+
+  it('includes British English language preference by default', () => {
+    const block = buildFrontalLobeExportBlock(makeProfile());
+    expect(block).toContain('Language: British English');
+    expect(block).toContain('Use British spelling and phrasing, e.g. centre, colour, organise, behaviour.');
+  });
+
+  it('renders selected non-British language preference correctly', () => {
+    const block = buildFrontalLobeExportBlock(makeProfile({ languagePreference: 'american_english' }));
+    expect(block).toContain('Language: American English');
+    expect(block).toContain('Use American spelling and phrasing, e.g. center, color, organize, behavior.');
   });
 
   it('includes Builder Skill Profile section', () => {

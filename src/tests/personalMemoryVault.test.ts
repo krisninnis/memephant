@@ -264,6 +264,7 @@ describe('Personal Memory Vault foundation', () => {
     expect(vault.frontalLobeProfile?.codeReviewStrictness).toBe('normal');
     expect(vault.frontalLobeProfile?.explanationDepth).toBe('explain_why');
     expect(vault.frontalLobeProfile?.tone).toBe('balanced');
+    expect(vault.frontalLobeProfile?.languagePreference).toBe('british_english');
     // Builder Skill Profile fields
     expect(vault.frontalLobeProfile?.codingConfidence).toBe('can_edit_with_exact_instructions');
     expect(vault.frontalLobeProfile?.codeInstructionStyle).toBe('exact_file_and_patch');
@@ -298,6 +299,7 @@ describe('Personal Memory Vault foundation', () => {
     expect(normalized!.frontalLobeProfile?.debuggingSupport).toBe('plain_english_error');
     expect(normalized!.frontalLobeProfile?.preferredPace).toBe('slow_guided');
     expect(normalized!.frontalLobeProfile?.mode).toBe('default_on');
+    expect(normalized!.frontalLobeProfile?.languagePreference).toBe('british_english');
   });
 
   it('normalizePersonalMemoryVault backfills Builder Skill Profile fields for partial vaults', () => {
@@ -326,6 +328,21 @@ describe('Personal Memory Vault foundation', () => {
     expect(normalized!.frontalLobeProfile?.preferredPace).toBe('slow_guided');
     // FrontalLobeMode also backfilled for vaults saved before Task 8B
     expect(normalized!.frontalLobeProfile?.mode).toBe('default_on');
+    expect(normalized!.frontalLobeProfile?.languagePreference).toBe('british_english');
+  });
+
+  it('normalizePersonalMemoryVault backfills languagePreference for old Frontal Lobe profiles', () => {
+    const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
+    const profileWithoutLanguage = { ...vault.frontalLobeProfile! };
+    delete (profileWithoutLanguage as Partial<typeof profileWithoutLanguage>).languagePreference;
+
+    const normalized = normalizePersonalMemoryVault({
+      ...vault,
+      frontalLobeProfile: profileWithoutLanguage,
+    });
+
+    expect(normalized).not.toBeNull();
+    expect(normalized!.frontalLobeProfile?.languagePreference).toBe('british_english');
   });
 
   it('normalizePersonalMemoryVault backfills mode for vaults saved before Task 8B', () => {

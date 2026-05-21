@@ -19,6 +19,13 @@ export type FrontalLobeExplanationDepth = 'steps_only' | 'explain_why' | 'teach_
 
 export type FrontalLobeTone = 'direct' | 'balanced' | 'friendly';
 
+export type FrontalLobeLanguagePreference =
+  | 'british_english'
+  | 'american_english'
+  | 'australian_english'
+  | 'canadian_english'
+  | 'neutral_english';
+
 // ── Builder Skill Profile ─────────────────────────────────────────────────────
 
 export type FrontalLobeCodingConfidence =
@@ -58,6 +65,7 @@ export interface FrontalLobeProfile {
   codeReviewStrictness: FrontalLobeCodeReviewStrictness;
   explanationDepth: FrontalLobeExplanationDepth;
   tone: FrontalLobeTone;
+  languagePreference: FrontalLobeLanguagePreference;
   codingConfidence: FrontalLobeCodingConfidence;
   codeInstructionStyle: FrontalLobeCodeInstructionStyle;
   debuggingSupport: FrontalLobeDebuggingSupport;
@@ -73,6 +81,7 @@ export const DEFAULT_FRONTAL_LOBE_PROFILE: FrontalLobeProfile = {
   codeReviewStrictness: 'normal',
   explanationDepth: 'explain_why',
   tone: 'balanced',
+  languagePreference: 'british_english',
   codingConfidence: 'can_edit_with_exact_instructions',
   codeInstructionStyle: 'exact_file_and_patch',
   debuggingSupport: 'plain_english_error',
@@ -80,6 +89,30 @@ export const DEFAULT_FRONTAL_LOBE_PROFILE: FrontalLobeProfile = {
   mode: 'default_on',
   customRules: [],
 };
+
+export const FRONTAL_LOBE_LANGUAGE_LABELS: Record<FrontalLobeLanguagePreference, string> = {
+  british_english: 'British English',
+  american_english: 'American English',
+  australian_english: 'Australian English',
+  canadian_english: 'Canadian English',
+  neutral_english: 'Neutral English',
+};
+
+export const FRONTAL_LOBE_LANGUAGE_INSTRUCTIONS: Record<FrontalLobeLanguagePreference, string> = {
+  british_english: 'Use British spelling and phrasing, e.g. centre, colour, organise, behaviour.',
+  american_english: 'Use American spelling and phrasing, e.g. center, color, organize, behavior.',
+  australian_english: 'Use Australian English spelling and phrasing.',
+  canadian_english: 'Use Canadian English spelling and phrasing.',
+  neutral_english: 'Use clear, neutral English and avoid region-specific idioms where possible.',
+};
+
+export function getFrontalLobeLanguageLabel(value: FrontalLobeLanguagePreference): string {
+  return FRONTAL_LOBE_LANGUAGE_LABELS[value] ?? value;
+}
+
+export function getFrontalLobeLanguageInstruction(value: FrontalLobeLanguagePreference): string {
+  return FRONTAL_LOBE_LANGUAGE_INSTRUCTIONS[value] ?? FRONTAL_LOBE_LANGUAGE_INSTRUCTIONS.british_english;
+}
 
 export type PersonalMemorySensitivity = 'standard' | 'private' | 'never_share';
 export type PersonalMemoryPermission = 'never' | 'ask_each_time' | 'allow';

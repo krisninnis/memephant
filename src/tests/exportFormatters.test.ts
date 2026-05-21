@@ -834,6 +834,26 @@ describe('quick mode', () => {
     expect(output.match(/AI Working Style/g)).toHaveLength(1);
   });
 
+  it('includes British English language preference in condensed AI Working Style', () => {
+    const output = formatForPlatform(
+      makeProject(),
+      'chatgpt',
+      undefined,
+      'quick',
+      undefined,
+      undefined,
+      [
+        '# AI Working Style',
+        'Answer Style: Balanced Builder',
+        'Language: British English',
+        'Use British spelling and phrasing, e.g. centre, colour, organise, behaviour.',
+      ].join('\n'),
+    );
+
+    expect(output).toContain('Language: British English');
+    expect(output).toContain('Use British spelling and phrasing, e.g. centre, colour, organise, behaviour.');
+  });
+
   it('does not include memphant_update instructions or giant response schema examples', () => {
     const output = formatForPlatform(makeProject(), 'chatgpt', undefined, 'quick');
 

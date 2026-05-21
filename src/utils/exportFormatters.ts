@@ -600,9 +600,12 @@ function condensedFrontalLobeBlock(block?: string): string | null {
       /^Answer Style:/i.test(line)
       || /^Challenge Level:/i.test(line)
       || /^Tone:/i.test(line)
+      || /^Language:/i.test(line)
+      || /^Use .+ English spelling and phrasing/i.test(line)
+      || /^Use British spelling and phrasing/i.test(line)
       || /^Code Instruction Style:/i.test(line),
     )
-    .slice(0, 4);
+    .slice(0, 6);
 
   if (!usefulLines.length) return null;
   return usefulLines.map((line) => `- ${sanitize(line)}`).join('\n');
