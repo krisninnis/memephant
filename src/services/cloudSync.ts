@@ -21,7 +21,12 @@
 import { supabase, supabaseClientInstanceId } from './supabaseClient';
 import type { ProjectMemory } from '../types/memphant-types';
 import type { SubscriptionTier, SubscriptionStatus } from '../store/projectStore';
-import { enqueue, dequeue, getAll as getQueued } from './syncQueue';
+import {
+  enqueue,
+  dequeue,
+  getAll as getQueued,
+  queuedEntriesForUser,
+} from './syncQueue';
 import { getRuntimeEnv } from '../utils/runtimeEnv';
 import { toCloudProjectData } from './toCloudProjectData';
 
@@ -1147,11 +1152,9 @@ export async function pushProject(
         projectId: project.id,
       });
 
-      await enqueue(project);
-
       return {
         status: 'pending',
-        message: err instanceof Error ? err.message : 'Cloud auth timed out. Will retry later.',
+        message: err instanceof Error ? err.message : 'Cloud auth timed out. Save again after reconnecting to retry.',
       };
     }
   }
@@ -1250,7 +1253,7 @@ export async function pushProject(
       return true;
     });
 
-    await dequeue(project.id);
+    await dequeue(project.id, userId);
     return { status: 'saved_local' };
   } catch (err) {
     const disconnected = cloudDisconnectInProgress || cloudConnectionGeneration !== connectionGenerationAtStart;
@@ -1272,7 +1275,7 @@ export async function pushProject(
         projectId: project.id,
       });
 
-      await enqueue(project);
+      await enqueue(project, userId);
     }
 
     return {
@@ -1476,12 +1479,20 @@ async function drainQueue(
   reason: SyncReason,
 ): Promise<void> {
   const queued = await getQueued();
+  const scopedQueued = queuedEntriesForUser(queued, userId);
+  const skippedCount = queued.length - scopedQueued.length;
 
   if (queued.length === 0) return;
 
-  logSync('queue', 'drain_start', { reason, userId, queuedCount: queued.length });
+  logSync('queue', 'drain_start', {
+    reason,
+    userId,
+    queuedCount: scopedQueued.length,
+    skippedCount,
+  });
 
-  for (const project of queued) {
+  for (const entry of scopedQueued) {
+    const { project } = entry;
     try {
       const row: ProjectRow = {
         user_id: userId,
@@ -1505,7 +1516,7 @@ async function drainQueue(
         continue;
       }
 
-      await dequeue(project.id);
+      await dequeue(project.id, userId);
 
       logSync('queue', 'drain_project_success', { reason, projectId: project.id });
     } catch (err) {

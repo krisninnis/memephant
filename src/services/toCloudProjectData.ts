@@ -1,6 +1,11 @@
 import type { ProjectMemory } from '../types/memphant-types';
 
-const REDACTED_LOCAL_PATH = '[REDACTED_LOCAL_PATH]';
+const REDACTED_LOCAL_PATH = '[local-path-redacted]';
+const FILE_URL_PATH_PATTERN = /file:\/\/\/?[^\s"'`<>)]+/gi;
+const WINDOWS_ABSOLUTE_PATH_PATTERN = /\b[A-Za-z]:[\\/][^\s"'`<>|?*]+/g;
+const UNC_ABSOLUTE_PATH_PATTERN = /\\\\[^\\/\s"'`<>|?*]+[\\/][^\s"'`<>|?*]+/g;
+const UNIX_ABSOLUTE_PATH_PATTERN =
+  /(^|[\s(["'`])((?:\/(?:Users|home|private|Volumes|mnt|var|tmp|Desktop))[^\s"'`<>)]*)/g;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -44,13 +49,40 @@ function redactKnownPaths(value: string, paths: string[]): string {
   );
 }
 
+function trimTrailingPathPunctuation(path: string): { path: string; trailing: string } {
+  const match = /[.,;:!?]+$/.exec(path);
+  if (!match) return { path, trailing: '' };
+
+  return {
+    path: path.slice(0, -match[0].length),
+    trailing: match[0],
+  };
+}
+
+function redactAbsoluteLocalPaths(value: string): string {
+  return value
+    .replace(FILE_URL_PATH_PATTERN, REDACTED_LOCAL_PATH)
+    .replace(WINDOWS_ABSOLUTE_PATH_PATTERN, (match) => {
+      const trimmed = trimTrailingPathPunctuation(match);
+      return `${REDACTED_LOCAL_PATH}${trimmed.trailing}`;
+    })
+    .replace(UNC_ABSOLUTE_PATH_PATTERN, (match) => {
+      const trimmed = trimTrailingPathPunctuation(match);
+      return `${REDACTED_LOCAL_PATH}${trimmed.trailing}`;
+    })
+    .replace(UNIX_ABSOLUTE_PATH_PATTERN, (_match, prefix: string, path: string) => {
+      const trimmed = trimTrailingPathPunctuation(path);
+      return `${prefix}${REDACTED_LOCAL_PATH}${trimmed.trailing}`;
+    });
+}
+
 function cloneCloudSafe(value: unknown, knownPaths: string[], key = ''): unknown {
   if (typeof value === 'string') {
     if (isLocalPathField(key, value)) {
       return undefined;
     }
 
-    return redactKnownPaths(value, knownPaths);
+    return redactAbsoluteLocalPaths(redactKnownPaths(value, knownPaths));
   }
 
   if (Array.isArray(value)) {
@@ -103,4 +135,3 @@ export function toCloudProjectData(project: ProjectMemory): Record<string, unkno
 
   return cloneCloudSafe(project, knownPaths) as Record<string, unknown>;
 }
-

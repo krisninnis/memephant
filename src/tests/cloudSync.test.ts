@@ -98,5 +98,56 @@ describe('toCloudProjectData', () => {
     expect(roundTripped.linkedFolder?.scanHash).toBe('scan-roundtrip');
     expect(roundTripped.linkedFolder?.path).toBeUndefined();
   });
-});
 
+  it('redacts Windows absolute paths inside free-text fields', () => {
+    const windowsPath = 'C:\\Users\\Kris\\Desktop\\Secret';
+    const cloudData = toCloudProjectData(makeProject({
+      summary: `Normal text before ${windowsPath} and normal text after.`,
+    }));
+
+    expect(cloudData.summary).toBe(
+      'Normal text before [local-path-redacted] and normal text after.',
+    );
+    expect(JSON.stringify(cloudData)).not.toContain(windowsPath);
+  });
+
+  it('redacts macOS absolute paths inside free-text fields', () => {
+    const macPath = '/Users/kris/project';
+    const cloudData = toCloudProjectData(makeProject({
+      currentState: `The local folder was ${macPath}. Keep the sentence useful.`,
+    }));
+
+    expect(cloudData.currentState).toBe(
+      'The local folder was [local-path-redacted]. Keep the sentence useful.',
+    );
+    expect(JSON.stringify(cloudData)).not.toContain(macPath);
+  });
+
+  it('redacts Linux absolute paths inside multiline strings', () => {
+    const linuxPath = '/home/user/private';
+    const cloudData = toCloudProjectData(makeProject({
+      lastSessionSummary: [
+        'First line is safe.',
+        `Second line mentions ${linuxPath}`,
+        'Third line is safe.',
+      ].join('\n'),
+    }));
+
+    expect(cloudData.lastSessionSummary).toBe([
+      'First line is safe.',
+      'Second line mentions [local-path-redacted]',
+      'Third line is safe.',
+    ].join('\n'));
+    expect(JSON.stringify(cloudData)).not.toContain(linuxPath);
+  });
+
+  it('redacts file URL paths without destroying mixed normal text', () => {
+    const fileUrl = 'file:///Users/kris/project/notes.md';
+    const cloudData = toCloudProjectData(makeProject({
+      goals: [`Review ${fileUrl} after launch`],
+    }));
+
+    expect(cloudData.goals).toEqual(['Review [local-path-redacted] after launch']);
+    expect(JSON.stringify(cloudData)).not.toContain(fileUrl);
+  });
+});

@@ -18,6 +18,7 @@ import type {
 } from '../types/memphant-types';
 import { cloneCheckpointSnapshot, hashProjectState, SCHEMA_VERSION } from '../types/memphant-types';
 import { pushProject, deleteCloudProject } from './cloudSync';
+import { dequeue } from './syncQueue';
 import { suggestEmptyFields } from '../utils/autoSuggest';
 import type { ProjectTemplate } from '../utils/projectTemplates';
 
@@ -1333,6 +1334,7 @@ export async function deleteProject(id: string): Promise<void> {
     store().removeProject(id);
     store().showToast(`"${project.name}" was removed.`);
 
+    await dequeue(id);
     void deleteCloudProject(id);
   } catch (err) {
     console.error('Delete failed:', err);
