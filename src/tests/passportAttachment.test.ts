@@ -19,6 +19,7 @@ const passport: PassportData = {
   configuration: {
     ...DEFAULT_PASSPORT_CONFIGURATION_V2,
     preferredName: 'Kris',
+    roleContext: 'Solo founder',
   },
   createdAt: '2026-05-21T10:00:00.000Z',
   schemaVersion: '1.0',
@@ -35,6 +36,7 @@ describe('Passport Attachment format', () => {
     expect(attachment.schemaVersion).toBe('memephant.passport.v0.1');
     expect(attachment.text).toContain('# Memephant Passport Attachment v0.1');
     expect(attachment.text).toContain('- Preferred name: Kris');
+    expect(attachment.text).toContain('- Role/context: Solo founder');
     expect(attachment.text).toContain('- Region: United Kingdom');
     expect(attachment.text).toContain('- Tone: Friendly');
     expect(attachment.text).toContain('- Style: Structured');

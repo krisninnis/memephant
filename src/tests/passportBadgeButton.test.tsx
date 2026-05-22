@@ -44,12 +44,20 @@ describe('PassportBadgeButton configuration UI', () => {
     fireEvent.change(within(dialog).getByLabelText('Preferred name'), {
       target: { value: 'Kris' },
     });
+    fireEvent.change(within(dialog).getByLabelText('Role / working context'), {
+      target: { value: 'Solo founder' },
+    });
+    fireEvent.change(within(dialog).getByLabelText('Language preference'), {
+      target: { value: 'British English' },
+    });
     fireEvent.change(within(dialog).getByLabelText('Directness'), {
       target: { value: 'Direct when risk is high' },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save Passport' }));
 
     expect(usePassportStore.getState().passport?.configuration?.preferredName).toBe('Kris');
+    expect(usePassportStore.getState().passport?.configuration?.roleContext).toBe('Solo founder');
+    expect(usePassportStore.getState().passport?.configuration?.languagePreference).toBe('British English');
     expect(usePassportStore.getState().passport?.configuration?.directness).toBe('Direct when risk is high');
     expect(within(dialog).getByRole('button', { name: 'Configure Passport' })).toBeInTheDocument();
   });

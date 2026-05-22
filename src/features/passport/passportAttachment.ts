@@ -26,6 +26,7 @@ export type PassportAttachmentPreview = {
   };
   identity: {
     preferredName: string;
+    roleContext: string;
     region: string;
     timezone: string;
     dateFormat: string;
@@ -65,10 +66,12 @@ export function buildPassportAttachmentPreview(
   const style = COMMUNICATION_LABELS[passport.profile.communicationStyle];
   const tone = TONE_LABELS[passport.profile.tone];
   const focus = FOCUS_LABELS[passport.profile.focusArea];
-  const language = getLanguage(frontalLobeProfile);
   const configuration = getPassportConfiguration(passport);
   const preferredName = compactAttachmentText(configuration.preferredName, 60);
+  const roleContext = compactAttachmentText(configuration.roleContext, 90);
   const region = compactAttachmentText(configuration.region, 80);
+  const language = compactAttachmentText(configuration.languagePreference, 80)
+    || getLanguage(frontalLobeProfile);
   const timezone = compactAttachmentText(configuration.timezone, 60);
   const dateFormat = compactAttachmentText(configuration.dateFormat, 40);
   const currency = compactAttachmentText(configuration.currency, 40);
@@ -89,12 +92,13 @@ export function buildPassportAttachmentPreview(
     '',
     'AI Working Identity',
     ...(preferredName ? [`- Preferred name: ${preferredName}`] : []),
+    ...(roleContext ? [`- Role/context: ${roleContext}`] : []),
     `- Region: ${region}`,
     `- Tone: ${tone}`,
     `- Style: ${style}`,
     `- Focus: ${focus}`,
     `- Language: ${language}`,
-    `- Locale: ${timezone} · ${dateFormat} · ${currency}`,
+    `- Locale: ${timezone} - ${dateFormat} - ${currency}`,
     `- Directness: ${directness}`,
     `- Technical level: ${technicalLevel}`,
     `- Risk tolerance: ${riskTolerance}`,
@@ -125,6 +129,7 @@ export function buildPassportAttachmentPreview(
     },
     identity: {
       preferredName,
+      roleContext,
       region,
       timezone,
       dateFormat,

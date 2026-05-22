@@ -29,12 +29,14 @@ export type FocusArea =
 export interface PassportConfigurationV2 {
   preferredName: string
   region: string
+  languagePreference: string
   timezone: string
   dateFormat: string
   currency: string
   directness: string
   technicalLevel: string
   riskTolerance: string
+  roleContext: string
   alwaysRules: string[]
   neverRules: string[]
   updatedAt?: string
@@ -43,12 +45,14 @@ export interface PassportConfigurationV2 {
 export const DEFAULT_PASSPORT_CONFIGURATION_V2: PassportConfigurationV2 = {
   preferredName: '',
   region: 'United Kingdom',
+  languagePreference: 'British English',
   timezone: 'Europe/London',
   dateFormat: 'DD/MM/YYYY',
-  currency: 'GBP / £',
+  currency: 'GBP / \u00a3',
   directness: 'Honest but supportive',
   technicalLevel: 'Learning builder',
   riskTolerance: 'Prefer small safe patches',
+  roleContext: '',
   alwaysRules: [
     'Ask before assuming missing details.',
     'Be honest when unsure.',

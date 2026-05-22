@@ -107,6 +107,7 @@ describe('Test 2 -- copy text: Passport Attachment v0.1 format', () => {
       configuration: {
         ...DEFAULT_PASSPORT_CONFIGURATION_V2,
         preferredName: 'Kris',
+        roleContext: 'Solo founder',
         directness: 'Honest but supportive',
         technicalLevel: 'Learning builder',
         riskTolerance: 'Prefer small safe patches',
@@ -117,6 +118,7 @@ describe('Test 2 -- copy text: Passport Attachment v0.1 format', () => {
     const attachment = buildPassportAttachmentPreview(data, DEFAULT_FRONTAL_LOBE_PROFILE);
 
     expect(attachment.text).toContain('Preferred name: Kris');
+    expect(attachment.text).toContain('Role/context: Solo founder');
     expect(attachment.text).toContain('Region: United Kingdom');
     expect(attachment.text).toContain('Language: British English');
     expect(attachment.text).toContain('Directness: Honest but supportive');

@@ -26,15 +26,13 @@ import {
   TONE_LABELS,
   getPassportConfiguration,
 } from '../passport.utils';
-import {
-  DEFAULT_FRONTAL_LOBE_PROFILE,
-  getFrontalLobeLanguageLabel,
-} from '../../../types/personalMemoryVault';
 import '../passport.badge.css';
 
 type PassportConfigDraft = {
   preferredName: string;
+  roleContext: string;
   region: string;
+  languagePreference: string;
   timezone: string;
   dateFormat: string;
   currency: string;
@@ -61,7 +59,9 @@ function toConfigDraft(
 ): PassportConfigDraft {
   return {
     preferredName: configuration.preferredName,
+    roleContext: configuration.roleContext,
     region: configuration.region,
+    languagePreference: configuration.languagePreference,
     timezone: configuration.timezone,
     dateFormat: configuration.dateFormat,
     currency: configuration.currency,
@@ -78,11 +78,6 @@ export function PassportBadgeButton() {
   const startPassportEdit = usePassportStore((s) => s.startPassportEdit);
   const updatePassportConfiguration = usePassportStore((s) => s.updatePassportConfiguration);
   const configuration = getPassportConfiguration(passport);
-  const [vaultSnapshot] = useState(() => loadPersonalMemoryVault());
-  const languageLabel = getFrontalLobeLanguageLabel(
-    vaultSnapshot.frontalLobeProfile?.languagePreference
-      ?? DEFAULT_FRONTAL_LOBE_PROFILE.languagePreference,
-  );
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
@@ -204,7 +199,9 @@ export function PassportBadgeButton() {
     event.preventDefault();
     updatePassportConfiguration({
       preferredName: configDraft.preferredName.trim(),
+      roleContext: configDraft.roleContext.trim(),
       region: configDraft.region.trim() || configuration.region,
+      languagePreference: configDraft.languagePreference.trim() || configuration.languagePreference,
       timezone: configDraft.timezone.trim() || configuration.timezone,
       dateFormat: configDraft.dateFormat.trim() || configuration.dateFormat,
       currency: configDraft.currency.trim() || configuration.currency,
@@ -281,6 +278,15 @@ export function PassportBadgeButton() {
                     placeholder="Kris"
                   />
                 </label>
+                <label>
+                  Role / working context
+                  <input
+                    type="text"
+                    value={configDraft.roleContext}
+                    onChange={(event) => handleConfigFieldChange('roleContext', event.target.value)}
+                    placeholder="Solo founder"
+                  />
+                </label>
               </section>
 
               <section className="passport-config__section" aria-labelledby="passport-config-region">
@@ -292,6 +298,14 @@ export function PassportBadgeButton() {
                       type="text"
                       value={configDraft.region}
                       onChange={(event) => handleConfigFieldChange('region', event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Language preference
+                    <input
+                      type="text"
+                      value={configDraft.languagePreference}
+                      onChange={(event) => handleConfigFieldChange('languagePreference', event.target.value)}
                     />
                   </label>
                   <label>
@@ -318,10 +332,6 @@ export function PassportBadgeButton() {
                       onChange={(event) => handleConfigFieldChange('currency', event.target.value)}
                     />
                   </label>
-                </div>
-                <div className="passport-config__readonly">
-                  <span>Language</span>
-                  <strong>{languageLabel}</strong>
                 </div>
               </section>
 
@@ -414,8 +424,14 @@ export function PassportBadgeButton() {
                 </div>
                 <div className="passport-panel__field">
                   <span className="passport-panel__field-label">Language</span>
-                  <span className="passport-panel__field-value">{languageLabel}</span>
+                  <span className="passport-panel__field-value">{configuration.languagePreference}</span>
                 </div>
+                {configuration.roleContext && (
+                  <div className="passport-panel__field">
+                    <span className="passport-panel__field-label">Context</span>
+                    <span className="passport-panel__field-value">{configuration.roleContext}</span>
+                  </div>
+                )}
               </div>
 
               <div className="passport-panel__guidance">
@@ -454,7 +470,7 @@ export function PassportBadgeButton() {
               {/* Notes */}
               <div className="passport-panel__notes">
                 <p className="passport-panel__privacy-note">
-                  This is not a password or sign-in method. Your Passport stays on this device.
+                  Your Passport stays on this device and is shared only when you copy or attach it.
                 </p>
                 <p className="passport-panel__compat-note">
                   Works by pasting into ChatGPT, Claude, Grok, Gemini, Perplexity, and local LLMs.
