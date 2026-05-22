@@ -130,6 +130,8 @@ describe('generateContextPassport — structure', () => {
   it('includes required sections in Markdown format', () => {
     const passport = generateContextPassport(CLEAN_PROJECT);
     const md = passport.formats.markdown;
+    expect(md).toContain('# Memory Trail: Clean Project');
+    expect(md).not.toContain('Context Passport');
     expect(md).toContain('## Purpose');
     expect(md).toContain('## Current State');
     expect(md).toContain('## Goals');
@@ -139,8 +141,8 @@ describe('generateContextPassport — structure', () => {
   it('includes required sections in Claude XML format', () => {
     const passport = generateContextPassport(CLEAN_PROJECT);
     const claude = passport.formats.claude;
-    expect(claude).toContain('<context_passport>');
-    expect(claude).toContain('</context_passport>');
+    expect(claude).toContain('<memory_trail>');
+    expect(claude).toContain('</memory_trail>');
     expect(claude).toContain('<purpose>');
     expect(claude).toContain('<goals>');
     expect(claude).toContain('<rules>');
@@ -367,11 +369,11 @@ describe('generateCustomPassportText — structure', () => {
 });
 
 describe('generateCustomPassportText — format variants', () => {
-  it('xml-like format wraps output in context_passport tag', () => {
+  it('xml-like format wraps output in memory_trail tag', () => {
     const platform = { ...GROK_PLATFORM, baseFormat: 'xml-like' as const };
     const text = generateCustomPassportText(CLEAN_PROJECT, platform);
-    expect(text).toContain('<context_passport');
-    expect(text).toContain('</context_passport>');
+    expect(text).toContain('<memory_trail');
+    expect(text).toContain('</memory_trail>');
   });
 
   it('xml-like format includes platform name as attribute', () => {

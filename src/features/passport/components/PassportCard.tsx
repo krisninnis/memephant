@@ -14,6 +14,9 @@ import {
 import { PassportSeal } from './PassportSeal'
 import { ShieldIcon } from './PassportIcons'
 import { usePassportStore } from '../usePassportStore'
+import { buildPassportAttachmentPreview } from '../passportAttachment'
+import { loadPersonalMemoryVault } from '../../../services/personalMemoryVaultStorage'
+import { PassportPreviewSimulator } from './PassportPreviewSimulator'
 import passportShieldIntegrity from '../../../assets/passport/hero/passport-shield-integrity.png'
 import passportStampBronze from '../../../assets/passport/tiers/passport-stamp-bronze.png'
 import passportStampGold from '../../../assets/passport/tiers/passport-stamp-gold.png'
@@ -333,6 +336,7 @@ export function PassportCard() {
   const passport           = usePassportStore(s => s.passport)
   const finishPassportFlow = usePassportStore(s => s.finishPassportFlow)
   const [doneHovered, setDoneHovered] = useState(false)
+  const [showSimulator, setShowSimulator] = useState(true)
 
   // "Enter Memephant" -- releases the gate and clears any re-editing flag so
   // PassportGate switches back to the main app. The persisted passport is intact.
@@ -343,6 +347,13 @@ export function PassportCard() {
   if (!passport) return null
 
   const { id, fingerprint, profile, createdAt } = passport
+
+  async function handleCopyPassport() {
+    if (!passport) return
+    const vault = loadPersonalMemoryVault()
+    const attachment = buildPassportAttachmentPreview(passport, vault.frontalLobeProfile)
+    await navigator.clipboard?.writeText(attachment.text)
+  }
 
   const doneStyle: React.CSSProperties = {
     ...DONE_BUTTON_BASE,
@@ -355,6 +366,15 @@ export function PassportCard() {
     <div style={STAGE}>
       <div style={AMBIENT_1} />
       <div style={AMBIENT_2} />
+
+      {showSimulator ? (
+        <PassportPreviewSimulator
+          passport={passport}
+          onCopyPassport={handleCopyPassport}
+          onBack={() => setShowSimulator(false)}
+        />
+      ) : (
+        <>
 
       <div style={CARD}>
         <div style={CARD_OVERLAY} />
@@ -439,7 +459,7 @@ export function PassportCard() {
           animation: 'passport-section-in 0.5s ease both 0.9s',
         }}
       >
-        Stored locally on your device · Never shared without your consent
+        Stored locally on your device - Never shared without your consent
       </p>
 
       <button
@@ -452,6 +472,8 @@ export function PassportCard() {
       >
         Enter Memephant
       </button>
+        </>
+      )}
     </div>
   )
 }

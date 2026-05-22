@@ -26,6 +26,7 @@ import {
   TONE_LABELS,
   getPassportConfiguration,
 } from '../passport.utils';
+import { PassportPreviewSimulator } from './PassportPreviewSimulator';
 import '../passport.badge.css';
 
 type PassportConfigDraft = {
@@ -81,6 +82,7 @@ export function PassportBadgeButton() {
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [configDraft, setConfigDraft] = useState(() => toConfigDraft(configuration));
   const [copied, setCopied]       = useState(false);
   const [panelTop, setPanelTop]   = useState(120);
@@ -119,6 +121,8 @@ export function PassportBadgeButton() {
       if (e.key === 'Escape') {
         if (configOpen) {
           setConfigOpen(false);
+        } else if (simulatorOpen) {
+          setSimulatorOpen(false);
         } else {
           setPanelOpen(false);
           triggerRef.current?.focus();
@@ -127,7 +131,7 @@ export function PassportBadgeButton() {
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [configOpen, panelOpen]);
+  }, [configOpen, panelOpen, simulatorOpen]);
 
   useEffect(() => {
     if (!panelOpen || configOpen) return;
@@ -174,12 +178,14 @@ export function PassportBadgeButton() {
   const handleEditPassport = () => {
     setPanelOpen(false);
     setConfigOpen(false);
+    setSimulatorOpen(false);
     startPassportEdit();
   };
 
   const handleOpenConfiguration = () => {
     setConfigDraft(toConfigDraft(getPassportConfiguration(passport)));
     setConfigOpen(true);
+    setSimulatorOpen(false);
     setCopied(false);
   };
 
@@ -454,6 +460,16 @@ export function PassportBadgeButton() {
                 <button
                   type="button"
                   className="passport-panel__secondary-btn"
+                  onClick={() => {
+                    setConfigOpen(false);
+                    setSimulatorOpen(true);
+                  }}
+                >
+                  Preview Passport
+                </button>
+                <button
+                  type="button"
+                  className="passport-panel__secondary-btn"
                   onClick={handleOpenConfiguration}
                 >
                   Configure Passport
@@ -488,6 +504,21 @@ export function PassportBadgeButton() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {simulatorOpen && (
+        <div
+          className="passport-simulator-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Passport preview simulator"
+        >
+          <PassportPreviewSimulator
+            passport={passport}
+            onCopyPassport={handleCopy}
+            onBack={() => setSimulatorOpen(false)}
+          />
         </div>
       )}
     </div>

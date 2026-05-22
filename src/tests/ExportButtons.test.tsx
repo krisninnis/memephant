@@ -153,6 +153,15 @@ describe('ExportButtons export preview', () => {
     )).toBeInTheDocument();
   });
 
+  it('labels the project continuity export as Memory Trail', () => {
+    render(<ExportButtons />);
+
+    expect(screen.getByRole('button', { name: /generate memory trail/i }))
+      .toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /generate context passport/i }))
+      .not.toBeInTheDocument();
+  });
+
   it('preview contains the exact export text', async () => {
     await openPreview();
 

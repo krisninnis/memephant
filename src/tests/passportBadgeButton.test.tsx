@@ -61,4 +61,19 @@ describe('PassportBadgeButton configuration UI', () => {
     expect(usePassportStore.getState().passport?.configuration?.directness).toBe('Direct when risk is high');
     expect(within(dialog).getByRole('button', { name: 'Configure Passport' })).toBeInTheDocument();
   });
+
+  it('sidebar Preview Passport button opens the simulator', () => {
+    usePassportStore.setState({ passport: createPassportData(FULL_PROFILE) });
+    render(<PassportBadgeButton />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open AI Passport' }));
+    const dialog = screen.getByRole('dialog', { name: 'Your AI Passport' });
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Preview Passport' }));
+
+    const simulator = screen.getByRole('dialog', { name: 'Passport preview simulator' });
+    expect(within(simulator).getByText('Without Passport')).toBeInTheDocument();
+    expect(within(simulator).getByText('With your Passport')).toBeInTheDocument();
+    expect(within(simulator).getByText(/This is a local template preview/)).toBeInTheDocument();
+  });
 });

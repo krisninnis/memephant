@@ -448,7 +448,7 @@ describe('Personal Memory Vault export guard', () => {
     }
   });
 
-  it('does not include personal vault data in Context Passport exports', () => {
+  it('does not include personal vault data in Memory Trail exports', () => {
     const project = makeProject();
     const vault = makeVaultWithSentinels();
     expect(vault.neverShare).toContain('PersonalVaultNeverShareSentinel');

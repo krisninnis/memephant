@@ -1,7 +1,7 @@
 /**
- * Context Passport Modal
+ * Memory Trail Modal
  *
- * Previews the generated Context Passport and lets the user copy it
+ * Previews the generated Memory Trail and lets the user copy it
  * in four built-in formats (Markdown, ChatGPT, Claude, Codex) plus any
  * custom platforms the user has defined.
  *
@@ -165,7 +165,7 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
         onClick={handleOverlayClick}
         role="dialog"
         aria-modal="true"
-        aria-label="Context Passport"
+        aria-label="Memory Trail"
       >
         <div className="passport-modal" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
@@ -173,7 +173,10 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
             <div className="passport-modal__title-row">
               <span className="passport-modal__emoji">🗺️</span>
               <div>
-                <h2 className="passport-modal__title">Context Passport</h2>
+                <h2 className="passport-modal__title">Memory Trail</h2>
+                <p className="passport-modal__help">
+                  Memory Trail helps another AI continue your project from where you left off.
+                </p>
                 <p className="passport-modal__subtitle">{passport.projectName}</p>
               </div>
             </div>
@@ -189,7 +192,7 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
           </div>
 
           {/* Format tabs */}
-          <div className="passport-modal__tabs" role="tablist" aria-label="Passport format">
+          <div className="passport-modal__tabs" role="tablist" aria-label="Memory Trail format">
             {/* Built-in tabs */}
             {FORMAT_TABS.map((tab) => (
               <button
@@ -249,14 +252,14 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
             <p className="passport-modal__format-desc">{activeTabDescription}</p>
           )}
 
-          {/* Passport preview */}
+          {/* Memory Trail preview */}
           <textarea
             className="passport-modal__preview"
             value={currentText}
             readOnly
             spellCheck={false}
-            aria-label={`Context Passport for ${activeTabLabel}`}
-            title="Passport preview — copy using the button below"
+            aria-label={`Memory Trail for ${activeTabLabel}`}
+            title="Memory Trail preview - copy using the button below"
           />
 
           {/* Footer actions */}
@@ -268,7 +271,7 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
               type="button"
               className={`passport-modal__copy-btn${copied ? ' passport-modal__copy-btn--copied' : ''}`}
               onClick={() => void handleCopy()}
-              title={`Copy ${activeTabLabel} passport to clipboard`}
+              title={`Copy ${activeTabLabel} Memory Trail to clipboard`}
             >
               {copied
                 ? `✅ Copied for ${activeTabLabel}!`

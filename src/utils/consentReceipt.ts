@@ -328,7 +328,7 @@ export function generateConsentReceipt(
   lines.push('## Privacy Boundary');
   lines.push('- This receipt does not include project memory.');
   lines.push('- This receipt does not include project exports.');
-  lines.push('- This receipt does not include Context Passport data.');
+  lines.push('- This receipt does not include Memory Trail data.');
   lines.push('- This receipt does not include Memory Bridge data.');
   lines.push('- This receipt is not synced to cloud by this feature.');
   lines.push('');

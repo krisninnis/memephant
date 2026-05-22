@@ -675,16 +675,16 @@ export function ExportButtons() {
   return (
     <>
     <div className="export-controls" data-tour="export">
-      {/* Context Passport button */}
+      {/* Memory Trail button */}
       {activeProject && (
         <button
           type="button"
           className="action-bar__btn"
           onClick={() => setPassportOpen(true)}
-          title="Generate a portable Context Passport you can copy into any AI tool"
+          title="Generate a portable Memory Trail you can copy into any AI tool"
           style={{ width: '100%', marginBottom: '8px', fontWeight: 600 }}
         >
-          🗺️ Generate Context Passport
+          🗺️ Generate Memory Trail
         </button>
       )}
 
@@ -1095,7 +1095,7 @@ export function ExportButtons() {
       )}
     </div>
 
-      {/* Context Passport modal — rendered outside the scroll container so it overlays the full app */}
+      {/* Memory Trail modal — rendered outside the scroll container so it overlays the full app */}
       {passportOpen && activeProject && (
         <ContextPassportModal
           project={activeProject}

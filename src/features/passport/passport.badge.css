@@ -415,11 +415,12 @@
 
 .passport-panel__secondary-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .passport-panel__secondary-btn {
-  flex: 1;
+  flex: 1 1 96px;
   min-height: 36px;
   border: 1px solid #2a3a5a;
   border-radius: 8px;
@@ -433,6 +434,19 @@
     border-color 0.12s ease,
     color 0.12s ease;
   padding: 0 8px;
+}
+
+.passport-simulator-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 28px 16px;
+  background: rgba(4, 8, 18, 0.82);
+  backdrop-filter: blur(10px);
 }
 
 .passport-panel__secondary-btn:hover:not(:disabled) {

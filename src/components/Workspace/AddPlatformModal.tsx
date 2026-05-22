@@ -1,7 +1,7 @@
 /**
  * AddPlatformModal
  *
- * A focused inline form for creating a custom AI platform in the Context Passport.
+ * A focused inline form for creating a custom AI platform in the Memory Trail.
  * On save, calls onSave with a new CustomPlatform object.
  * Never mutates project data. Safe export rules always apply to output.
  */
