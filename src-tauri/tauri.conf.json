@@ -41,7 +41,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNGM0UzQkYyRDVCQThGNDgKUldSSWo3clY4anMrUDdGZkRWY3VJSDV0YVBQZEZrVHlEaGtXTkYyWnI3RDhRU2dHRUE1SnVjblMK",
       "endpoints": [
-        "https://github.com/krisninnis/memphant/releases/latest/download/latest.json"
+        "https://github.com/krisninnis/memephant/releases/latest/download/latest.json"
       ]
     }
   }

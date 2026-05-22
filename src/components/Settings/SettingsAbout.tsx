@@ -1,8 +1,12 @@
 ﻿import { useEffect, useState } from 'react';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import packageJson from '../../../package.json';
 import { PWAInstallButton } from '../PWAInstallButton';
 import { usePWA } from '../../hooks/usePWA';
 import {
+  DESKTOP_DOWNLOAD_URL,
+  DESKTOP_RELEASES_URL,
+  DesktopUpdateError,
   checkForUpdate,
   downloadAndInstall,
   getInstalledVersion,
@@ -36,11 +40,11 @@ function formatLastChecked(date: Date | null): string | null {
   if (!date) return null;
 
   const diffMs = Date.now() - date.getTime();
-  if (diffMs < 15_000) return 'Updated just now';
-  if (diffMs < 60_000) return `Updated ${Math.max(1, Math.floor(diffMs / 1000))} seconds ago`;
-  if (diffMs < 3_600_000) return `Updated ${Math.max(1, Math.floor(diffMs / 60_000))} minutes ago`;
+  if (diffMs < 15_000) return 'Checked just now';
+  if (diffMs < 60_000) return `Checked ${Math.max(1, Math.floor(diffMs / 1000))} seconds ago`;
+  if (diffMs < 3_600_000) return `Checked ${Math.max(1, Math.floor(diffMs / 60_000))} minutes ago`;
 
-  return `Updated ${date.toLocaleDateString([], {
+  return `Checked ${date.toLocaleDateString([], {
     month: 'short',
     day: 'numeric',
   })} at ${date.toLocaleTimeString([], {
@@ -49,25 +53,36 @@ function formatLastChecked(date: Date | null): string | null {
   })}`;
 }
 
-function statusDescription(phase: UpdatePhase, info: UpdateInfo | null, progress: number): string {
+function statusDescription(
+  phase: UpdatePhase,
+  info: UpdateInfo | null,
+  progress: number,
+  errorMessage: string | null,
+): string {
   switch (phase) {
     case 'idle':
-      return 'Check for the latest version of Memephant.';
+      return 'Desktop updates use signed Tauri releases, not Vercel web deploys.';
     case 'checking':
-      return 'Checking for updates...';
+      return 'Checking signed desktop release metadata...';
     case 'available':
-      return `Memephant ${info?.version} is available`;
+      return `Desktop version ${info?.version} is available.`;
     case 'up-to-date':
-      return "You're on the latest version.";
+      return 'No newer desktop release was found for this installed app.';
     case 'downloading':
       return `Downloading update... ${progress}%`;
     case 'ready':
       return 'Update installed - restart to finish';
     case 'error':
-      return 'Could not check for updates - check your connection';
+      return errorMessage ?? 'Desktop update check failed.';
     default:
       return '';
   }
+}
+
+function getDesktopUpdateErrorMessage(error: unknown): string {
+  if (error instanceof DesktopUpdateError) return error.message;
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return 'Desktop update check failed. Download the latest version manually if this continues.';
 }
 
 function statusIcon(phase: UpdatePhase): string {
@@ -93,6 +108,9 @@ export function SettingsAbout() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [installedVersion, setInstalledVersion] = useState<string>('...');
+  const [desktopLastChecked, setDesktopLastChecked] = useState<Date | null>(null);
+  const [desktopLastResult, setDesktopLastResult] = useState<string | null>(null);
+  const [desktopError, setDesktopError] = useState<string | null>(null);
 
   const { isChecking, updateAvailable, checkForUpdates, applyUpdate, lastChecked } = usePWA();
 
@@ -102,7 +120,7 @@ export function SettingsAbout() {
       return;
     }
 
-    setInstalledVersion(import.meta.env.VITE_APP_VERSION || '0.2.22');
+    setInstalledVersion(packageJson.version);
   }, []);
 
   useEffect(() => {
@@ -118,15 +136,22 @@ export function SettingsAbout() {
   const silentCheck = async () => {
     try {
       const info = await checkForUpdate();
+      const checkedAt = new Date();
+      setDesktopLastChecked(checkedAt);
+      setDesktopError(null);
       if (info) {
         setUpdateInfo(info);
+        setDesktopLastResult(`Desktop update available: ${info.version}`);
         setPhase('available');
       } else {
         setUpdateInfo(null);
+        setDesktopLastResult('No newer desktop release found.');
         setPhase('idle');
       }
-    } catch {
-      // Silent background check.
+    } catch (error) {
+      setDesktopLastChecked(new Date());
+      setDesktopLastResult(null);
+      setDesktopError(getDesktopUpdateErrorMessage(error));
     }
   };
 
@@ -134,17 +159,24 @@ export function SettingsAbout() {
     if (!isTauri()) return;
 
     setPhase('checking');
+    setDesktopError(null);
+    setDesktopLastResult(null);
     try {
       const info = await checkForUpdate();
+      setDesktopLastChecked(new Date());
       if (info) {
         setUpdateInfo(info);
+        setDesktopLastResult(`Desktop update available: ${info.version}`);
         setPhase('available');
       } else {
         setUpdateInfo(null);
+        setDesktopLastResult('No newer desktop release found.');
         setPhase('up-to-date');
       }
-    } catch {
+    } catch (error) {
       setUpdateInfo(null);
+      setDesktopLastChecked(new Date());
+      setDesktopError(getDesktopUpdateErrorMessage(error));
       setPhase('error');
     }
   };
@@ -156,7 +188,10 @@ export function SettingsAbout() {
     try {
       await downloadAndInstall((pct) => setDownloadProgress(pct));
       setPhase('ready');
-    } catch {
+      setDesktopError(null);
+      setDesktopLastResult('Desktop update installed. Restart to finish.');
+    } catch (error) {
+      setDesktopError(getDesktopUpdateErrorMessage(error));
       setPhase('error');
     }
   };
@@ -175,16 +210,16 @@ export function SettingsAbout() {
   };
 
   const webUpdateLabel = isChecking
-    ? 'Checking updates'
+    ? 'Checking web/PWA updates'
     : updateAvailable
-      ? 'Update available'
-      : 'Check for updates';
+      ? 'Web/PWA update available'
+      : 'Check web/PWA updates';
 
   const webUpdateDescription = isChecking
-    ? 'Checking for the latest version of Memephant...'
+    ? 'Checking for the latest web/PWA build of Memephant...'
     : updateAvailable
-      ? 'A newer version is ready. Refresh or reinstall the app to use the latest version.'
-      : "Make sure you're using the latest version of Memephant.";
+      ? 'A newer web/PWA build is ready. This does not update the installed desktop app.'
+      : 'Web/PWA updates are separate from installed desktop releases.';
 
   const webUpdateButtonText = isChecking
     ? 'Checking...'
@@ -205,7 +240,9 @@ export function SettingsAbout() {
 
         <div className="setting-row">
           <div className="setting-info">
-            <div className="setting-label">Version</div>
+            <div className="setting-label">
+              {isTauri() ? 'Current desktop app version' : 'Current web/PWA version'}
+            </div>
           </div>
           <span className="setting-badge">v{installedVersion}</span>
         </div>
@@ -231,7 +268,7 @@ export function SettingsAbout() {
           </div>
           <button
             className="setting-btn"
-            onClick={() => openLink('https://github.com/krisninnis/memphant')}
+            onClick={() => openLink('https://github.com/krisninnis/memephant')}
           >
             View on GitHub
           </button>
@@ -241,7 +278,7 @@ export function SettingsAbout() {
 
       {!isTauri() && (
         <div className="settings-group">
-          <div className="settings-group-title">App Updates</div>
+          <div className="settings-group-title">Web/PWA Updates</div>
 
           <div className="setting-row setting-row--update">
             <div className="setting-info setting-info--grow">
@@ -292,7 +329,7 @@ export function SettingsAbout() {
 
       {isTauri() && (
         <div className="settings-group">
-          <div className="settings-group-title">Updates</div>
+          <div className="settings-group-title">Desktop Updates</div>
 
           <div className="setting-row setting-row--update">
             <div className="setting-info setting-info--grow">
@@ -305,8 +342,14 @@ export function SettingsAbout() {
                     : 'Check for updates'}
               </div>
               <div className="setting-description">
-                {statusDescription(phase, updateInfo, downloadProgress)}
+                {statusDescription(phase, updateInfo, downloadProgress, desktopError)}
               </div>
+              <div className="about-update-timestamp">
+                {formatLastChecked(desktopLastChecked) ?? 'Not checked yet'}
+              </div>
+              {desktopLastResult && (
+                <div className="about-update-timestamp">{desktopLastResult}</div>
+              )}
             </div>
 
             <div className="about-update-actions">
@@ -379,6 +422,34 @@ export function SettingsAbout() {
               </button>
             </div>
           )}
+
+          <div className="settings-trust-box" style={{ marginTop: 12 }}>
+            Desktop updates are delivered through signed Tauri releases from GitHub. Vercel deploys
+            update only the website/PWA and will not update this installed desktop app.
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-info">
+              <div className="setting-label">Manual desktop download</div>
+              <div className="setting-description">
+                Use this if update checking fails or release metadata has not been published yet.
+              </div>
+            </div>
+            <div className="about-update-actions">
+              <button
+                className="setting-btn"
+                onClick={() => openLink(DESKTOP_DOWNLOAD_URL)}
+              >
+                Download latest version
+              </button>
+              <button
+                className="setting-btn"
+                onClick={() => openLink(DESKTOP_RELEASES_URL)}
+              >
+                GitHub releases
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -419,7 +490,7 @@ export function SettingsAbout() {
 
           <button
             className="setting-btn"
-            onClick={() => openLink('https://github.com/krisninnis/memphant/issues/new')}
+            onClick={() => openLink('https://github.com/krisninnis/memephant/issues/new')}
           >
             🐛 Report a bug
           </button>
@@ -439,5 +510,3 @@ export function SettingsAbout() {
 }
 
 export default SettingsAbout;
-
-

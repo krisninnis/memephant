@@ -106,7 +106,7 @@ describe('AppShell Memory Vault navigation', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText('Local only').length).toBeGreaterThan(0);
     expect(
-      screen.getByText(/Not included in project exports or Context Passports/),
+      screen.getByText(/Not included in project exports or Memory Trails/),
     ).toBeInTheDocument();
     expect(screen.getByText('Your data rights layer')).toBeInTheDocument();
     expect(screen.getByText('Consent and licensing preview')).toBeInTheDocument();

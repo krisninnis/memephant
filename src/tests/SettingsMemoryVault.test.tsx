@@ -88,7 +88,7 @@ describe('SettingsMemoryVault', () => {
     expect(screen.getByText('Off by default')).toBeInTheDocument();
     expect(screen.getAllByText('Disabled').length).toBeGreaterThan(0);
     expect(
-      screen.getByText(/Not included in project exports or Context Passports/),
+      screen.getByText(/Not included in project exports or Memory Trails/),
     ).toBeInTheDocument();
   });
 
@@ -795,7 +795,7 @@ describe('AI Answer Style dropdown', () => {
   });
 });
 
-describe('Personal Context Passport', () => {
+describe('Personal Memory Snapshot', () => {
   const PASSPORT_PREF_SENTINEL = 'PASSPORT_PREF_SENTINEL';
   const PASSPORT_RULE_SENTINEL = 'PASSPORT_RULE_SENTINEL';
   const PASSPORT_BOUNDARY_SENTINEL = 'PASSPORT_BOUNDARY_SENTINEL';
@@ -818,18 +818,18 @@ describe('Personal Context Passport', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders Personal Context Passport section', () => {
+  it('renders Personal Memory Snapshot section', () => {
     render(<SettingsMemoryVault />);
 
-    const passport = screen.getByLabelText('Personal Context Passport section');
+    const passport = screen.getByLabelText('Personal Memory Snapshot section');
     expect(passport).toBeInTheDocument();
     expect(
       within(passport).getByRole('heading', { name: 'Copy personal AI instructions' }),
     ).toBeInTheDocument();
     expect(
-      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+      within(passport).getByRole('button', { name: 'Copy Personal Memory Snapshot' }),
     ).toBeInTheDocument();
-    expect(within(passport).getByLabelText('Personal Context Passport preview')).toBeInTheDocument();
+    expect(within(passport).getByLabelText('Personal Memory Snapshot preview')).toBeInTheDocument();
   });
 
   it('preview includes selected preferences, rules, boundaries, and answer style memories', () => {
@@ -866,9 +866,9 @@ describe('Personal Context Passport', () => {
 
     render(<SettingsMemoryVault />);
 
-    const passport = screen.getByLabelText('Personal Context Passport section');
+    const passport = screen.getByLabelText('Personal Memory Snapshot section');
     const preview = within(passport).getByLabelText(
-      'Personal Context Passport preview',
+      'Personal Memory Snapshot preview',
     ) as HTMLTextAreaElement;
     expect(preview.value).toContain(PASSPORT_PREF_SENTINEL);
     expect(preview.value).toContain(PASSPORT_RULE_SENTINEL);
@@ -905,9 +905,9 @@ describe('Personal Context Passport', () => {
 
     render(<SettingsMemoryVault />);
 
-    const passport = screen.getByLabelText('Personal Context Passport section');
+    const passport = screen.getByLabelText('Personal Memory Snapshot section');
     const preview = within(passport).getByLabelText(
-      'Personal Context Passport preview',
+      'Personal Memory Snapshot preview',
     ) as HTMLTextAreaElement;
     expect(preview.value).not.toContain(PASSPORT_NEVER_SHARE_SHOULD_NOT_COPY);
     expect(preview.value).not.toContain(PASSPORT_CUSTOM_NOTE_SHOULD_NOT_COPY);
@@ -918,7 +918,7 @@ describe('Personal Context Passport', () => {
   it('shows "Never-share items excluded" wording', () => {
     render(<SettingsMemoryVault />);
 
-    const passport = screen.getByLabelText('Personal Context Passport section');
+    const passport = screen.getByLabelText('Personal Memory Snapshot section');
     expect(within(passport).getByText('Never-share items excluded')).toBeInTheDocument();
   });
 
@@ -936,14 +936,14 @@ describe('Personal Context Passport', () => {
 
     render(<SettingsMemoryVault />);
 
-    const passport = screen.getByLabelText('Personal Context Passport section');
+    const passport = screen.getByLabelText('Personal Memory Snapshot section');
     fireEvent.click(
-      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+      within(passport).getByRole('button', { name: 'Copy Personal Memory Snapshot' }),
     );
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
     const copied = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
-    expect(copied).toContain('# Personal Context Passport');
+    expect(copied).toContain('# Personal Memory Snapshot');
     expect(copied).toContain(PASSPORT_PREF_SENTINEL);
     expect(copied).toContain('## Privacy Boundary');
   });
@@ -959,18 +959,18 @@ describe('Personal Context Passport', () => {
 
     render(<SettingsMemoryVault />);
 
-    const passport = screen.getByLabelText('Personal Context Passport section');
+    const passport = screen.getByLabelText('Personal Memory Snapshot section');
     fireEvent.click(
-      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+      within(passport).getByRole('button', { name: 'Copy Personal Memory Snapshot' }),
     );
 
     // Preview is always visible — wait a tick and verify it still exists
-    await screen.findByLabelText('Personal Context Passport preview');
+    await screen.findByLabelText('Personal Memory Snapshot preview');
     const preview = within(passport).getByLabelText(
-      'Personal Context Passport preview',
+      'Personal Memory Snapshot preview',
     ) as HTMLTextAreaElement;
     expect(preview).toBeInTheDocument();
-    expect(preview.value).toContain('# Personal Context Passport');
+    expect(preview.value).toContain('# Personal Memory Snapshot');
   });
 
   it('rendering and copying the passport does not mutate localStorage', async () => {
@@ -988,9 +988,9 @@ describe('Personal Context Passport', () => {
 
     render(<SettingsMemoryVault />);
 
-    const passport = screen.getByLabelText('Personal Context Passport section');
+    const passport = screen.getByLabelText('Personal Memory Snapshot section');
     fireEvent.click(
-      within(passport).getByRole('button', { name: 'Copy Personal Context Passport' }),
+      within(passport).getByRole('button', { name: 'Copy Personal Memory Snapshot' }),
     );
 
     const storedAfter = window.localStorage.getItem(PERSONAL_MEMORY_VAULT_STORAGE_KEY);
@@ -1392,20 +1392,20 @@ describe('Frontal Lobe AI Working Style profile', () => {
       );
     }
 
-    // Personal Context Passport — does not include frontalLobeProfile data
-    const passportPreview = screen.getByLabelText('Personal Context Passport preview') as HTMLTextAreaElement;
+    // Personal Memory Snapshot does not include frontalLobeProfile data
+    const passportPreview = screen.getByLabelText('Personal Memory Snapshot preview') as HTMLTextAreaElement;
     expect(passportPreview.value).not.toContain(FRONTAL_LOBE_PROFILE_SHOULD_NOT_EXPORT);
   });
 
-  // Test 12: existing Personal Context Passport / AI Working Style tests still work
-  it('Frontal Lobe section coexists without breaking AI Working Style copy or Context Passport', () => {
+  // Test 12: existing Personal Memory Snapshot / AI Working Style tests still work
+  it('Frontal Lobe section coexists without breaking AI Working Style copy or Memory Trail copy', () => {
     render(<SettingsMemoryVault />);
 
     const frontalSection = screen.getByLabelText('Frontal Lobe AI Working Style section');
     expect(frontalSection).toBeInTheDocument();
-    expect(screen.getByLabelText('Personal Context Passport section')).toBeInTheDocument();
+    expect(screen.getByLabelText('Personal Memory Snapshot section')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy AI working style' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy Personal Context Passport' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy Personal Memory Snapshot' })).toBeInTheDocument();
   });
 
   // Test 13: Builder Skill Profile fields all render and update preview

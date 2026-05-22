@@ -1,4 +1,5 @@
 import { useProjectStore } from '../../store/projectStore';
+import packageJson from '../../../package.json';
 import { resolvePlatformRegistry } from '../../utils/platformRegistry';
 import Toggle from '../Shared/Toggle';
 import '../Shared/Toggle.css';
@@ -12,7 +13,7 @@ async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Prom
   return invoke<T>(cmd, args);
 }
 
-const appVersion = import.meta.env.VITE_APP_VERSION || 'dev';
+const appVersion = packageJson.version;
 
 export function SettingsGeneral() {
   const settings = useProjectStore((s) => s.settings);
@@ -193,10 +194,10 @@ export function SettingsGeneral() {
           </div>
           <button
             className="setting-btn"
-            onClick={() => showToast("You're on the latest version", 'success')}
-            title="Check whether Memephant is up to date"
+            onClick={() => showToast('Use Settings > About to check web and desktop updates separately.', 'info')}
+            title="Open Settings > About for web and desktop update checks"
           >
-            Check Now
+            See About
           </button>
         </div>
       </div>

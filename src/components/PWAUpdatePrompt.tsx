@@ -9,7 +9,7 @@ export function PWAUpdatePrompt() {
     <div className="pwa-update-prompt" role="status" aria-live="polite">
       <div className="pwa-update-prompt__title">Update available</div>
       <div className="pwa-update-prompt__body">
-        A newer version of Memephant is ready. Update now to use the latest build.
+        A newer web/PWA build of Memephant is ready. This does not update the installed desktop app.
       </div>
       {updateMessage ? <div className="pwa-update-prompt__body">{updateMessage}</div> : null}
       <div className="pwa-update-prompt__actions">
