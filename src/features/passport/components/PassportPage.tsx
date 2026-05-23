@@ -26,7 +26,6 @@ import { PassportPreviewSimulator } from "./PassportPreviewSimulator";
 import passportStampBronze from "../../../assets/passport/tiers/passport-stamp-bronze.png";
 import passportStampSilver from "../../../assets/passport/tiers/passport-stamp-silver.png";
 
-
 const PAGE: React.CSSProperties = {
   width: "100%",
   display: "flex",
@@ -52,6 +51,15 @@ const HERO: React.CSSProperties = {
   boxShadow: "0 0 0 1px rgba(245,158,11,0.05) inset",
 };
 
+const HERO_STAMP_COLUMN: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0.85rem",
+  flex: "0 0 260px",
+};
+
 const STAMP: React.CSSProperties = {
   width: "220px",
   height: "220px",
@@ -59,7 +67,7 @@ const STAMP: React.CSSProperties = {
   flexShrink: 0,
   transform: "scale(1.75)",
   transformOrigin: "center",
-  margin: "0.75rem 2.75rem 0.75rem 1.25rem",
+  margin: "0.5rem 0 0.85rem",
   cursor: "pointer",
   filter: "drop-shadow(0 0 42px rgba(245,158,11,0.38))",
 };
@@ -69,9 +77,24 @@ const HERO_TEXT: React.CSSProperties = {
   flexDirection: "column",
   gap: "0.45rem",
   minWidth: 0,
-  flex: "1 1 260px",
+  flex: "1 1 360px",
+};
+const HERO_ACTION_TITLE: React.CSSProperties = {
+  margin: "0.25rem 0 0",
+  color: "#f8fafc",
+  fontSize: "0.9rem",
+  fontWeight: 800,
+  letterSpacing: "-0.01em",
+  textAlign: "center",
 };
 
+const HERO_ACTIONS_VERTICAL: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.55rem",
+  width: "100%",
+  maxWidth: "220px",
+};
 const EYEBROW: React.CSSProperties = {
   margin: 0,
   color: "rgba(245,158,11,0.7)",
@@ -258,7 +281,6 @@ const EMPTY_HERO: React.CSSProperties = {
     "linear-gradient(135deg, rgba(217,119,6,0.10) 0%, rgba(124,58,237,0.05) 100%)",
 };
 
-
 export function PassportPage() {
   const passport = usePassportStore((s) => s.passport);
   const startPassportEdit = usePassportStore((s) => s.startPassportEdit);
@@ -285,7 +307,7 @@ export function PassportPage() {
                 <h1 style={TITLE}>Set your AI working style</h1>
                 <p style={SUBTITLE}>
                   Tell AI tools how you work once. Then carry that identity
-                conversation without re-explaining yourself.
+                  conversation without re-explaining yourself.
                 </p>
               </div>
             </div>
@@ -327,7 +349,6 @@ export function PassportPage() {
       </div>
     );
   }
-
 
   const hasConfiguration = Boolean(passport.configuration);
   const sealImage = hasConfiguration
@@ -372,7 +393,44 @@ export function PassportPage() {
         <section style={PAGE} aria-label="AI Passport page">
           {/* Hero */}
           <header style={HERO} aria-label="AI Passport identity">
-            <img src={sealImage} alt="" aria-hidden="true" style={STAMP} />
+            <div style={HERO_STAMP_COLUMN}>
+              <img src={sealImage} alt="" aria-hidden="true" style={STAMP} />
+
+              <h2 style={HERO_ACTION_TITLE}>Use your Passport</h2>
+
+              <div
+                style={HERO_ACTIONS_VERTICAL}
+                role="group"
+                aria-label="Passport actions"
+              >
+                <button
+                  type="button"
+                  style={copied ? BTN_PRIMARY_COPIED : BTN_PRIMARY}
+                  onClick={() => void handleCopy()}
+                  aria-label="Copy AI Passport to clipboard"
+                >
+                  {copied ? "Copied to clipboard" : "Copy Passport"}
+                </button>
+
+                <button
+                  type="button"
+                  style={BTN_SECONDARY}
+                  onClick={handleEdit}
+                  aria-label="Edit your AI Passport"
+                >
+                  Edit Passport
+                </button>
+
+                <button
+                  type="button"
+                  style={BTN_SECONDARY}
+                  onClick={handleSeeTheDifference}
+                  aria-label="See the difference your AI Passport makes"
+                >
+                  See the Difference
+                </button>
+              </div>
+            </div>
             <div style={HERO_TEXT}>
               <p style={EYEBROW}>AI Passport</p>
               <h1 style={TITLE}>Your AI working identity</h1>
@@ -385,8 +443,7 @@ export function PassportPage() {
                 <span>
                   Calibrated | {formatPassportDate(passport.createdAt)}
                 </span>
-                <span>
-                </span>
+                <span>{hasConfiguration ? "Tier | Silver" : "Tier | Bronze"}</span>
               </div>
             </div>
           </header>
@@ -455,45 +512,6 @@ export function PassportPage() {
                 <span style={FACET_LABEL}>Risk tolerance</span>
                 <span style={FACET_VALUE}>{config.riskTolerance}</span>
               </div>
-            </div>
-          </section>
-
-          {/* Actions */}
-          <section style={SECTION} aria-label="Passport actions">
-            <div style={SECTION_HEADER}>
-              <h2 style={SECTION_TITLE}>Use your Passport</h2>
-              <p style={SECTION_HELP}>
-                Copy this into any AI tool, or edit it to refine your identity.
-              </p>
-            </div>
-
-            <div style={ACTIONS} role="group" aria-label="Passport actions">
-              <button
-                type="button"
-                style={copied ? BTN_PRIMARY_COPIED : BTN_PRIMARY}
-                onClick={() => void handleCopy()}
-                aria-label="Copy AI Passport to clipboard"
-              >
-                {copied ? "Copied to clipboard" : "Copy Passport"}
-              </button>
-
-              <button
-                type="button"
-                style={BTN_SECONDARY}
-                onClick={handleEdit}
-                aria-label="Edit your AI Passport"
-              >
-                Edit Passport
-              </button>
-
-              <button
-                type="button"
-                style={BTN_SECONDARY}
-                onClick={handleSeeTheDifference}
-                aria-label="See the difference your AI Passport makes"
-              >
-                See the Difference
-              </button>
             </div>
           </section>
 
