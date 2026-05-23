@@ -309,7 +309,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
                 marginTop: "0.3rem",
               }}
             >
-              <PassportBadgeButton />
+              <PassportBadgeButton onNavigate={onNavigate} />
             </div>
           </div>
         </div>

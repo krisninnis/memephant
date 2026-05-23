@@ -12,6 +12,9 @@ export { PassportFlow } from './components/PassportFlow'
 // Sidebar entry point — visible badge + one-click copy panel
 export { PassportBadgeButton } from './components/PassportBadgeButton'
 
+// Full-page AI Passport view (rendered when currentView === 'passport')
+export { PassportPage } from './components/PassportPage'
+
 // Individual screens — export for deep-linking if needed later
 export { PassportWelcome }    from './components/PassportWelcome'
 export { PassportCalibration } from './components/PassportCalibration'

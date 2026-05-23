@@ -15,6 +15,7 @@ import SettingsMemoryVault from '../Settings/SettingsMemoryVault';
 import TourOverlay from '../Tour/TourOverlay';
 import { CommandPalette } from '../CommandPalette/CommandPalette';
 import { PWAInstallButton } from '../PWAInstallButton';
+import { PassportPage } from '../../features/passport/components/PassportPage';
 
 export function AppShell() {
   useTauriSync();
@@ -191,6 +192,8 @@ export function AppShell() {
             </div>
             <TrustFooter />
           </div>
+        ) : currentView === 'passport' ? (
+          <PassportPage />
         ) : showWelcome ? (
           <WelcomeScreen />
         ) : (
@@ -277,7 +280,9 @@ export function AppShell() {
         </button>
       </div>
 
-      {(currentView === 'settings' || currentView === 'memory-vault') && (
+      {(currentView === 'settings' ||
+        currentView === 'memory-vault' ||
+        currentView === 'passport') && (
         <button
           type="button"
           className="mobile-projects-fab"
