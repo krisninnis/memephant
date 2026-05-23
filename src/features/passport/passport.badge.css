@@ -666,16 +666,18 @@
 }
 
 .passport-badge-btn__seal--large {
-  width: 78px;
-  height: 78px;
+  width: 92px;
+  height: 92px;
   border-radius: 18px;
   object-fit: contain;
-  filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.28));
+  transform: scale(1.35);
+  transform-origin: center;
+  filter: drop-shadow(0 0 22px rgba(245, 158, 11, 0.32));
 }
 
 .passport-badge-btn--stacked:hover .passport-badge-btn__seal--large {
-  transform: translateY(-1px) scale(1.04);
-  filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.38));
+  transform: translateY(-1px) scale(1.42);
+  filter: drop-shadow(0 0 28px rgba(245, 158, 11, 0.42));
 }
 
 .passport-badge-btn__body--centered {

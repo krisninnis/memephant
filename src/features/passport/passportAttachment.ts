@@ -58,6 +58,28 @@ function compactAttachmentText(value: string, maxLength: number): string {
   return `${trimmed.slice(0, maxLength - 3).trimEnd()}...`;
 }
 
+function formatDatePreference(value: string, region: string): string {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return region.toLowerCase().includes("united kingdom")
+      ? "UK date format (DD/MM/YYYY)"
+      : "User date format";
+  }
+
+  const looksLikeSpecificDate =
+    /\b\d{4}\b/.test(trimmed) ||
+    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(trimmed);
+
+  if (looksLikeSpecificDate) {
+    return region.toLowerCase().includes("united kingdom")
+      ? "UK date format (DD/MM/YYYY)"
+      : "User date format";
+  }
+
+  return trimmed;
+}
+
 function formatOptionalLine(label: string, value: string): string[] {
   return value.trim() ? [`- ${label}: ${value}`] : [];
 }
@@ -79,7 +101,10 @@ export function buildPassportAttachmentPreview(
     compactAttachmentText(configuration.languagePreference, 45) ||
     getLanguage(frontalLobeProfile);
   const timezone = compactAttachmentText(configuration.timezone, 35);
-  const dateFormat = compactAttachmentText(configuration.dateFormat, 24);
+  const dateFormat = formatDatePreference(
+    compactAttachmentText(configuration.dateFormat, 24),
+    region,
+  );
   const currency = compactAttachmentText(configuration.currency, 24);
   const directness = compactAttachmentText(configuration.directness, 60);
   const technicalLevel = compactAttachmentText(configuration.technicalLevel, 60);
@@ -100,7 +125,7 @@ export function buildPassportAttachmentPreview(
     'No API keys, private keys, recovery phrases, or secrets.',
     'No silent sharing or invented facts.',
     'Medical/legal/financial: general guidance; suggest professional checks.',
-    'No project state, commits, file paths, repo status, or tasks.',
+    'Use Memory Trail for task/project context only; do not merge it into this Passport.',
   ];
 
   const compatibility = [

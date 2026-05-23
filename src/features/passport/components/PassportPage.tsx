@@ -1,5 +1,3 @@
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Memephant â€” AI Passport Page (full main-content view)
 //
 // Replaces the cramped sidebar dropdown panel with a calm, full-width page
 // that surfaces the user's AI working identity, the three primary actions
@@ -7,14 +5,11 @@
 // callout.
 //
 // Routing: rendered by AppShell when projectStore.currentView === 'passport'.
-// PassportGate is unaffected â€” this page only shows for users who already
 // have a passport AND are in a steady state (flowStep === 'welcome',
 // isReeditingPassport === false). The "See the Difference" sub-view is purely
 // local state so flowStep is never touched from here.
 //
-// Identity-first. Memory Trail handles project state â€” not this page.
 // No cloud sync. No silent attachment.
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 import React, { useState } from "react";
 import { usePassportStore } from "../usePassportStore";
@@ -31,7 +26,6 @@ import { PassportPreviewSimulator } from "./PassportPreviewSimulator";
 import passportStampBronze from "../../../assets/passport/tiers/passport-stamp-bronze.png";
 import passportStampSilver from "../../../assets/passport/tiers/passport-stamp-silver.png";
 
-// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const PAGE: React.CSSProperties = {
   width: "100%",
@@ -59,11 +53,15 @@ const HERO: React.CSSProperties = {
 };
 
 const STAMP: React.CSSProperties = {
-  width: "96px",
-  height: "96px",
+  width: "220px",
+  height: "220px",
   objectFit: "contain",
   flexShrink: 0,
-  filter: "drop-shadow(0 0 22px rgba(245,158,11,0.28))",
+  transform: "scale(1.75)",
+  transformOrigin: "center",
+  margin: "0.75rem 2.75rem 0.75rem 1.25rem",
+  cursor: "pointer",
+  filter: "drop-shadow(0 0 42px rgba(245,158,11,0.38))",
 };
 
 const HERO_TEXT: React.CSSProperties = {
@@ -199,7 +197,8 @@ const BTN_BASE: React.CSSProperties = {
   letterSpacing: "0.01em",
   cursor: "pointer",
   fontFamily: "inherit",
-  transition: "transform 0.12s ease, background 0.18s ease, border-color 0.18s ease",
+  transition:
+    "transform 0.12s ease, background 0.18s ease, border-color 0.18s ease",
   outline: "none",
 };
 
@@ -259,7 +258,6 @@ const EMPTY_HERO: React.CSSProperties = {
     "linear-gradient(135deg, rgba(217,119,6,0.10) 0%, rgba(124,58,237,0.05) 100%)",
 };
 
-// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function PassportPage() {
   const passport = usePassportStore((s) => s.passport);
@@ -270,7 +268,6 @@ export function PassportPage() {
   const [subview, setSubview] = useState<"details" | "simulator">("details");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  // â”€â”€ Empty state â€” no passport yet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!passport) {
     return (
       <div className="workspace-scroll">
@@ -287,8 +284,8 @@ export function PassportPage() {
                 <p style={EYEBROW}>AI Passport</p>
                 <h1 style={TITLE}>Set your AI working style</h1>
                 <p style={SUBTITLE}>
-                  Tell AI tools how you work â€” once. Then carry that identity into
-                  every conversation, on every platform.
+                  Tell AI tools how you work once. Then carry that identity
+                conversation without re-explaining yourself.
                 </p>
               </div>
             </div>
@@ -314,7 +311,6 @@ export function PassportPage() {
     );
   }
 
-  // â”€â”€ Simulator subview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (subview === "simulator") {
     return (
       <div className="workspace-scroll">
@@ -332,10 +328,11 @@ export function PassportPage() {
     );
   }
 
-  // â”€â”€ Details subview (default) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const hasConfiguration = Boolean(passport.configuration);
-  const sealImage = hasConfiguration ? passportStampSilver : passportStampBronze;
+  const sealImage = hasConfiguration
+    ? passportStampSilver
+    : passportStampBronze;
   const config = getPassportConfiguration(passport);
 
   async function handleCopy() {
@@ -351,7 +348,7 @@ export function PassportPage() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2400);
     } catch {
-      // Clipboard unavailable (e.g. in tests) â€” silently no-op.
+      // Clipboard may be unavailable in tests or restricted browser contexts.
     }
   }
 
@@ -380,18 +377,20 @@ export function PassportPage() {
               <p style={EYEBROW}>AI Passport</p>
               <h1 style={TITLE}>Your AI working identity</h1>
               <p style={SUBTITLE}>
-                Carry your style, tone, and preferences into every AI conversation â€”
-                without re-explaining yourself.
+                Carry your style, tone, and preferences into every AI
+                conversation without re-explaining yourself.
               </p>
               <div style={META_ROW}>
-                <span>ID Â· {passport.id}</span>
-                <span>Calibrated Â· {formatPassportDate(passport.createdAt)}</span>
-                <span>{hasConfiguration ? "Tier Â· Silver" : "Tier Â· Bronze"}</span>
+                <span>ID | {passport.id}</span>
+                <span>
+                  Calibrated | {formatPassportDate(passport.createdAt)}
+                </span>
+                <span>
+                </span>
               </div>
             </div>
           </header>
 
-          {/* Identity facets â€” the three calibration answers */}
           <section style={SECTION} aria-label="Working style">
             <div style={SECTION_HEADER}>
               <h2 style={SECTION_TITLE}>Working style</h2>
@@ -418,13 +417,10 @@ export function PassportPage() {
             </div>
           </section>
 
-          {/* Identity preferences â€” richer configuration when present */}
           <section style={SECTION} aria-label="Identity preferences">
             <div style={SECTION_HEADER}>
               <h2 style={SECTION_TITLE}>Identity preferences</h2>
-              <p style={SECTION_HELP}>
-                Edit Passport to refine these.
-              </p>
+              <p style={SECTION_HELP}>Edit Passport to refine these.</p>
             </div>
             <div style={FACET_GRID}>
               {config.preferredName.trim() && (
@@ -478,7 +474,7 @@ export function PassportPage() {
                 onClick={() => void handleCopy()}
                 aria-label="Copy AI Passport to clipboard"
               >
-                {copied ? "âœ“ Copied to clipboard" : "Copy Passport"}
+                {copied ? "Copied to clipboard" : "Copy Passport"}
               </button>
 
               <button
@@ -510,7 +506,7 @@ export function PassportPage() {
               Your AI Passport is stored on this device only. It is never
               uploaded to a server, never shared with another AI tool, and never
               auto-attached to anything. Copy it yourself when you want to use
-              it â€” that is the only way it travels.
+              it - that is the only way it travels.
             </p>
             <p style={PRIVACY_NOTE}>
               Project state lives in <strong>Memory Trail</strong>, not here.
