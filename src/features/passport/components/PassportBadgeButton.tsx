@@ -1,22 +1,19 @@
-// ─────────────────────────────────────────────────────────────────────────────
+﻿// -----------------------------------------------------------------------------
 // Memephant — Passport Badge Button (sidebar entry)
 //
-// Shows the user's Passport tier stamp + a short identity label in the
-// sidebar. Clicking the badge navigates to the full-page AI Passport view
-// (projectStore.currentView = 'passport') — it no longer opens a cramped
-// inline dropdown.
+// Sidebar entry for the user's AI Passport.
+// Clicking opens the full-page AI Passport view.
+// This no longer opens an inline dropdown.
 //
-// Behaviour summary:
-//  - If a passport exists      → click → setCurrentView('passport')
-//  - If no passport exists yet → click → startPassportEdit() (opens flow)
+// Behaviour:
+// - No Passport: starts Passport creation flow.
+// - Existing Passport: navigates to the dedicated Passport page.
 //
 // Stamp tier:
-//  - Bronze: no configuration set (just the three calibration answers)
-//  - Silver: configuration filled in
-//  - Gold:   reserved for a future trusted/premium tier (asset exists)
-//
-// No silent cloud sync. No silent attachment. Identity-first, not project-state.
-// ─────────────────────────────────────────────────────────────────────────────
+// - Bronze: basic Passport created.
+// - Silver: configured Passport.
+// - Gold: reserved for future trusted/premium tier.
+// -----------------------------------------------------------------------------
 
 import { usePassportStore } from "../usePassportStore";
 import { useProjectStore } from "../../../store/projectStore";
@@ -29,7 +26,9 @@ interface PassportBadgeButtonProps {
   onNavigate?: () => void;
 }
 
-export function PassportBadgeButton({ onNavigate }: PassportBadgeButtonProps = {}) {
+export function PassportBadgeButton({
+  onNavigate,
+}: PassportBadgeButtonProps = {}) {
   const passport = usePassportStore((s) => s.passport);
   const startPassportEdit = usePassportStore((s) => s.startPassportEdit);
   const setCurrentView = useProjectStore((s) => s.setCurrentView);
@@ -39,7 +38,7 @@ export function PassportBadgeButton({ onNavigate }: PassportBadgeButtonProps = {
       <div className="passport-badge-root">
         <button
           type="button"
-          className="passport-badge-btn"
+          className="passport-badge-btn passport-badge-btn--stacked"
           aria-label="Create AI Passport"
           onClick={() => {
             startPassportEdit();
@@ -48,23 +47,19 @@ export function PassportBadgeButton({ onNavigate }: PassportBadgeButtonProps = {
           title="Create AI Passport"
         >
           <img
-            className="passport-badge-btn__seal"
+            className="passport-badge-btn__seal passport-badge-btn__seal--large"
             src={passportStampBronze}
             alt=""
             aria-hidden="true"
           />
 
-          <span className="passport-badge-btn__body">
+          <span className="passport-badge-btn__body passport-badge-btn__body--centered">
             <span className="passport-badge-btn__label">
               Create AI Passport
             </span>
             <span className="passport-badge-btn__id">
               Set your AI working style
             </span>
-          </span>
-
-          <span className="passport-badge-btn__chevron" aria-hidden="true">
-            +
           </span>
         </button>
       </div>
@@ -86,25 +81,21 @@ export function PassportBadgeButton({ onNavigate }: PassportBadgeButtonProps = {
     <div className="passport-badge-root">
       <button
         type="button"
-        className="passport-badge-btn"
+        className="passport-badge-btn passport-badge-btn--stacked"
         aria-label="Open AI Passport"
         onClick={handleOpenPage}
         title="Open AI Passport"
       >
         <img
-          className="passport-badge-btn__seal"
+          className="passport-badge-btn__seal passport-badge-btn__seal--large"
           src={sealImage}
           alt=""
           aria-hidden="true"
         />
 
-        <span className="passport-badge-btn__body">
+        <span className="passport-badge-btn__body passport-badge-btn__body--centered">
           <span className="passport-badge-btn__label">AI Passport</span>
           <span className="passport-badge-btn__id">{shortId}</span>
-        </span>
-
-        <span className="passport-badge-btn__chevron" aria-hidden="true">
-          ›
         </span>
       </button>
     </div>
