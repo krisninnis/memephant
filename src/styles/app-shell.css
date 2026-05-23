@@ -10,7 +10,13 @@ body,
   height: 100%;
   background: #0f172a;
   color: #e5e7eb;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
 }
 
 * {
@@ -200,7 +206,10 @@ select {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .sidebar-action-btn:hover {
@@ -1071,7 +1080,7 @@ select {
 
 .github-repo-input {
   flex: 1;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
   font-size: 13px;
   color: #93c5fd;
 }
@@ -1092,7 +1101,9 @@ select {
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .github-repo-link:hover {
@@ -1244,7 +1255,10 @@ select {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 
 .github-scan-btn:hover {
@@ -1260,7 +1274,9 @@ select {
 
 /* Spinner for scanning state */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .scan-spinner {
@@ -1300,7 +1316,9 @@ select {
   transition: border-color 0.15s;
 }
 
-.scan-error-retry:hover { border-color: #f87171; }
+.scan-error-retry:hover {
+  border-color: #f87171;
+}
 
 /* ── Detected stack chips (post-merge, shown in editor) ─────────────────── */
 
@@ -1333,7 +1351,9 @@ select {
   margin-left: 2px;
 }
 
-.detected-stack-rescan:hover { color: #90b8f8; }
+.detected-stack-rescan:hover {
+  color: #90b8f8;
+}
 
 /* ── GitHub Scan Preview panel ───────────────────────────────────────────── */
 
@@ -1346,8 +1366,14 @@ select {
 }
 
 @keyframes scanSlideIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .scan-preview__header {
@@ -1387,7 +1413,9 @@ select {
   text-decoration: none;
 }
 
-.scan-preview__repo-link:hover { text-decoration: underline; }
+.scan-preview__repo-link:hover {
+  text-decoration: underline;
+}
 
 .scan-preview__dismiss-x {
   background: none;
@@ -1401,7 +1429,9 @@ select {
   transition: color 0.15s;
 }
 
-.scan-preview__dismiss-x:hover { color: #aaa; }
+.scan-preview__dismiss-x:hover {
+  color: #aaa;
+}
 
 .scan-preview__warning {
   margin: 12px 18px 0;
@@ -1546,7 +1576,9 @@ select {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   text-align: center;
 }
 
@@ -1563,7 +1595,9 @@ select {
   color: #446;
   font-size: 13px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .scan-preview__skip-btn:hover {
@@ -1804,9 +1838,15 @@ select {
   line-height: 1.4;
 }
 
-.diff-item--added { background: #0a1f0a; }
-.diff-item--updated { background: #1a1a0a; }
-.diff-item--removed { background: #1f0a0a; }
+.diff-item--added {
+  background: #0a1f0a;
+}
+.diff-item--updated {
+  background: #1a1a0a;
+}
+.diff-item--removed {
+  background: #1f0a0a;
+}
 
 .diff-item__field {
   font-weight: 600;
@@ -1821,9 +1861,15 @@ select {
   margin-top: 1px;
 }
 
-.diff-item--added .diff-item__action { color: #4ade80; }
-.diff-item--updated .diff-item__action { color: #facc15; }
-.diff-item--removed .diff-item__action { color: #f87171; }
+.diff-item--added .diff-item__action {
+  color: #4ade80;
+}
+.diff-item--updated .diff-item__action {
+  color: #facc15;
+}
+.diff-item--removed .diff-item__action {
+  color: #f87171;
+}
 
 .diff-item__value {
   color: #ccc;
@@ -1997,10 +2043,10 @@ select {
     display: none;
   }
 
- .workspace {
-  min-width: 0;
-  min-height: 0;
-}
+  .workspace {
+    min-width: 0;
+    min-height: 0;
+  }
 
   .workspace-scroll {
     padding-bottom: calc(96px + env(safe-area-inset-bottom));
@@ -2207,7 +2253,10 @@ select {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s, background 0.25s;
+  transition:
+    opacity 0.15s,
+    transform 0.1s,
+    background 0.25s;
   width: 100%;
 }
 
@@ -2283,7 +2332,11 @@ select {
   padding: 10px 12px;
   border: 1px solid rgba(125, 211, 252, 0.18);
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(15, 23, 42, 0.26));
+  background: linear-gradient(
+    135deg,
+    rgba(14, 165, 233, 0.08),
+    rgba(15, 23, 42, 0.26)
+  );
   color: rgba(224, 242, 254, 0.92);
   font-size: 0.82rem;
   line-height: 1.4;
@@ -2478,7 +2531,10 @@ select {
   background:
     linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(15, 23, 42, 0.12)),
     rgba(2, 6, 23, 0.46);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
 }
 
 .passport-attachment-panel:hover {
@@ -2676,7 +2732,9 @@ select {
   border-radius: 8px;
   background: rgba(2, 6, 23, 0.78);
   color: #dbeafe;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   font-size: 0.75rem;
   line-height: 1.5;
   resize: vertical;
@@ -2713,7 +2771,9 @@ select {
   border-radius: 8px;
   background: #020617;
   color: #e2e8f0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   font-size: 0.78rem;
   line-height: 1.5;
   resize: vertical;
@@ -2758,7 +2818,10 @@ select {
   border: 1px solid #2e4268;
   border-radius: 10px;
   cursor: pointer;
-  transition: border-color 0.15s, transform 0.1s, background 0.2s;
+  transition:
+    border-color 0.15s,
+    transform 0.1s,
+    background 0.2s;
 }
 
 .export-manifest-btn:hover:not(:disabled) {
@@ -3108,7 +3171,10 @@ select {
   font-weight: 500;
   color: #8080a0;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 }
 
@@ -3183,7 +3249,9 @@ select {
   cursor: pointer;
   width: 100%;
   text-align: left;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   margin-bottom: 4px;
 }
 
@@ -3236,7 +3304,9 @@ select {
   font-weight: 600;
   padding: 5px 10px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .sidebar-cloud-nudge__cta:hover {
@@ -3577,7 +3647,9 @@ select {
   font-size: 0.78rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
   white-space: nowrap;
 }
 
@@ -3588,4 +3660,93 @@ select {
 
 .task-field__action-btn:active {
   transform: scale(0.97);
+}
+.sidebar-projects {
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.sidebar-projects::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-projects::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+.sidebar-projects::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-show-more {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.75rem 0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sidebar-show-more:hover {
+  color: #f8fafc;
+}
+.sidebar-inner {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-projects::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-projects::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+.sidebar-projects::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-account-dock {
+  flex-shrink: 0;
+}
+.sidebar-inner {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 16px;
+}
+
+.sidebar-inner::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-inner::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+.sidebar-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-projects {
+  flex: initial;
+  min-height: auto;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.sidebar-account-dock {
+  flex-shrink: 0;
+  margin-top: 1rem;
 }

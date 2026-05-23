@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { useProjectStore } from '../../store/projectStore';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
+import { useProjectStore } from "../../store/projectStore";
 import {
   isDesktopApp,
   createProject,
@@ -7,38 +14,39 @@ import {
   createProjectFromTemplate,
   importProjectFromFile,
   deleteProject,
-} from '../../services/tauriActions';
-import { PROJECT_TEMPLATES } from '../../utils/projectTemplates';
-import type { ProjectTemplate } from '../../utils/projectTemplates';
+} from "../../services/tauriActions";
+import { PROJECT_TEMPLATES } from "../../utils/projectTemplates";
+import type { ProjectTemplate } from "../../utils/projectTemplates";
 import {
   ensureValidPlatformId,
   getPlatformConfig,
-} from '../../utils/platformRegistry';
-import ProjectCard from './ProjectCard';
-import ConfirmDialog from '../Shared/ConfirmDialog';
-import LaunchpadWizard from '../Launchpad/LaunchpadWizard';
-import { PassportBadgeButton } from '../../features/passport/components/PassportBadgeButton';
+} from "../../utils/platformRegistry";
+import ProjectCard from "./ProjectCard";
+import ConfirmDialog from "../Shared/ConfirmDialog";
+import LaunchpadWizard from "../Launchpad/LaunchpadWizard";
+import { PassportBadgeButton } from "../../features/passport/components/PassportBadgeButton";
 
 interface SidebarProps {
   onNavigate?: () => void;
 }
 
-type CreateMode = 'none' | 'name' | 'templates' | 'template-name';
+type CreateMode = "none" | "name" | "templates" | "template-name";
 
 function getInitials(email: string) {
-  const name = email.split('@')[0] || 'U';
+  const name = email.split("@")[0] || "U";
   const parts = name.split(/[._-]+/).filter(Boolean);
-  if (parts.length >= 2) return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+  if (parts.length >= 2)
+    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
 
 function getDisplayName(email: string) {
-  const raw = email.split('@')[0] || 'User';
+  const raw = email.split("@")[0] || "User";
   return raw
     .split(/[._-]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 const Sidebar = ({ onNavigate }: SidebarProps) => {
@@ -53,18 +61,20 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const setCurrentView = useProjectStore((s) => s.setCurrentView);
   const setSettingsTab = useProjectStore((s) => s.setSettingsTab);
 
-  const [createMode, setCreateMode] = useState<CreateMode>('none');
+  const [createMode, setCreateMode] = useState<CreateMode>("none");
   const [showLaunchpad, setShowLaunchpad] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [newName, setNewName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAllProjects, setShowAllProjects] = useState(false);
   const [showDesktopPrompt, setShowDesktopPrompt] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
-  const [templateName, setTemplateName] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<ProjectTemplate | null>(null);
+  const [templateName, setTemplateName] = useState("");
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [cloudNudgeDismissed, setCloudNudgeDismissed] = useState(
-    () => localStorage.getItem('mph_cloud_nudge_dismissed') === '1',
+    () => localStorage.getItem("mph_cloud_nudge_dismissed") === "1",
   );
 
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +95,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   useEffect(() => {
     if (desktopApp) return;
 
-    const dismissed = sessionStorage.getItem('mph_desktop_prompt_seen') === '1';
+    const dismissed = sessionStorage.getItem("mph_desktop_prompt_seen") === "1";
     if (dismissed) return;
 
     const showTimer = window.setTimeout(() => {
@@ -94,7 +104,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
 
     const hideTimer = window.setTimeout(() => {
       setShowDesktopPrompt(false);
-      sessionStorage.setItem('mph_desktop_prompt_seen', '1');
+      sessionStorage.setItem("mph_desktop_prompt_seen", "1");
     }, 5200);
 
     return () => {
@@ -106,7 +116,10 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 120);
+    searchDebounceRef.current = setTimeout(
+      () => setDebouncedSearch(value),
+      120,
+    );
   }, []);
 
   const filteredProjects = useMemo(() => {
@@ -120,15 +133,22 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
         p.goals?.some((g) => g.toLowerCase().includes(q)) ||
         p.nextSteps?.some((s) => s.toLowerCase().includes(q)) ||
         p.decisions?.some((d) =>
-          (typeof d === 'string' ? d : d.decision).toLowerCase().includes(q),
+          (typeof d === "string" ? d : d.decision).toLowerCase().includes(q),
         ),
     );
   }, [projects, debouncedSearch]);
+  const visibleProjects = showAllProjects
+    ? filteredProjects
+    : filteredProjects.slice(0, 4);
 
+  const hiddenProjectCount = Math.max(
+    filteredProjects.length - visibleProjects.length,
+    0,
+  );
   const resetCreate = () => {
-    setCreateMode('none');
-    setNewName('');
-    setTemplateName('');
+    setCreateMode("none");
+    setNewName("");
+    setTemplateName("");
     setSelectedTemplate(null);
   };
 
@@ -147,48 +167,52 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   };
 
   const handleNewProjectClick = () => {
-  resetCreate();
-  setShowLaunchpad(true);
+    resetCreate();
+    setShowLaunchpad(true);
   };
 
   const handleImportClick = () => {
-  importFileRef.current?.click();
+    importFileRef.current?.click();
 
-  // Show desktop prompt again when user tries to import,
-  // but don't restart it if it's already visible
-  if (!desktopApp && !showDesktopPrompt) {
-    setShowDesktopPrompt(true);
+    if (!desktopApp && !showDesktopPrompt) {
+      setShowDesktopPrompt(true);
 
-    window.setTimeout(() => {
-      setShowDesktopPrompt(false);
-    }, 4000);
-  }
-};
+      window.setTimeout(() => {
+        setShowDesktopPrompt(false);
+      }, 4000);
+    }
+  };
 
-  const handleImportFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImportFileChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     await importProjectFromFile(file);
-    event.target.value = '';
+    event.target.value = "";
     onNavigate?.();
   };
 
   const openCloudBackup = () => {
-    setSettingsTab('sync');
-    setCurrentView('settings');
+    setSettingsTab("sync");
+    setCurrentView("settings");
     onNavigate?.();
   };
 
   const openDesktopDownload = () => {
-    window.open('https://memephant.com/download', '_blank', 'noopener,noreferrer');
+    window.open(
+      "https://memephant.com/download",
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const pendingDeleteProject = pendingDeleteId
     ? projects.find((p) => p.id === pendingDeleteId)
     : null;
 
-  const planLabel = 'Free during early access';
+  const planLabel = "Free during early access";
 
   return (
     <div className="sidebar-inner">
@@ -204,15 +228,97 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       )}
 
       <div className="sidebar-header">
-        <div>
-          <h2 className="sidebar-brand">Memephant</h2>
-          <p className="sidebar-tagline">Your project context, ready for any AI.</p>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.85rem",
+            }}
+          >
+            <img
+              src="/icons/source-elephant-1024.png"
+              alt="Memephant"
+              style={{
+                width: "48px",
+                height: "48px",
+                objectFit: "contain",
+                borderRadius: "14px",
+                filter: "drop-shadow(0 0 14px rgba(245,158,11,0.18))",
+              }}
+            />
+
+            <div>
+              <h2 className="sidebar-brand">Memephant</h2>
+              <p className="sidebar-tagline">
+                Portable AI identity & continuity
+              </p>
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "rgba(245,158,11,0.06)",
+              border: "1px solid rgba(245,158,11,0.13)",
+              borderRadius: "16px",
+              padding: "0.9rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.7rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.28rem",
+              }}
+            >
+              <span
+                style={{
+                  color: "#f8fafc",
+                  fontSize: "0.92rem",
+                  fontWeight: 700,
+                }}
+              >
+                Your AI Identity
+              </span>
+
+              <span
+                style={{
+                  color: "#cbd5e1",
+                  fontSize: "0.76rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                Teach AI tools how you work once — then carry it everywhere.
+              </span>
+            </div>
+
+            <div
+              style={{
+                transform: "scale(1.04)",
+                transformOrigin: "top left",
+                marginTop: "0.3rem",
+              }}
+            >
+              <PassportBadgeButton />
+            </div>
+          </div>
         </div>
+
         <button
           type="button"
           className="sidebar-settings-btn"
           onClick={() => {
-            setCurrentView('settings');
+            setCurrentView("settings");
             onNavigate?.();
           }}
           title="Open Settings"
@@ -222,34 +328,91 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
         </button>
       </div>
 
-      <div className="sidebar-primary-nav" aria-label="Main navigation">
+      <div
+        className="sidebar-primary-nav"
+        aria-label="Main navigation"
+        style={{
+          marginTop: "0.2rem",
+          marginBottom: "0.65rem",
+        }}
+      >
         <button
           type="button"
-          className={`sidebar-nav-card${currentView === 'memory-vault' ? ' sidebar-nav-card--active' : ''}`}
-          aria-current={currentView === 'memory-vault' ? 'page' : undefined}
+          className={`sidebar-nav-card${currentView === "memory-vault" ? " sidebar-nav-card--active" : ""}`}
+          aria-current={currentView === "memory-vault" ? "page" : undefined}
           onClick={() => {
-            setCurrentView('memory-vault');
+            setCurrentView("memory-vault");
             onNavigate?.();
           }}
           title="Open your local Personal Memory Vault"
+          style={{
+            width: "100%",
+            cursor: "pointer",
+            background:
+              currentView === "memory-vault"
+                ? "linear-gradient(135deg, rgba(124,58,237,0.22), rgba(245,158,11,0.12))"
+                : "rgba(255,255,255,0.03)",
+            border:
+              currentView === "memory-vault"
+                ? "1px solid rgba(245,158,11,0.28)"
+                : "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "18px",
+            padding: "1rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "0.38rem",
+            transition: "all 0.22s ease",
+            boxShadow:
+              currentView === "memory-vault"
+                ? "0 0 22px rgba(245,158,11,0.08)"
+                : "none",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.borderColor = "rgba(245,158,11,0.22)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.borderColor =
+              currentView === "memory-vault"
+                ? "rgba(245,158,11,0.28)"
+                : "rgba(255,255,255,0.08)";
+          }}
         >
-          <span className="sidebar-nav-card__label">Memory Vault</span>
-          <span className="sidebar-nav-card__hint">Private personal memory</span>
-        </button>
+          <span
+            style={{
+              color: "#f8fafc",
+              fontSize: "1rem",
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Memory Vault
+          </span>
 
-        {/* AI Passport entry point — only renders when a passport exists */}
-        <PassportBadgeButton />
+          <span
+            style={{
+              color: "#94a3b8",
+              fontSize: "0.76rem",
+              lineHeight: 1.5,
+              textAlign: "left",
+            }}
+          >
+            Private personal memory
+          </span>
+        </button>
       </div>
 
       <div className="sidebar-actions">
-        {createMode === 'none' && (
+        {createMode === "none" && (
           <>
             <button
               type="button"
               className="sidebar-action-btn sidebar-action-btn--primary"
               data-tour="new-project"
               onClick={handleNewProjectClick}
-              style={{ background: selectedPlatform.color ?? '#64748b' }}
+              style={{ background: selectedPlatform.color ?? "#64748b" }}
               title="Start a new project memory"
             >
               + New Project
@@ -259,7 +422,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               type="button"
               className="sidebar-action-btn"
               onClick={() => {
-                setCreateMode('templates');
+                setCreateMode("templates");
               }}
               title="Create a project from a starter template"
             >
@@ -267,14 +430,14 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             </button>
 
             {desktopApp ? (
-                <button
-                  type="button"
-                  className="sidebar-action-btn"
-                  onClick={() => void createProjectFromFolder()}
-                  title="Create a project by scanning a local folder"
-                >
-                  📂 Select folder
-                </button>
+              <button
+                type="button"
+                className="sidebar-action-btn"
+                onClick={() => void createProjectFromFolder()}
+                title="Create a project by scanning a local folder"
+              >
+                📂 Select folder
+              </button>
             ) : (
               <>
                 <button
@@ -289,7 +452,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
                   ref={importFileRef}
                   type="file"
                   accept=".json,application/json"
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                   onChange={(e) => void handleImportFileChange(e)}
                   title="Choose a project JSON file to import"
                 />
@@ -298,7 +461,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           </>
         )}
 
-        {createMode === 'name' && (
+        {createMode === "name" && (
           <div className="sidebar-create-form">
             <input
               ref={nameInputRef}
@@ -309,8 +472,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               onChange={(e) => setNewName(e.target.value)}
               title="Enter a name for the new project"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleCreate();
-                if (e.key === 'Escape') resetCreate();
+                if (e.key === "Enter") void handleCreate();
+                if (e.key === "Escape") resetCreate();
               }}
             />
             <div className="sidebar-create-buttons">
@@ -322,14 +485,19 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               >
                 Create
               </button>
-              <button type="button" className="sidebar-action-btn" onClick={resetCreate} title="Cancel creating this project">
+              <button
+                type="button"
+                className="sidebar-action-btn"
+                onClick={resetCreate}
+                title="Cancel creating this project"
+              >
                 Cancel
               </button>
             </div>
           </div>
         )}
 
-        {createMode === 'templates' && (
+        {createMode === "templates" && (
           <div className="sidebar-template-picker">
             <p className="sidebar-template-title">Pick a template</p>
             {PROJECT_TEMPLATES.map((t) => (
@@ -338,8 +506,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
                 className="sidebar-template-option"
                 onClick={() => {
                   setSelectedTemplate(t);
-                  setTemplateName('');
-                  setCreateMode('template-name');
+                  setTemplateName("");
+                  setCreateMode("template-name");
                   setTimeout(() => templateNameRef.current?.focus(), 50);
                 }}
                 title={`Use the ${t.label} template`}
@@ -348,13 +516,18 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
                 <span>{t.label}</span>
               </button>
             ))}
-            <button type="button" className="sidebar-action-btn" onClick={resetCreate} title="Cancel choosing a template">
+            <button
+              type="button"
+              className="sidebar-action-btn"
+              onClick={resetCreate}
+              title="Cancel choosing a template"
+            >
               Cancel
             </button>
           </div>
         )}
 
-        {createMode === 'template-name' && selectedTemplate && (
+        {createMode === "template-name" && selectedTemplate && (
           <div className="sidebar-create-form">
             <p className="sidebar-template-chosen">
               {selectedTemplate.emoji} {selectedTemplate.label}
@@ -368,8 +541,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               onChange={(e) => setTemplateName(e.target.value)}
               title="Enter a name for this template project"
               onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleCreateFromTemplate();
-                if (e.key === 'Escape') resetCreate();
+                if (e.key === "Enter") void handleCreateFromTemplate();
+                if (e.key === "Escape") resetCreate();
               }}
             />
             <div className="sidebar-create-buttons">
@@ -382,7 +555,12 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               >
                 Create
               </button>
-              <button type="button" className="sidebar-action-btn" onClick={resetCreate} title="Cancel creating this template project">
+              <button
+                type="button"
+                className="sidebar-action-btn"
+                onClick={resetCreate}
+                title="Cancel creating this template project"
+              >
                 Cancel
               </button>
             </div>
@@ -397,14 +575,18 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             <span>Back up your projects and sync across devices</span>
           </div>
           <div className="sidebar-cloud-nudge__actions">
-            <button className="sidebar-cloud-nudge__cta" onClick={openCloudBackup} title="Open Cloud Backup settings to sign in">
+            <button
+              className="sidebar-cloud-nudge__cta"
+              onClick={openCloudBackup}
+              title="Open Cloud Backup settings to sign in"
+            >
               Sign in free →
             </button>
             <button
               className="sidebar-cloud-nudge__dismiss"
               aria-label="Dismiss"
               onClick={() => {
-                localStorage.setItem('mph_cloud_nudge_dismissed', '1');
+                localStorage.setItem("mph_cloud_nudge_dismissed", "1");
                 setCloudNudgeDismissed(true);
               }}
               title="Hide this cloud backup reminder"
@@ -429,8 +611,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             <button
               className="sidebar-search-clear"
               onClick={() => {
-                handleSearchChange('');
-                setDebouncedSearch('');
+                handleSearchChange("");
+                setDebouncedSearch("");
               }}
               aria-label="Clear search"
               title="Clear the project search"
@@ -445,8 +627,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
         {projects.length === 0 && (
           <p className="sidebar-empty">
             {desktopApp
-              ? 'No projects yet — create one above or open a folder.'
-              : 'No projects yet — create one above or import a project.'}
+              ? "No projects yet — create one above or open a folder."
+              : "No projects yet — create one above or import a project."}
           </p>
         )}
 
@@ -454,19 +636,38 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           <p className="sidebar-empty">No projects match "{searchQuery}".</p>
         )}
 
-        {filteredProjects.map((project) => (
+        {visibleProjects.map((project) => (
           <ProjectCard
             key={project.id}
             project={project}
             isActive={project.id === activeProjectId}
             onSelect={() => {
               setActiveProject(project.id);
-              setCurrentView('projects');
+              setCurrentView("projects");
               onNavigate?.();
             }}
             onDelete={() => setPendingDeleteId(project.id)}
           />
         ))}
+        {hiddenProjectCount > 0 && (
+          <button
+            type="button"
+            className="sidebar-show-more"
+            onClick={() => setShowAllProjects(true)}
+          >
+            Show {hiddenProjectCount} more
+          </button>
+        )}
+
+        {showAllProjects && filteredProjects.length > 4 && (
+          <button
+            type="button"
+            className="sidebar-show-more"
+            onClick={() => setShowAllProjects(false)}
+          >
+            Show less
+          </button>
+        )}
       </div>
 
       <div className="sidebar-account-dock">
@@ -478,7 +679,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               <div className="sidebar-auth-text">
                 <p className="sidebar-auth-title">Back up & sync</p>
                 <p className="sidebar-auth-desc">
-                  Access your projects on any device and never lose your context.
+                  Access your projects on any device and never lose your
+                  context.
                 </p>
               </div>
 
@@ -540,21 +742,22 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           onCancel={() => setPendingDeleteId(null)}
         />
       )}
+
       {showLaunchpad && (
-  <LaunchpadWizard
-    onClose={() => setShowLaunchpad(false)}
-    onScanExisting={() => {
-      setShowLaunchpad(false);
-      void createProjectFromFolder();
-      onNavigate?.();
-    }}
-    onCreateBlankMemory={() => {
-      setShowLaunchpad(false);
-      setCreateMode('name');
-      setTimeout(() => nameInputRef.current?.focus(), 50);
-    }}
-  />
-)}
+        <LaunchpadWizard
+          onClose={() => setShowLaunchpad(false)}
+          onScanExisting={() => {
+            setShowLaunchpad(false);
+            void createProjectFromFolder();
+            onNavigate?.();
+          }}
+          onCreateBlankMemory={() => {
+            setShowLaunchpad(false);
+            setCreateMode("name");
+            setTimeout(() => nameInputRef.current?.focus(), 50);
+          }}
+        />
+      )}
     </div>
   );
 };

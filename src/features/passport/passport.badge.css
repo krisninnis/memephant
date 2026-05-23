@@ -28,12 +28,19 @@
     background 0.15s ease,
     border-color 0.15s ease,
     transform 0.12s ease;
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.05) inset,
+    0 0 24px rgba(245, 158, 11, 0.04);
 }
 
 .passport-badge-btn:hover,
 .passport-badge-btn--open {
   background: #162642;
   border-color: #d97706;
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.08) inset,
+    0 0 30px rgba(245, 158, 11, 0.07);
+  transform: translateY(-1px);
 }
 
 .passport-badge-btn:active {
@@ -60,10 +67,11 @@
 }
 
 .passport-badge-btn__label {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
   color: #f8fafc;
-  line-height: 1.2;
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .passport-badge-btn__id {
@@ -71,15 +79,19 @@
   font-weight: 600;
   color: #d97706;
   letter-spacing: 0.06em;
-  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
   line-height: 1;
 }
 
 .passport-badge-btn__chevron {
-  font-size: 18px;
+  font-size: 20px;
+  margin-left: 6px;
   color: #4a6080;
   flex-shrink: 0;
-  transition: transform 0.15s ease, color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease;
 }
 
 .passport-badge-btn--open .passport-badge-btn__chevron,
@@ -166,7 +178,10 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  transition:
+    color 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease;
   padding: 0;
 }
 
@@ -342,13 +357,13 @@
     transform 0.12s ease;
 }
 
-.passport-config__actions button[type='button'] {
+.passport-config__actions button[type="button"] {
   border: 1px solid #2a3a5a;
   background: transparent;
   color: #8aa8cc;
 }
 
-.passport-config__actions button[type='submit'] {
+.passport-config__actions button[type="submit"] {
   border: 1px solid rgba(217, 119, 6, 0.4);
   background: linear-gradient(135deg, #d97706, #b45309);
   color: #fff;
@@ -358,13 +373,13 @@
   transform: translateY(-1px);
 }
 
-.passport-config__actions button[type='button']:hover {
+.passport-config__actions button[type="button"]:hover {
   border-color: #3a5070;
   background: rgba(255, 255, 255, 0.04);
   color: #c8daf0;
 }
 
-.passport-config__actions button[type='submit']:hover {
+.passport-config__actions button[type="submit"]:hover {
   background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
@@ -622,4 +637,19 @@
   flex-shrink: 0;
   font-weight: 300;
   line-height: 1;
+}
+.passport-badge-btn__seal {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 8px;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.18));
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.passport-badge-btn:hover .passport-badge-btn__seal {
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.28));
 }

@@ -38,13 +38,35 @@ export function AppShell() {
   const showWelcome = projects.length === 0;
 
   const closeMobileDrawer = () => setMobileDrawerOpen(false);
+
   const openProjectsDrawer = () => {
     setCurrentView('projects');
     setMobileDrawerOpen(true);
   };
+
   const openSearch = () => {
     window.dispatchEvent(new Event('memephant:open-search'));
   };
+
+  async function handleShare() {
+    const shareData = {
+      title: 'Memephant',
+      text: 'Move your project context between AI tools without rebuilding it every time.',
+      url: 'https://memephant.com',
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      await navigator.clipboard.writeText('https://memephant.com');
+      alert('Memephant link copied to clipboard');
+    } catch (error) {
+      console.error('Share failed', error);
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -64,24 +86,100 @@ export function AppShell() {
         <div
           style={{
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.75rem 1rem 0',
+            gap: '1rem',
+            padding: '0.9rem 1rem 0',
             flexShrink: 0,
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            marginBottom: '0.75rem',
           }}
         >
-          <button
-            type="button"
-            className="app-search-button"
-            onClick={openSearch}
-            aria-label="Search Memephant"
-            title="Search Memephant (Ctrl+K / Cmd+K)"
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+            }}
           >
-            <span aria-hidden="true">⌕</span>
-            <span>Search</span>
-          </button>
-          <PWAInstallButton variant="header" />
+            <img
+              src="/icons/source-elephant-1024.png"
+              alt="Memephant"
+              style={{
+                width: '42px',
+                height: '42px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 10px rgba(245,158,11,0.18))',
+              }}
+            />
+
+            <div>
+              <div
+                style={{
+                  color: '#f8fafc',
+                  fontSize: '1.2rem',
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  letterSpacing: '-0.03em',
+                }}
+              >
+                Memephant
+              </div>
+
+              <div
+                style={{
+                  color: '#94a3b8',
+                  fontSize: '0.78rem',
+                  marginTop: '0.2rem',
+                }}
+              >
+                Your AI context, ready for any AI.
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleShare}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.7rem 0.95rem',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.03)',
+                color: '#cbd5e1',
+                cursor: 'pointer',
+                fontWeight: 600,
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <span aria-hidden="true">↗</span>
+              <span>Share</span>
+            </button>
+
+            <button
+              type="button"
+              className="app-search-button"
+              onClick={openSearch}
+              aria-label="Search Memephant"
+              title="Search Memephant (Ctrl+K / Cmd+K)"
+            >
+              <span aria-hidden="true">⌕</span>
+              <span>Search</span>
+            </button>
+
+            <PWAInstallButton variant="header" />
+          </div>
         </div>
 
         {currentView === 'settings' ? (
@@ -98,9 +196,12 @@ export function AppShell() {
         ) : (
           <div className="workspace-scroll">
             <ActionBar />
+
             <div className="workspace-main">
               {activeProject && <WorkflowGuide />}
+
               <PasteZone />
+
               {activeProject ? (
                 <ProjectEditor />
               ) : (
@@ -109,6 +210,7 @@ export function AppShell() {
                 </div>
               )}
             </div>
+
             <TrustFooter />
           </div>
         )}
@@ -123,6 +225,7 @@ export function AppShell() {
           <span className="mobile-bottom-bar__icon" aria-hidden="true">
             📁
           </span>
+
           <span className="mobile-bottom-bar__label">
             Projects{projects.length > 0 ? ` (${projects.length})` : ''}
           </span>
@@ -139,6 +242,7 @@ export function AppShell() {
           <span className="mobile-bottom-bar__icon" aria-hidden="true">
             ⚙️
           </span>
+
           <span className="mobile-bottom-bar__label">Settings</span>
         </button>
 
@@ -153,6 +257,7 @@ export function AppShell() {
           <span className="mobile-bottom-bar__icon" aria-hidden="true">
             V
           </span>
+
           <span className="mobile-bottom-bar__label">Vault</span>
         </button>
 
@@ -167,6 +272,7 @@ export function AppShell() {
           <span className="mobile-bottom-bar__icon" aria-hidden="true">
             🐘
           </span>
+
           <span className="mobile-bottom-bar__label">Workspace</span>
         </button>
       </div>
