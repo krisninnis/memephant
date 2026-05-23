@@ -1,45 +1,60 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Memephant Passport — Flow Orchestrator
-// Routes between the 6 steps based on Zustand store state.
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Memephant Passport â€” Flow Orchestrator
+// Routes between the Passport steps based on Zustand store state.
 // Import this CSS here so it's loaded exactly once.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-import '../passport.animations.css'
-
-import { usePassportStore } from '../usePassportStore'
-import { PassportWelcome }    from './PassportWelcome'
-import { PassportCalibration } from './PassportCalibration'
-import { PassportConfigurationStep } from './PassportConfigurationStep'
-import { PassportGeneration }  from './PassportGeneration'
-import { PassportCard }       from './PassportCard'
+import "../passport.animations.css";
+import { PassportPreviewSimulator } from "./PassportPreviewSimulator";
+import { usePassportStore } from "../usePassportStore";
+import { PassportWelcome } from "./PassportWelcome";
+import { PassportCalibration } from "./PassportCalibration";
+import { PassportConfigurationStep } from "./PassportConfigurationStep";
+import { PassportGeneration } from "./PassportGeneration";
+import { PassportCard } from "./PassportCard";
 
 export function PassportFlow() {
-  const flowStep = usePassportStore(s => s.flowStep)
+  const flowStep = usePassportStore((s) => s.flowStep);
 
   switch (flowStep) {
-    case 'welcome':
-      return <PassportWelcome />
+    case "welcome":
+      return <PassportWelcome />;
 
-    case 'q1':
-      return <PassportCalibration questionIndex={0} />
+    case "q1":
+      return <PassportCalibration questionIndex={0} />;
 
-    case 'q2':
-      return <PassportCalibration questionIndex={1} />
+    case "q2":
+      return <PassportCalibration questionIndex={1} />;
 
-    case 'q3':
-      return <PassportCalibration questionIndex={2} />
+    case "q3":
+      return <PassportCalibration questionIndex={2} />;
 
-    case 'configure':
-      return <PassportConfigurationStep />
+    case "configure":
+      return <PassportConfigurationStep />;
 
-    case 'generating':
-      return <PassportGeneration />
+    case "generating":
+      return <PassportGeneration />;
 
-    case 'complete':
-      return <PassportCard />
+    case "complete":
+      return <PassportCard />;
+
+    case "preview": {
+      const passport = usePassportStore.getState().passport;
+
+      if (!passport) {
+        return <PassportWelcome />;
+      }
+
+      return (
+        <PassportPreviewSimulator
+          passport={passport}
+          onCopyPassport={() => {}}
+          onBack={() => usePassportStore.getState().setFlowStep("complete")}
+        />
+      );
+    }
 
     default:
-      // Exhaustive check — TypeScript will warn if a case is missed
-      return <PassportWelcome />
+      return <PassportWelcome />;
   }
 }

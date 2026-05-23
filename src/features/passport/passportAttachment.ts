@@ -58,6 +58,10 @@ function compactAttachmentText(value: string, maxLength: number): string {
   return `${trimmed.slice(0, maxLength - 3).trimEnd()}...`;
 }
 
+function formatOptionalLine(label: string, value: string): string[] {
+  return value.trim() ? [`- ${label}: ${value}`] : [];
+}
+
 export function buildPassportAttachmentPreview(
   passport: PassportData,
   frontalLobeProfile?: FrontalLobeProfile | null,
@@ -67,54 +71,83 @@ export function buildPassportAttachmentPreview(
   const tone = TONE_LABELS[passport.profile.tone];
   const focus = FOCUS_LABELS[passport.profile.focusArea];
   const configuration = getPassportConfiguration(passport);
-  const preferredName = compactAttachmentText(configuration.preferredName, 60);
-  const roleContext = compactAttachmentText(configuration.roleContext, 90);
-  const region = compactAttachmentText(configuration.region, 80);
-  const language = compactAttachmentText(configuration.languagePreference, 80)
-    || getLanguage(frontalLobeProfile);
-  const timezone = compactAttachmentText(configuration.timezone, 60);
-  const dateFormat = compactAttachmentText(configuration.dateFormat, 40);
-  const currency = compactAttachmentText(configuration.currency, 40);
-  const directness = compactAttachmentText(configuration.directness, 120);
-  const technicalLevel = compactAttachmentText(configuration.technicalLevel, 120);
-  const riskTolerance = compactAttachmentText(configuration.riskTolerance, 120);
+
+  const preferredName = compactAttachmentText(configuration.preferredName, 40);
+  const roleContext = compactAttachmentText(configuration.roleContext, 50);
+  const region = compactAttachmentText(configuration.region, 45);
+  const language =
+    compactAttachmentText(configuration.languagePreference, 45) ||
+    getLanguage(frontalLobeProfile);
+  const timezone = compactAttachmentText(configuration.timezone, 35);
+  const dateFormat = compactAttachmentText(configuration.dateFormat, 24);
+  const currency = compactAttachmentText(configuration.currency, 24);
+  const directness = compactAttachmentText(configuration.directness, 60);
+  const technicalLevel = compactAttachmentText(configuration.technicalLevel, 60);
+  const riskTolerance = compactAttachmentText(configuration.riskTolerance, 60);
+
   const alwaysRules = configuration.alwaysRules
     .slice(0, 3)
-    .map((rule) => compactAttachmentText(rule, 140));
+    .map((rule) => compactAttachmentText(rule, 62))
+    .filter(Boolean);
+
   const neverRules = configuration.neverRules
     .slice(0, 3)
-    .map((rule) => compactAttachmentText(rule, 140));
-  const privacyRules = ['No passwords', 'No API keys', 'No silent sharing'];
-  const compatibility = ['ChatGPT', 'Claude', 'Gemini'];
+    .map((rule) => compactAttachmentText(rule, 62))
+    .filter(Boolean);
+
+  const privacyRules = [
+    'No passwords.',
+    'No API keys, private keys, recovery phrases, or secrets.',
+    'No silent sharing or invented facts.',
+    'Medical/legal/financial: general guidance; suggest professional checks.',
+    'No project state, commits, file paths, repo status, or tasks.',
+  ];
+
+  const compatibility = [
+    'ChatGPT',
+    'Claude',
+    'Gemini',
+    'Grok',
+    'Perplexity',
+    'local LLMs',
+  ];
 
   const text = [
-    '# Memephant Passport Attachment v0.1',
+    '# AI Passport',
     '',
-    'AI Working Identity',
-    ...(preferredName ? [`- Preferred name: ${preferredName}`] : []),
-    ...(roleContext ? [`- Role/context: ${roleContext}`] : []),
+    'User-provided profile for how AI should work with me.',
+    'Not a project brief, task update, repo summary, or Memory Trail.',
+    '',
+    '## Basics',
+    ...formatOptionalLine('Preferred name', preferredName),
+    ...formatOptionalLine('Role/context', roleContext),
     `- Region: ${region}`,
-    `- Tone: ${tone}`,
-    `- Style: ${style}`,
-    `- Focus: ${focus}`,
     `- Language: ${language}`,
-    `- Locale: ${timezone} - ${dateFormat} - ${currency}`,
+    `- Locale: ${timezone} | ${dateFormat} | ${currency}`,
+    '',
+    '## How to Answer Me',
+    `- Style: ${style}`,
+    `- Tone: ${tone}`,
+    `- Typical use area: ${focus}`,
     `- Directness: ${directness}`,
     `- Technical level: ${technicalLevel}`,
     `- Risk tolerance: ${riskTolerance}`,
     '',
-    'Always',
+    '## Everyday Use',
+    '- Use my region, currency, dates, and language when relevant.',
+    '- For comparisons, show cheap / sensible / premium options.',
+    '- For local prices, state assumptions or ask for details.',
+    '',
+    '## Always',
     ...alwaysRules.map((rule) => `- ${rule}`),
     '',
-    'Never',
+    '## Never',
     ...neverRules.map((rule) => `- ${rule}`),
     '',
-    'Privacy Rules',
+    '## Boundaries',
     ...privacyRules.map((rule) => `- ${rule}`),
     '',
-    'Compatibility',
-    ...compatibility.map((platform) => `- ${platform}`),
-    '',
+    `Compatible with: ${compatibility.join(', ')}`,
     `Integrity fingerprint: ${passport.id}`,
   ].join('\n');
 

@@ -214,7 +214,7 @@ describe('ExportButtons export preview', () => {
     const passportPreview = screen.getByLabelText(
       'Passport Attachment preview text',
     ) as HTMLTextAreaElement;
-    expect(passportPreview.value).toContain('# Memephant Passport Attachment v0.1');
+    expect(passportPreview.value).toContain('# AI Passport');
     expect(passportPreview.value).toContain('- Tone: Friendly');
     expect(passportPreview.value).toContain('- Style: Structured');
     expect(passportPreview.value).toContain('- Language: British English');
@@ -231,7 +231,7 @@ describe('ExportButtons export preview', () => {
 
     const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
     expect(preview.value).toContain('PREAMBLE\nEXACT_EXPORT_TEXT');
-    expect(preview.value).toContain('# Memephant Passport Attachment v0.1');
+    expect(preview.value).toContain('# AI Passport');
     expect(screen.getAllByText('Included')).toHaveLength(2);
     expect(screen.getByText('Your AI working identity will be included in this handoff.'))
       .toBeInTheDocument();
@@ -240,7 +240,7 @@ describe('ExportButtons export preview', () => {
 
     await waitFor(() => {
       expect(copyExportToClipboard).toHaveBeenCalledWith(
-        expect.stringContaining('# Memephant Passport Attachment v0.1'),
+        expect.stringContaining('# AI Passport'),
         'claude',
       );
     });
@@ -268,7 +268,7 @@ describe('ExportButtons export preview', () => {
 
     fireEvent.click(screen.getByLabelText('Include in this export'));
     const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
-    expect(preview.value).toContain('# Memephant Passport Attachment v0.1');
+    expect(preview.value).toContain('# AI Passport');
   });
 
   it('uses Quick Start mode by default for ChatGPT exports', async () => {

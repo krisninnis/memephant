@@ -34,7 +34,7 @@ describe('Passport Attachment format', () => {
     );
 
     expect(attachment.schemaVersion).toBe('memephant.passport.v0.1');
-    expect(attachment.text).toContain('# Memephant Passport Attachment v0.1');
+    expect(attachment.text).toContain('# AI Passport');
     expect(attachment.text).toContain('- Preferred name: Kris');
     expect(attachment.text).toContain('- Role/context: Solo founder');
     expect(attachment.text).toContain('- Region: United Kingdom');

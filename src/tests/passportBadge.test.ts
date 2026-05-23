@@ -43,7 +43,7 @@ function resetStore(): void {
   localStorage.clear();
 }
 
-// ── Test 1: passport store state ──────────────────────────────────────────────
+// â”€â”€ Test 1: passport store state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 1 -- badge visibility', () => {
   beforeEach(resetStore);
@@ -63,13 +63,13 @@ describe('Test 1 -- badge visibility', () => {
   });
 });
 
-// ── Test 2: copy text format ──────────────────────────────────────────────────
+// â”€â”€ Test 2: copy text format â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 2 -- copy text: Passport Attachment v0.1 format', () => {
   it('text includes required heading', () => {
     const data       = createPassportData(FULL_PROFILE);
     const attachment = buildPassportAttachmentPreview(data, DEFAULT_FRONTAL_LOBE_PROFILE);
-    expect(attachment.text).toContain('# Memephant Passport Attachment v0.1');
+    expect(attachment.text).toContain('# AI Passport');
   });
 
   it('text includes all three working-style fields', () => {
@@ -147,7 +147,7 @@ describe('Test 2 -- copy text: Passport Attachment v0.1 format', () => {
   });
 });
 
-// ── Test 3: no cloud or identity fields ──────────────────────────────────────
+// â”€â”€ Test 3: no cloud or identity fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 3 -- copy text: no cloud or identity fields', () => {
   it('text does not contain userId/supabase fields', () => {
@@ -175,7 +175,7 @@ describe('Test 3 -- copy text: no cloud or identity fields', () => {
   });
 });
 
-// ── Test 4: no Memory Vault leak ──────────────────────────────────────────────
+// â”€â”€ Test 4: no Memory Vault leak â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 4 -- copy text: no Memory Vault leak', () => {
   beforeEach(() => {
@@ -210,7 +210,7 @@ describe('Test 4 -- copy text: no Memory Vault leak', () => {
   });
 });
 
-// ── Test 5: startPassportEdit ─────────────────────────────────────────────────
+// â”€â”€ Test 5: startPassportEdit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 5 -- startPassportEdit: re-editing flow', () => {
   beforeEach(resetStore);
@@ -242,7 +242,7 @@ describe('Test 5 -- startPassportEdit: re-editing flow', () => {
   });
 });
 
-// ── Test 6: finishPassportFlow ────────────────────────────────────────────────
+// â”€â”€ Test 6: finishPassportFlow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 6 -- finishPassportFlow: gate release', () => {
   beforeEach(resetStore);
@@ -276,7 +276,7 @@ describe('Test 6 -- finishPassportFlow: gate release', () => {
   });
 });
 
-// ── Test 7: no-passport CTA launches flow ────────────────────────────────────
+// â”€â”€ Test 7: no-passport CTA launches flow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 7 -- no-passport CTA: startPassportEdit launches flow for existing users', () => {
   beforeEach(resetStore);
@@ -311,7 +311,7 @@ describe('Test 7 -- no-passport CTA: startPassportEdit launches flow for existin
   });
 });
 
-// ── Test 8: Passport Configuration v2 ─────────────────────────────────────
+// â”€â”€ Test 8: Passport Configuration v2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 describe('Test 8 -- Passport Configuration v2', () => {
   beforeEach(resetStore);
