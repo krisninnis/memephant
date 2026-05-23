@@ -1,23 +1,23 @@
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-   Memephant â€” Passport Badge Button + Panel
+/* ─────────────────────────────────────────────────────────────────────────────
+   Memephant — Passport Badge Button + Panel
    Dark glassmorphism, consistent with app-shell.css design language.
-   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+   ───────────────────────────────────────────────────────────────────────────── */
 
-/* â”€â”€ Badge root â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Badge root ──────────────────────────────────────────────────────────── */
 
 .passport-badge-root {
   position: relative;
   width: 100%;
 }
 
-/* â”€â”€ Trigger button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Trigger button ──────────────────────────────────────────────────────── */
 
 .passport-badge-btn {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 14px 16px;
   border: 1px solid #2a3a5a;
   border-radius: 12px;
   background: #10192f;
@@ -100,7 +100,7 @@
   transform: rotate(90deg);
 }
 
-/* â”€â”€ Panel (fixed popover to the right of the sidebar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Panel (fixed popover to the right of the sidebar) ───────────────────── */
 
 .passport-panel {
   position: fixed;
@@ -388,7 +388,7 @@
   outline-offset: 2px;
 }
 
-/* Primary action â€” Copy Passport */
+/* Primary action — Copy Passport */
 
 .passport-panel__copy-btn {
   width: 100%;
@@ -532,7 +532,7 @@
   margin-top: 1px;
 }
 
-/* â”€â”€ Reduced motion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   .passport-panel {
@@ -548,7 +548,7 @@
   }
 }
 
-/* â”€â”€ Mobile: panel becomes bottom sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Mobile: panel becomes bottom sheet ─────────────────────────────────── */
 
 @media (max-width: 768px) {
   .passport-panel {
@@ -568,7 +568,7 @@
   }
 }
 
-/* â”€â”€ Create AI Passport CTA (shown when no passport exists) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ── Create AI Passport CTA (shown when no passport exists) ─────────────── */
 
 .passport-create-cta {
   width: 100%;
@@ -639,11 +639,11 @@
   line-height: 1;
 }
 .passport-badge-btn__seal {
-  width: 56px;
-  height: 56px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
-  border-radius: 10px;
-  filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.22));
+  border-radius: 8px;
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.18));
   transition:
     transform 0.18s ease,
     filter 0.18s ease;
@@ -651,12 +651,48 @@
 
 .passport-badge-btn:hover .passport-badge-btn__seal {
   transform: scale(1.04);
-  filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.32));
+  filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.28));
+}
+/* ── Sidebar Passport card: stacked premium layout ───────────────────────── */
+
+.passport-badge-btn--stacked {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1.05rem 0.9rem;
+  text-align: center;
+  min-height: 154px;
 }
 
-/* The trigger button now navigates to the full Passport page rather than
-   opening an inline panel. Keep some breathing room around the larger seal. */
-.passport-badge-btn {
-  padding: 14px 14px;
-  gap: 12px;
+.passport-badge-btn__seal--large {
+  width: 78px;
+  height: 78px;
+  border-radius: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.28));
+}
+
+.passport-badge-btn--stacked:hover .passport-badge-btn__seal--large {
+  transform: translateY(-1px) scale(1.04);
+  filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.38));
+}
+
+.passport-badge-btn__body--centered {
+  align-items: center;
+  text-align: center;
+  gap: 0.24rem;
+}
+
+.passport-badge-btn--stacked .passport-badge-btn__label {
+  font-size: 1rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.passport-badge-btn--stacked .passport-badge-btn__id {
+  font-size: 0.68rem;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  color: #f59e0b;
 }

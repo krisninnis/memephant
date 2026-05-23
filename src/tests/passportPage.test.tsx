@@ -19,6 +19,7 @@ function resetStores(): void {
     isGenerating: false,
     isReeditingPassport: false,
   });
+
   useProjectStore.setState({ currentView: "projects" });
   localStorage.clear();
 }
@@ -32,6 +33,7 @@ describe("PassportPage — empty state", () => {
     expect(
       screen.getByRole("heading", { name: /Set your AI working style/i }),
     ).toBeInTheDocument();
+
     expect(
       screen.getByRole("button", { name: /Create your AI Passport/i }),
     ).toBeInTheDocument();
@@ -59,7 +61,9 @@ describe("PassportPage — details subview", () => {
     render(<PassportPage />);
 
     const region = screen.getByRole("region", { name: /AI Passport page/i });
+
     expect(within(region).getByText("AI Passport")).toBeInTheDocument();
+
     expect(
       within(region).getByRole("heading", {
         name: /Your AI working identity/i,
@@ -67,7 +71,9 @@ describe("PassportPage — details subview", () => {
     ).toBeInTheDocument();
 
     const passport = usePassportStore.getState().passport!;
-    expect(within(region).getByText(new RegExp(passport.id))).toBeInTheDocument();
+    expect(
+      within(region).getByText(new RegExp(passport.id)),
+    ).toBeInTheDocument();
   });
 
   it("shows the three working-style facets — Style, Tone, Focus", () => {
@@ -81,15 +87,17 @@ describe("PassportPage — details subview", () => {
     expect(screen.getByText("Startup")).toBeInTheDocument();
   });
 
-  it("shows the three action buttons: Copy / Edit / See the Difference", () => {
+  it("shows the three main action buttons: Copy / Edit / See the Difference", () => {
     render(<PassportPage />);
 
     expect(
       screen.getByRole("button", { name: /Copy AI Passport to clipboard/i }),
     ).toBeInTheDocument();
+
     expect(
       screen.getByRole("button", { name: /Edit your AI Passport/i }),
     ).toBeInTheDocument();
+
     expect(
       screen.getByRole("button", {
         name: /See the difference your AI Passport makes/i,
@@ -109,7 +117,7 @@ describe("PassportPage — details subview", () => {
     expect(usePassportStore.getState().passport).toBeNull();
   });
 
-  it("clicking 'See the Difference' switches to the simulator subview", () => {
+  it("clicking See the Difference switches to the simulator subview", () => {
     render(<PassportPage />);
 
     fireEvent.click(
@@ -118,7 +126,6 @@ describe("PassportPage — details subview", () => {
       }),
     );
 
-    // Simulator heading from PassportPreviewSimulator
     expect(
       screen.getByRole("heading", {
         name: /See how your Passport changes the way AI responds/i,
@@ -134,6 +141,7 @@ describe("PassportPage — details subview", () => {
         name: /See the difference your AI Passport makes/i,
       }),
     );
+
     fireEvent.click(screen.getByRole("button", { name: /Back to Passport/i }));
 
     expect(
@@ -147,12 +155,9 @@ describe("PassportPage — details subview", () => {
     expect(
       screen.getByRole("heading", { name: /Local-first by design/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/stored on this device only/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Memory Trail/i),
-    ).toBeInTheDocument();
+
+    expect(screen.getByText(/stored on this device only/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Memory Trail/i).length).toBeGreaterThan(0);
   });
 
   it("Copy Passport writes the identity-first attachment text to the clipboard", async () => {
@@ -165,14 +170,93 @@ describe("PassportPage — details subview", () => {
       screen.getByRole("button", { name: /Copy AI Passport to clipboard/i }),
     );
 
-    // Allow the awaited clipboard write + setState to resolve
     await Promise.resolve();
     await Promise.resolve();
 
     expect(writeText).toHaveBeenCalledTimes(1);
+
     const copied = writeText.mock.calls[0][0] as string;
     expect(copied).toContain("# AI Passport");
-    expect(copied).not.toContain("currentState"); // no project state
-    expect(copied).not.toContain("nextSteps");    // no project state
+    expect(copied).not.toContain("currentState");
+    expect(copied).not.toContain("nextSteps");
+  });
+});
+
+describe("PassportPage — Delete Passport", () => {
+  beforeEach(() => {
+    resetStores();
+    usePassportStore.setState({ passport: createPassportData(FULL_PROFILE) });
+  });
+
+  it("shows a Delete Passport action on the Passport page", () => {
+    render(<PassportPage />);
+
+    expect(
+      screen.getByRole("heading", { name: /Delete Passport/i }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: /Delete AI Passport/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("clicking Delete Passport shows a confirmation prompt", () => {
+    render(<PassportPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Delete AI Passport/i }),
+    );
+
+    expect(screen.getByText(/Are you sure/i)).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: /Cancel deleting AI Passport/i }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: /Confirm delete AI Passport/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("cancelling Delete Passport keeps the Passport", () => {
+    render(<PassportPage />);
+
+    const existingPassport = usePassportStore.getState().passport;
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Delete AI Passport/i }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Cancel deleting AI Passport/i }),
+    );
+
+    expect(usePassportStore.getState().passport).toEqual(existingPassport);
+
+    expect(
+      screen.getByRole("heading", { name: /Your AI working identity/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("confirming Delete Passport removes the Passport and returns to empty state", () => {
+    render(<PassportPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Delete AI Passport/i }),
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Confirm delete AI Passport/i }),
+    );
+
+    expect(usePassportStore.getState().passport).toBeNull();
+
+    expect(
+      screen.getByRole("heading", { name: /Set your AI working style/i }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: /Create your AI Passport/i }),
+    ).toBeInTheDocument();
   });
 });

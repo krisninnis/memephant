@@ -1,5 +1,5 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Memephant — AI Passport Page (full main-content view)
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Memephant â€” AI Passport Page (full main-content view)
 //
 // Replaces the cramped sidebar dropdown panel with a calm, full-width page
 // that surfaces the user's AI working identity, the three primary actions
@@ -7,14 +7,14 @@
 // callout.
 //
 // Routing: rendered by AppShell when projectStore.currentView === 'passport'.
-// PassportGate is unaffected — this page only shows for users who already
+// PassportGate is unaffected â€” this page only shows for users who already
 // have a passport AND are in a steady state (flowStep === 'welcome',
 // isReeditingPassport === false). The "See the Difference" sub-view is purely
 // local state so flowStep is never touched from here.
 //
-// Identity-first. Memory Trail handles project state — not this page.
+// Identity-first. Memory Trail handles project state â€” not this page.
 // No cloud sync. No silent attachment.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 import React, { useState } from "react";
 import { usePassportStore } from "../usePassportStore";
@@ -31,7 +31,7 @@ import { PassportPreviewSimulator } from "./PassportPreviewSimulator";
 import passportStampBronze from "../../../assets/passport/tiers/passport-stamp-bronze.png";
 import passportStampSilver from "../../../assets/passport/tiers/passport-stamp-silver.png";
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const PAGE: React.CSSProperties = {
   width: "100%",
@@ -119,6 +119,13 @@ const SECTION: React.CSSProperties = {
   borderRadius: "16px",
   border: "1px solid rgba(255,255,255,0.06)",
   background: "rgba(255,255,255,0.025)",
+};
+
+const DANGER_SECTION: React.CSSProperties = {
+  ...SECTION,
+  border: "1px solid rgba(248,113,113,0.18)",
+  background:
+    "linear-gradient(135deg, rgba(127,29,29,0.16), rgba(255,255,255,0.018))",
 };
 
 const SECTION_HEADER: React.CSSProperties = {
@@ -216,9 +223,30 @@ const BTN_SECONDARY: React.CSSProperties = {
   color: "#cbd5e1",
 };
 
+const BTN_DANGER: React.CSSProperties = {
+  ...BTN_BASE,
+  border: "1px solid rgba(248,113,113,0.35)",
+  background: "rgba(127,29,29,0.12)",
+  color: "#fecaca",
+};
+
+const BTN_DANGER_SOLID: React.CSSProperties = {
+  ...BTN_BASE,
+  border: "1px solid rgba(248,113,113,0.55)",
+  background: "linear-gradient(135deg, #dc2626, #991b1b)",
+  color: "#fff",
+};
+
 const PRIVACY_NOTE: React.CSSProperties = {
   margin: 0,
   color: "#94a3b8",
+  fontSize: "0.82rem",
+  lineHeight: 1.55,
+};
+
+const WARNING_TEXT: React.CSSProperties = {
+  margin: 0,
+  color: "#fca5a5",
   fontSize: "0.82rem",
   lineHeight: 1.55,
 };
@@ -231,16 +259,18 @@ const EMPTY_HERO: React.CSSProperties = {
     "linear-gradient(135deg, rgba(217,119,6,0.10) 0%, rgba(124,58,237,0.05) 100%)",
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function PassportPage() {
   const passport = usePassportStore((s) => s.passport);
   const startPassportEdit = usePassportStore((s) => s.startPassportEdit);
+  const resetPassport = usePassportStore((s) => s.resetPassport);
 
   const [copied, setCopied] = useState(false);
   const [subview, setSubview] = useState<"details" | "simulator">("details");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  // ── Empty state — no passport yet ─────────────────────────────────────────
+  // â”€â”€ Empty state â€” no passport yet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!passport) {
     return (
       <div className="workspace-scroll">
@@ -257,7 +287,7 @@ export function PassportPage() {
                 <p style={EYEBROW}>AI Passport</p>
                 <h1 style={TITLE}>Set your AI working style</h1>
                 <p style={SUBTITLE}>
-                  Tell AI tools how you work — once. Then carry that identity into
+                  Tell AI tools how you work â€” once. Then carry that identity into
                   every conversation, on every platform.
                 </p>
               </div>
@@ -284,7 +314,7 @@ export function PassportPage() {
     );
   }
 
-  // ── Simulator subview ─────────────────────────────────────────────────────
+  // â”€â”€ Simulator subview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (subview === "simulator") {
     return (
       <div className="workspace-scroll">
@@ -302,7 +332,7 @@ export function PassportPage() {
     );
   }
 
-  // ── Details subview (default) ─────────────────────────────────────────────
+  // â”€â”€ Details subview (default) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const hasConfiguration = Boolean(passport.configuration);
   const sealImage = hasConfiguration ? passportStampSilver : passportStampBronze;
@@ -321,7 +351,7 @@ export function PassportPage() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2400);
     } catch {
-      // Clipboard unavailable (e.g. in tests) — silently no-op.
+      // Clipboard unavailable (e.g. in tests) â€” silently no-op.
     }
   }
 
@@ -331,6 +361,12 @@ export function PassportPage() {
 
   function handleSeeTheDifference() {
     setSubview("simulator");
+  }
+
+  function handleDeletePassport() {
+    resetPassport();
+    setConfirmingDelete(false);
+    setSubview("details");
   }
 
   return (
@@ -344,18 +380,18 @@ export function PassportPage() {
               <p style={EYEBROW}>AI Passport</p>
               <h1 style={TITLE}>Your AI working identity</h1>
               <p style={SUBTITLE}>
-                Carry your style, tone, and preferences into every AI conversation —
+                Carry your style, tone, and preferences into every AI conversation â€”
                 without re-explaining yourself.
               </p>
               <div style={META_ROW}>
-                <span>ID · {passport.id}</span>
-                <span>Calibrated · {formatPassportDate(passport.createdAt)}</span>
-                <span>{hasConfiguration ? "Tier · Silver" : "Tier · Bronze"}</span>
+                <span>ID Â· {passport.id}</span>
+                <span>Calibrated Â· {formatPassportDate(passport.createdAt)}</span>
+                <span>{hasConfiguration ? "Tier Â· Silver" : "Tier Â· Bronze"}</span>
               </div>
             </div>
           </header>
 
-          {/* Identity facets — the three calibration answers */}
+          {/* Identity facets â€” the three calibration answers */}
           <section style={SECTION} aria-label="Working style">
             <div style={SECTION_HEADER}>
               <h2 style={SECTION_TITLE}>Working style</h2>
@@ -382,7 +418,7 @@ export function PassportPage() {
             </div>
           </section>
 
-          {/* Identity preferences — richer configuration when present */}
+          {/* Identity preferences â€” richer configuration when present */}
           <section style={SECTION} aria-label="Identity preferences">
             <div style={SECTION_HEADER}>
               <h2 style={SECTION_TITLE}>Identity preferences</h2>
@@ -442,7 +478,7 @@ export function PassportPage() {
                 onClick={() => void handleCopy()}
                 aria-label="Copy AI Passport to clipboard"
               >
-                {copied ? "✓ Copied to clipboard" : "Copy Passport"}
+                {copied ? "âœ“ Copied to clipboard" : "Copy Passport"}
               </button>
 
               <button
@@ -474,12 +510,64 @@ export function PassportPage() {
               Your AI Passport is stored on this device only. It is never
               uploaded to a server, never shared with another AI tool, and never
               auto-attached to anything. Copy it yourself when you want to use
-              it — that is the only way it travels.
+              it â€” that is the only way it travels.
             </p>
             <p style={PRIVACY_NOTE}>
               Project state lives in <strong>Memory Trail</strong>, not here.
               Passport is identity. Trail is the work in front of you.
             </p>
+          </section>
+          <section style={DANGER_SECTION} aria-label="Delete Passport">
+            <div style={SECTION_HEADER}>
+              <h2 style={SECTION_TITLE}>Delete Passport</h2>
+            </div>
+
+            {!confirmingDelete ? (
+              <>
+                <p style={PRIVACY_NOTE}>
+                  Remove your local AI Passport from this device. This does not
+                  delete projects, Memory Trail exports, or your Memory Vault.
+                </p>
+
+                <div style={ACTIONS}>
+                  <button
+                    type="button"
+                    style={BTN_DANGER}
+                    onClick={() => setConfirmingDelete(true)}
+                    aria-label="Delete AI Passport"
+                  >
+                    Delete Passport
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p style={WARNING_TEXT}>
+                  Are you sure? This removes your local Passport and you will
+                  need to create it again before copying it into AI tools.
+                </p>
+
+                <div style={ACTIONS}>
+                  <button
+                    type="button"
+                    style={BTN_SECONDARY}
+                    onClick={() => setConfirmingDelete(false)}
+                    aria-label="Cancel deleting AI Passport"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    style={BTN_DANGER_SOLID}
+                    onClick={handleDeletePassport}
+                    aria-label="Confirm delete AI Passport"
+                  >
+                    Yes, delete Passport
+                  </button>
+                </div>
+              </>
+            )}
           </section>
         </section>
       </div>
