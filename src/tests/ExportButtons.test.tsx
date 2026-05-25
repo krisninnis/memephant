@@ -169,6 +169,22 @@ describe('ExportButtons export preview', () => {
     expect(preview.value).toBe('PREAMBLE\nEXACT_EXPORT_TEXT');
   });
 
+  it('uses a clear toggle for copy options', () => {
+    render(<ExportButtons />);
+
+    const copyOptions = screen.getByRole('button', { name: 'Show copy options' });
+    expect(copyOptions).toHaveAttribute('aria-expanded', 'false');
+    expect(copyOptions).toHaveAttribute('aria-controls', 'copy-options-menu');
+    expect(copyOptions).toHaveTextContent('Show options ▾');
+
+    fireEvent.click(copyOptions);
+
+    expect(copyOptions).toHaveAttribute('aria-expanded', 'true');
+    expect(copyOptions).toHaveAccessibleName('Hide copy options');
+    expect(copyOptions).toHaveTextContent('Hide options ▴');
+    expect(screen.getByRole('menu', { name: 'Copy options' })).toBeInTheDocument();
+  });
+
   it('applies Advanced writing options in Inspect export before copying', async () => {
     (formatForPlatform as jest.Mock).mockReturnValue(
       'It is important to note that robust handoffs\u2014moving forward\u2014streamline work.',
@@ -243,7 +259,14 @@ describe('ExportButtons export preview', () => {
     expect(within(dialog).getByText('Copy handoff')).toBeInTheDocument();
 
     expect(screen.queryByLabelText('Passport Attachment preview text')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Preview Passport Show Passport/i }));
+    const passportPreviewToggle = screen.getByRole('button', { name: 'Show Passport ▾' });
+    expect(passportPreviewToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(passportPreviewToggle).toHaveAttribute('aria-controls', 'passport-attachment-preview');
+
+    fireEvent.click(passportPreviewToggle);
+
+    expect(passportPreviewToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(passportPreviewToggle).toHaveTextContent('Hide Passport ▴');
 
     const passportPreview = screen.getByLabelText(
       'Passport Attachment preview text',

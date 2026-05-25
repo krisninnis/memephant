@@ -861,7 +861,8 @@ export function ExportButtons() {
             type="button"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            aria-label="Choose a copy option"
+            aria-controls="copy-options-menu"
+            aria-label={menuOpen ? 'Hide copy options' : 'Show copy options'}
             disabled={!activeProject}
             onClick={() => setMenuOpen((open) => !open)}
             style={{
@@ -875,19 +876,21 @@ export function ExportButtons() {
               fontWeight: 800,
               cursor: activeProject ? 'pointer' : 'not-allowed',
               opacity: activeProject ? 1 : 0.6,
+              padding: '0 12px',
               boxShadow: copied
                 ? '0 10px 24px rgba(15, 159, 110, 0.24)'
                 : `0 10px 24px ${selectedPlatform.color ?? '#64748b'}47`,
             }}
             title="Choose a shorter or more focused copy option"
           >
-            {menuOpen ? '▴' : '▾'}
+            {menuOpen ? 'Hide options ▴' : 'Show options ▾'}
           </button>
           )}
         </div>
 
         {memoryBridgeMode === 'manual' && menuOpen && activeProject && (
           <div
+            id="copy-options-menu"
             role="menu"
             aria-label="Copy options"
             style={{
@@ -1297,8 +1300,7 @@ export function ExportButtons() {
                       aria-expanded={passportPreviewVisible}
                       aria-controls="passport-attachment-preview"
                     >
-                      <span>Preview Passport</span>
-                      <span>{passportPreviewVisible ? 'Hide Passport ▴' : 'Show Passport ▾'}</span>
+                      {passportPreviewVisible ? 'Hide Passport ▴' : 'Show Passport ▾'}
                     </button>
                     <label className="passport-attachment-toggle">
                       <input

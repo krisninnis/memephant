@@ -2068,13 +2068,16 @@ select {
     bottom: 0;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    gap: 0;
     background: #16213e;
     border-top: 1px solid #2a2a3e;
     padding-bottom: env(safe-area-inset-bottom);
   }
 
   .mobile-bottom-bar__btn {
+    min-width: 0;
     min-height: 64px;
     display: flex;
     flex-direction: column;
@@ -2085,7 +2088,7 @@ select {
     border: none;
     color: #8fa0b8;
     cursor: pointer;
-    padding: 8px 6px;
+    padding: 8px 4px;
   }
 
   .mobile-bottom-bar__btn--active {
@@ -2098,7 +2101,11 @@ select {
   }
 
   .mobile-bottom-bar__label {
-    font-size: 11px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.7rem;
     font-weight: 600;
     text-align: center;
   }
