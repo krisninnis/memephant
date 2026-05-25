@@ -110,6 +110,8 @@ export interface PassportStoreState {
   draft: Partial<PassportProfile>;
   /** True during the artificial generation delay */
   isGenerating: boolean;
+  /** True only for the current app session when the first Passport screen is skipped. */
+  passportFlowSkipped: boolean;
   /**
    * True when an existing user has chosen to re-edit their passport from the
    * PassportBadgeButton. Forces PassportGate to show the flow even for users
@@ -130,6 +132,8 @@ export interface PassportStoreActions {
     updates: Partial<PassportConfigurationV2>,
   ) => void;
   resetPassport: () => void;
+  /** Let a new user continue without creating a Passport in this session. */
+  skipPassportFlow: () => void;
   /** Re-enter the passport creation flow for an existing user. */
   startPassportEdit: () => void;
   /** Called by "Enter Memephant" -- clears the re-editing flag and releases the gate. */

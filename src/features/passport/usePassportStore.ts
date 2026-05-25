@@ -28,6 +28,7 @@ export const usePassportStore = create<PassportStore>()(
       flowStep: 'welcome',
       draft: {},
       isGenerating: false,
+      passportFlowSkipped: false,
       isReeditingPassport: false,
 
       // ── Actions ────────────────────────────────────────────────────────────
@@ -93,6 +94,17 @@ export const usePassportStore = create<PassportStore>()(
           flowStep: 'welcome',
           draft: {},
           isGenerating: false,
+          passportFlowSkipped: false,
+          isReeditingPassport: false,
+        });
+      },
+
+      skipPassportFlow: () => {
+        set({
+          flowStep: 'welcome',
+          draft: {},
+          isGenerating: false,
+          passportFlowSkipped: true,
           isReeditingPassport: false,
         });
       },
@@ -105,6 +117,7 @@ export const usePassportStore = create<PassportStore>()(
           flowStep: 'welcome',
           draft: {},
           isGenerating: false,
+          passportFlowSkipped: false,
           isReeditingPassport: true,
         });
       },

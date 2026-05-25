@@ -11,6 +11,7 @@ function resetStore(): void {
     flowStep: 'welcome',
     draft: {},
     isGenerating: false,
+    passportFlowSkipped: false,
     isReeditingPassport: false,
   });
   localStorage.clear();
@@ -54,6 +55,17 @@ describe('Passport Configuration setup step', () => {
       jest.runOnlyPendingTimers();
     });
     jest.useRealTimers();
+  });
+
+  it('first Passport screen lets users skip for now without creating a Passport', () => {
+    render(<PassportFlow />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip for now' }));
+
+    const state = usePassportStore.getState();
+    expect(state.passport).toBeNull();
+    expect(state.passportFlowSkipped).toBe(true);
+    expect(state.flowStep).toBe('welcome');
   });
 
   it('first-time Passport flow shows Complete your Passport after 3 questions', () => {

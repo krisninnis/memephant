@@ -18,6 +18,8 @@ import {
   type PassportFormat,
   type CustomPlatform,
 } from '../../utils/passportGenerator';
+import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
+import { applyPassportStyleSettings } from '../../utils/passportStyleTransform';
 import { AddPlatformModal } from './AddPlatformModal';
 import './ContextPassportModal.css';
 
@@ -88,6 +90,8 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
   const [copied, setCopied] = useState(false);
   const [showAddPlatform, setShowAddPlatform] = useState(false);
   const [customPlatforms, setCustomPlatforms] = useState<CustomPlatform[]>(loadCustomPlatforms);
+  const [styleSettings, setStyleSettings] = useState(defaultPassportStyleSettings);
+  const [writingOptionsOpen, setWritingOptionsOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Generate built-in passport once — pure, deterministic
@@ -97,11 +101,12 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
   const builtinTab = FORMAT_TABS.find((t) => t.id === activeTabKey);
   const customTab = customPlatforms.find((p) => p.id === activeTabKey);
 
-  const currentText: string = builtinTab
+  const rawCurrentText: string = builtinTab
     ? passport.formats[activeTabKey as PassportFormat]
     : customTab
     ? generateCustomPassportText(project, customTab)
     : '';
+  const currentText = applyPassportStyleSettings(rawCurrentText, styleSettings);
 
   const activeTabLabel = builtinTab?.label ?? customTab?.name ?? '';
   const activeTabDescription =
@@ -154,6 +159,22 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
 
   const switchTab = (key: string) => {
     setActiveTabKey(key);
+    setCopied(false);
+  };
+
+  const toggleAvoidEmDashes = () => {
+    setStyleSettings((current) => ({
+      ...current,
+      avoidEmDashes: !current.avoidEmDashes,
+    }));
+    setCopied(false);
+  };
+
+  const toggleReduceAiPhrases = () => {
+    setStyleSettings((current) => ({
+      ...current,
+      reduceAiPhrases: !current.reduceAiPhrases,
+    }));
     setCopied(false);
   };
 
@@ -251,6 +272,47 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
           {(builtinTab || customTab) && (
             <p className="passport-modal__format-desc">{activeTabDescription}</p>
           )}
+
+          <section className="passport-modal__writing-options">
+            <button
+              type="button"
+              className="passport-modal__writing-options-summary"
+              aria-expanded={writingOptionsOpen}
+              aria-controls="passport-writing-options-panel"
+              onClick={() => setWritingOptionsOpen((open) => !open)}
+            >
+              <span>Advanced writing options</span>
+              <span className="passport-modal__writing-options-state">
+                {writingOptionsOpen ? 'Hide options ▴' : 'Show options ▾'}
+              </span>
+            </button>
+            {writingOptionsOpen && (
+              <div id="passport-writing-options-panel">
+                <p className="passport-modal__writing-options-help">
+                  Control how AI-generated exports communicate and feel.
+                </p>
+                <label className="passport-modal__writing-option">
+                  <input
+                    type="checkbox"
+                    checked={styleSettings.avoidEmDashes}
+                    onChange={toggleAvoidEmDashes}
+                  />
+                  <span>Avoid em dashes</span>
+                </label>
+                <label className="passport-modal__writing-option">
+                  <input
+                    type="checkbox"
+                    checked={styleSettings.reduceAiPhrases}
+                    onChange={toggleReduceAiPhrases}
+                  />
+                  <span>Simplify polished wording</span>
+                </label>
+                <p className="passport-modal__writing-option-help">
+                  Remove or simplify common over-polished AI wording in copied passports.
+                </p>
+              </div>
+            )}
+          </section>
 
           {/* Memory Trail preview */}
           <textarea

@@ -26,6 +26,7 @@ function resetStore(): void {
     flowStep: 'welcome',
     draft: {},
     isGenerating: false,
+    passportFlowSkipped: false,
     isReeditingPassport: false,
   });
   localStorage.clear();
@@ -35,8 +36,9 @@ function shouldShowPassportFlow(
   passport: PassportData | null,
   hasSeenOnboarding: boolean,
   flowStep: PassportFlowStep,
+  passportFlowSkipped = false,
 ): boolean {
-  const isNewUser = !passport && !hasSeenOnboarding;
+  const isNewUser = !passport && !hasSeenOnboarding && !passportFlowSkipped;
   const isViewingCard = flowStep === 'complete';
   return isNewUser || isViewingCard;
 }
@@ -74,6 +76,15 @@ describe('Test 2 -- existing users bypass passport flow', () => {
 
   it('gate passes when hasSeenOnboarding is true even if passport is null', () => {
     expect(shouldShowPassportFlow(null, true, 'welcome')).toBe(false);
+  });
+
+  it('gate passes when first Passport setup is skipped for this session', () => {
+    usePassportStore.getState().skipPassportFlow();
+
+    const state = usePassportStore.getState();
+    expect(state.passport).toBeNull();
+    expect(state.passportFlowSkipped).toBe(true);
+    expect(shouldShowPassportFlow(null, false, 'welcome', state.passportFlowSkipped)).toBe(false);
   });
 
   it('gate passes when passport exists regardless of hasSeenOnboarding', () => {
@@ -186,13 +197,15 @@ describe('Test 4 -- passport is not included in cloud sync paths', () => {
   });
 
   it('partialize only persists "passport" field', () => {
-    const { setDraftAnswer } = usePassportStore.getState();
+    const { setDraftAnswer, skipPassportFlow } = usePassportStore.getState();
     setDraftAnswer('communicationStyle', 'concise');
+    skipPassportFlow();
     const raw = localStorage.getItem('mph_passport_v1');
     if (raw) {
-      const stored = JSON.parse(raw) as { state?: { draft?: unknown } };
+      const stored = JSON.parse(raw) as { state?: { draft?: unknown; passportFlowSkipped?: unknown } };
       const state  = stored.state ?? stored;
       expect((state as Record<string, unknown>).draft).toBeUndefined();
+      expect((state as Record<string, unknown>).passportFlowSkipped).toBeUndefined();
     }
   });
 });

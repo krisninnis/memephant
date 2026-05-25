@@ -57,6 +57,8 @@ import type { ExportMode, HandoffMode } from '../../types/memphant-types';
 import { ContextPassportModal } from './ContextPassportModal';
 import { ExportDiffPanel } from './ExportDiffPanel';
 import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
+import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
+import { applyPassportStyleSettings } from '../../utils/passportStyleTransform';
 
 function formatSyncAge(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
@@ -164,6 +166,8 @@ export function ExportButtons() {
   const [handoffMode, setHandoffMode] = useState<HandoffMode>('continue');
   const [contextOpen, setContextOpen] = useState(false);
   const [switchReason, setSwitchReason] = useState('');
+  const [styleSettings, setStyleSettings] = useState(defaultPassportStyleSettings);
+  const [writingOptionsOpen, setWritingOptionsOpen] = useState(false);
 
   // ── Frontal Lobe / AI Working Style inclusion ─────────────────────────────
   const [vault] = useState(() => loadPersonalMemoryVault());
@@ -548,13 +552,34 @@ export function ExportButtons() {
     }
   }, [passportUnlockInput]);
 
+  const toggleAvoidEmDashes = useCallback(() => {
+    setStyleSettings((current) => ({
+      ...current,
+      avoidEmDashes: !current.avoidEmDashes,
+    }));
+  }, []);
+
+  const toggleReduceAiPhrases = useCallback(() => {
+    setStyleSettings((current) => ({
+      ...current,
+      reduceAiPhrases: !current.reduceAiPhrases,
+    }));
+  }, []);
+
+  const styledExportText = exportPreview
+    ? applyPassportStyleSettings(exportPreview.exportText, styleSettings)
+    : '';
+  const styledExportHealth = exportPreview
+    ? analyzeExportHealth(styledExportText)
+    : null;
+
   const handleCopyPreview = useCallback(async (compressed = false) => {
     if (!activeProject || !exportPreview) return;
 
     try {
       const textToCopy = compressed
-        ? exportPreview.compressedExportText
-        : exportPreview.exportText;
+        ? applyPassportStyleSettings(exportPreview.compressedExportText, styleSettings)
+        : applyPassportStyleSettings(exportPreview.exportText, styleSettings);
 
       await copyExportToClipboard(textToCopy, exportPreview.copyPlatformId);
 
@@ -602,6 +627,7 @@ export function ExportButtons() {
     currentTask,
     exportPreview,
     handoffMode,
+    styleSettings,
     switchReason,
     updateLastAiSession,
     updateProject,
@@ -855,7 +881,7 @@ export function ExportButtons() {
             }}
             title="Choose a shorter or more focused copy option"
           >
-            ▾
+            {menuOpen ? '▴' : '▾'}
           </button>
           )}
         </div>
@@ -1002,6 +1028,7 @@ export function ExportButtons() {
     type="button"
     onClick={() => setContextOpen((o) => !o)}
     aria-expanded={contextOpen}
+    aria-controls="handoff-context-note"
     title="Add a note about what you were working on and why you are switching"
     style={{
       background: 'none',
@@ -1012,14 +1039,17 @@ export function ExportButtons() {
       padding: '2px 0',
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'space-between',
       gap: '4px',
+      width: '100%',
     }}
   >
-    <span>{contextOpen ? '▴' : '▾'}</span>
-    Add context (optional)
+    <span>Add context (optional)</span>
+    <span>{contextOpen ? 'Hide context ▴' : 'Show context ▾'}</span>
   </button>
   {contextOpen && (
     <textarea
+      id="handoff-context-note"
       value={switchReason}
       onChange={(e) => setSwitchReason(e.target.value)}
       placeholder="Why are you switching platforms or starting a new session?"
@@ -1171,13 +1201,57 @@ export function ExportButtons() {
               <div>
                 <dt>Approx. size</dt>
                 <dd>
-                  {exportPreview.characterCount.toLocaleString()} characters
+                  {styledExportText.length.toLocaleString()} characters
                   <span className="export-preview-summary__subvalue">
-                    ~{exportPreview.health.approximateTokens.toLocaleString()} tokens
+                    ~{(styledExportHealth ?? exportPreview.health).approximateTokens.toLocaleString()} tokens
                   </span>
                 </dd>
               </div>
             </dl>
+
+            <section className="export-preview-writing-options">
+              <button
+                type="button"
+                className="export-preview-writing-options__toggle"
+                aria-expanded={writingOptionsOpen}
+                aria-controls="export-preview-writing-options-panel"
+                onClick={() => setWritingOptionsOpen((open) => !open)}
+              >
+                <span>Advanced writing options</span>
+                <span className="export-preview-writing-options__state">
+                  {writingOptionsOpen ? 'Hide options ▴' : 'Show options ▾'}
+                </span>
+              </button>
+              {writingOptionsOpen && (
+                <div
+                  id="export-preview-writing-options-panel"
+                  className="export-preview-writing-options__panel"
+                >
+                  <p>
+                    Control how AI-generated exports communicate and feel.
+                  </p>
+                  <label className="export-preview-writing-options__option">
+                    <input
+                      type="checkbox"
+                      checked={styleSettings.avoidEmDashes}
+                      onChange={toggleAvoidEmDashes}
+                    />
+                    Avoid em dashes
+                  </label>
+                  <label className="export-preview-writing-options__option">
+                    <input
+                      type="checkbox"
+                      checked={styleSettings.reduceAiPhrases}
+                      onChange={toggleReduceAiPhrases}
+                    />
+                    Simplify polished wording
+                  </label>
+                  <p className="export-preview-writing-options__help">
+                    Remove or simplify common over-polished AI wording in copied passports.
+                  </p>
+                </div>
+              )}
+            </section>
 
             <section
               className={`passport-attachment-panel passport-attachment-panel--${exportPreview.passportAttachmentStatus}`}
@@ -1223,7 +1297,8 @@ export function ExportButtons() {
                       aria-expanded={passportPreviewVisible}
                       aria-controls="passport-attachment-preview"
                     >
-                      Preview Passport
+                      <span>Preview Passport</span>
+                      <span>{passportPreviewVisible ? 'Hide Passport ▴' : 'Show Passport ▾'}</span>
                     </button>
                     <label className="passport-attachment-toggle">
                       <input
@@ -1282,20 +1357,20 @@ export function ExportButtons() {
               exact text that will be copied.
             </p>
 
-            {exportPreview.health.riskLevel !== 'safe' && (
+            {(styledExportHealth ?? exportPreview.health).riskLevel !== 'safe' && (
               <div
-                className={`export-preview-health export-preview-health--${exportPreview.health.riskLevel}`}
+                className={`export-preview-health export-preview-health--${(styledExportHealth ?? exportPreview.health).riskLevel}`}
                 role="status"
                 aria-live="polite"
               >
                 <strong>
-                  Export health: {exportPreview.health.riskLevel === 'high' ? 'High risk' : 'Needs a look'}
+                  Export health: {(styledExportHealth ?? exportPreview.health).riskLevel === 'high' ? 'High risk' : 'Needs a look'}
                 </strong>
                 <span>
-                  Approx. {exportPreview.health.approximateTokens.toLocaleString()} tokens.
+                  Approx. {(styledExportHealth ?? exportPreview.health).approximateTokens.toLocaleString()} tokens.
                 </span>
                 <ul>
-                  {exportPreview.health.warnings.map((warning) => (
+                  {(styledExportHealth ?? exportPreview.health).warnings.map((warning) => (
                     <li key={warning}>{warning}</li>
                   ))}
                 </ul>
@@ -1315,7 +1390,7 @@ export function ExportButtons() {
             <textarea
               className="export-preview-textarea"
               readOnly
-              value={exportPreview.exportText}
+              value={styledExportText}
               aria-label="Export preview text"
             />
 
@@ -1328,7 +1403,7 @@ export function ExportButtons() {
                 Close
               </button>
               {exportPreview.targetPlatformId === 'chatgpt'
-                && exportPreview.health.suggestedAction === 'compress' && (
+                && (styledExportHealth ?? exportPreview.health).suggestedAction === 'compress' && (
                 <button
                   type="button"
                   className="export-preview-actions__secondary"

@@ -1,4 +1,4 @@
-//
+﻿//
 // Replaces the cramped sidebar dropdown panel with a calm, full-width page
 // that surfaces the user's AI working identity, the three primary actions
 // (Copy Passport / Edit Passport / See the Difference) and a clear privacy
@@ -273,6 +273,67 @@ const WARNING_TEXT: React.CSSProperties = {
   lineHeight: 1.55,
 };
 
+const STAMP_BUTTON: React.CSSProperties = {
+  appearance: "none",
+  border: "none",
+  padding: 0,
+  margin: 0,
+  background: "transparent",
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const STAMP_SHOWCASE: React.CSSProperties = {
+  width: "100%",
+  minHeight: "calc(100vh - 120px)",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "1.5rem",
+  padding: "2rem 1rem",
+  boxSizing: "border-box",
+  color: "#e2e8f0",
+  textAlign: "center",
+};
+
+const STAMP_SHOWCASE_FRAME: React.CSSProperties = {
+  position: "relative",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "min(76vw, 620px)",
+  height: "min(76vw, 620px)",
+  borderRadius: "999px",
+  background:
+    "radial-gradient(circle, rgba(245,158,11,0.20) 0%, rgba(124,58,237,0.10) 38%, rgba(15,23,42,0) 72%)",
+  animation: "passportStampGlow 1.15s ease-out both",
+};
+
+const STAMP_SHOWCASE_IMAGE: React.CSSProperties = {
+  width: "min(64vw, 520px)",
+  height: "min(64vw, 520px)",
+  objectFit: "contain",
+  filter: "drop-shadow(0 0 70px rgba(245,158,11,0.55))",
+  animation: "passportStampRise 1.15s ease-out both",
+};
+
+const STAMP_SHOWCASE_TITLE: React.CSSProperties = {
+  margin: 0,
+  color: "#f8fafc",
+  fontSize: "1.35rem",
+  fontWeight: 900,
+  letterSpacing: "-0.02em",
+};
+const STAMP_SHOWCASE_SUBTITLE: React.CSSProperties = {
+  margin: "-0.8rem 0 0",
+  color: "#94a3b8",
+  fontSize: "0.95rem",
+  lineHeight: 1.45,
+};
+
 const EMPTY_HERO: React.CSSProperties = {
   ...HERO,
   flexDirection: "column",
@@ -287,7 +348,7 @@ export function PassportPage() {
   const resetPassport = usePassportStore((s) => s.resetPassport);
 
   const [copied, setCopied] = useState(false);
-  const [subview, setSubview] = useState<"details" | "simulator">("details");
+  const [subview, setSubview] = useState<"details" | "simulator" | "stamp">("details");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   if (!passport) {
@@ -355,6 +416,80 @@ export function PassportPage() {
     ? passportStampSilver
     : passportStampBronze;
   const config = getPassportConfiguration(passport);
+  if (subview === "stamp") {
+    return (
+      <div className="workspace-scroll">
+        <style>
+          {`
+            @keyframes passportStampGlow {
+              0% {
+                opacity: 0;
+                transform: scale(0.82);
+                box-shadow: 0 0 0 rgba(245, 158, 11, 0);
+              }
+              45% {
+                opacity: 1;
+                transform: scale(1.04);
+                box-shadow: 0 0 120px rgba(245, 158, 11, 0.38);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 52px rgba(245, 158, 11, 0.18);
+              }
+            }
+
+            @keyframes passportStampRise {
+              0% {
+                opacity: 0;
+                transform: translateY(18px) scale(0.78);
+              }
+              55% {
+                opacity: 1;
+                transform: translateY(-4px) scale(1.06);
+              }
+              100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+              }
+            }
+          `}
+        </style>
+
+        <div className="workspace-main">
+          <section style={STAMP_SHOWCASE} aria-label="AI Passport stamp showcase">
+            <div style={STAMP_SHOWCASE_FRAME}>
+              <img
+                src={sealImage}
+                alt="AI Passport stamp"
+                style={STAMP_SHOWCASE_IMAGE}
+              />
+            </div>
+
+            <h1 style={STAMP_SHOWCASE_TITLE}>
+              {hasConfiguration
+                ? "Silver Passport Activated"
+                : "Bronze Passport Activated"}
+            </h1>
+
+            <p style={STAMP_SHOWCASE_SUBTITLE}>
+              Your AI working identity is ready.
+            </p>
+
+            <button
+              type="button"
+              style={BTN_SECONDARY}
+              onClick={() => setSubview("details")}
+              aria-label="Back to AI Passport"
+            >
+              Back to Passport
+            </button>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
 
   async function handleCopy() {
     if (!passport) return;
@@ -394,7 +529,15 @@ export function PassportPage() {
           {/* Hero */}
           <header style={HERO} aria-label="AI Passport identity">
             <div style={HERO_STAMP_COLUMN}>
-              <img src={sealImage} alt="" aria-hidden="true" style={STAMP} />
+              <button
+                type="button"
+                style={STAMP_BUTTON}
+                onClick={() => setSubview("stamp")}
+                aria-label="Open AI Passport stamp showcase"
+                title="Open AI Passport stamp"
+              >
+                <img src={sealImage} alt="" aria-hidden="true" style={STAMP} />
+              </button>
 
               <h2 style={HERO_ACTION_TITLE}>Use your Passport</h2>
 
@@ -590,3 +733,8 @@ export function PassportPage() {
 }
 
 export default PassportPage;
+
+
+
+
+

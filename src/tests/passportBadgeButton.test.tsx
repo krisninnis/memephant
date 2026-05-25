@@ -17,6 +17,7 @@ function resetStores(): void {
     flowStep: "welcome",
     draft: {},
     isGenerating: false,
+    passportFlowSkipped: false,
     isReeditingPassport: false,
   });
   useProjectStore.setState({ currentView: "projects" });

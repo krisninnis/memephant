@@ -169,6 +169,40 @@ describe('ExportButtons export preview', () => {
     expect(preview.value).toBe('PREAMBLE\nEXACT_EXPORT_TEXT');
   });
 
+  it('applies Advanced writing options in Inspect export before copying', async () => {
+    (formatForPlatform as jest.Mock).mockReturnValue(
+      'It is important to note that robust handoffs\u2014moving forward\u2014streamline work.',
+    );
+
+    await openPreview();
+
+    const options = screen.getByRole('button', { name: /Advanced writing options Show options/i });
+    expect(options).toHaveAttribute('aria-expanded', 'false');
+    expect(options).toHaveTextContent('Show options ▾');
+
+    fireEvent.click(options);
+    expect(options).toHaveAttribute('aria-expanded', 'true');
+    expect(options).toHaveTextContent('Hide options ▴');
+    expect(screen.getByLabelText('Avoid em dashes')).not.toBeChecked();
+    expect(screen.getByLabelText('Simplify polished wording')).not.toBeChecked();
+
+    fireEvent.click(screen.getByLabelText('Avoid em dashes'));
+    fireEvent.click(screen.getByLabelText('Simplify polished wording'));
+
+    const preview = screen.getByLabelText('Export preview text') as HTMLTextAreaElement;
+    expect(preview.value).toContain('solid handoffs - next - simplify work.');
+    expect(preview.value).not.toContain('It is important to note that');
+
+    fireEvent.click(screen.getByRole('button', { name: /copy export/i }));
+
+    await waitFor(() => {
+      expect(copyExportToClipboard).toHaveBeenCalledWith(
+        expect.stringContaining('solid handoffs - next - simplify work.'),
+        'claude',
+      );
+    });
+  });
+
   it('shows Frontal Lobe status', async () => {
     const dialog = await openPreview();
 
@@ -209,7 +243,7 @@ describe('ExportButtons export preview', () => {
     expect(within(dialog).getByText('Copy handoff')).toBeInTheDocument();
 
     expect(screen.queryByLabelText('Passport Attachment preview text')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Preview Passport' }));
+    fireEvent.click(screen.getByRole('button', { name: /Preview Passport Show Passport/i }));
 
     const passportPreview = screen.getByLabelText(
       'Passport Attachment preview text',

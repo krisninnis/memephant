@@ -33,6 +33,7 @@ interface PassportGateProps {
 export function PassportGate({ children }: PassportGateProps) {
   const passport            = usePassportStore((s) => s.passport);
   const flowStep            = usePassportStore((s) => s.flowStep);
+  const passportFlowSkipped = usePassportStore((s) => s.passportFlowSkipped);
   const isReeditingPassport = usePassportStore((s) => s.isReeditingPassport);
 
   // Existing users (already onboarded) bypass the passport flow entirely.
@@ -40,7 +41,7 @@ export function PassportGate({ children }: PassportGateProps) {
   const hasSeenOnboarding = useProjectStore((s) => s.settings.general.hasSeenOnboarding);
 
   // Case 1: brand new user -- no passport, never seen onboarding
-  const isNewUser = !passport && !hasSeenOnboarding;
+  const isNewUser = !passport && !hasSeenOnboarding && !passportFlowSkipped;
 
   // Case 2: user just generated their passport and is viewing the card
   const isViewingCard = flowStep === 'complete';

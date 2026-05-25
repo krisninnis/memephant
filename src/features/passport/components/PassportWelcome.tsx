@@ -117,15 +117,40 @@ const PRIVACY_NOTE: React.CSSProperties = {
   lineHeight: 1.6,
 }
 
+const ACTIONS: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '10px',
+  flexWrap: 'wrap',
+}
+
+const SKIP_BUTTON: React.CSSProperties = {
+  padding: '12px 18px',
+  border: '1px solid rgba(148,163,184,0.2)',
+  borderRadius: '9px',
+  background: 'rgba(255,255,255,0.03)',
+  color: 'rgba(226,232,240,0.68)',
+  fontSize: '14px',
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function PassportWelcome() {
   const setFlowStep = usePassportStore(s => s.setFlowStep)
+  const skipPassportFlow = usePassportStore(s => s.skipPassportFlow)
   const [hovered, setHovered] = useState(false)
   const [heroHovered, setHeroHovered] = useState(false)
 
   function handleStart() {
     setFlowStep('q1')
+  }
+
+  function handleSkip() {
+    skipPassportFlow()
   }
 
   const ctaStyle: React.CSSProperties = {
@@ -199,17 +224,26 @@ export function PassportWelcome() {
         <div style={DIVIDER} />
 
         {/* CTA */}
-        <button
-          style={ctaStyle}
-          onClick={handleStart}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          onFocus={() => setHovered(true)}
-          onBlur={() => setHovered(false)}
-        >
-          Start Passport Setup
-          <ChevronRight size={15} color="currentColor" />
-        </button>
+        <div style={ACTIONS}>
+          <button
+            style={ctaStyle}
+            onClick={handleStart}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onFocus={() => setHovered(true)}
+            onBlur={() => setHovered(false)}
+          >
+            Start Passport Setup
+            <ChevronRight size={15} color="currentColor" />
+          </button>
+          <button
+            type="button"
+            style={SKIP_BUTTON}
+            onClick={handleSkip}
+          >
+            Skip for now
+          </button>
+        </div>
 
         <p style={PRIVACY_NOTE}>
           About 90 seconds &nbsp;·&nbsp; Stored locally on your device
