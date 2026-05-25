@@ -475,6 +475,7 @@ export function ProjectEditor() {
         items={activeProject.importantAssets}
         onChange={(v) => update('importantAssets', v)}
         placeholder="Add a file or asset path..."
+        collapsibleSelectedItems
       />
 
       <div className="field-group">

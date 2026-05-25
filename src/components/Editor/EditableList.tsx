@@ -1,5 +1,5 @@
-/** Editable list component — each item is a text input, + add button at bottom */
-import { useRef, useState, type KeyboardEvent } from 'react';
+/** Editable list component - each item is a text input, + add button at bottom */
+import { useId, useRef, useState, type KeyboardEvent } from 'react';
 
 interface EditableListProps {
   label: string;
@@ -7,19 +7,23 @@ interface EditableListProps {
   onChange: (items: string[]) => void;
   placeholder?: string;
   addLabel?: string;
-  /** When provided, a ✨ button appears next to the label */
+  /** When provided, an auto-fill button appears next to the label */
   onSuggest?: () => void;
+  collapsibleSelectedItems?: boolean;
 }
 
 export function EditableList({
   label,
   items,
   onChange,
-  placeholder = 'Add item…',
+  placeholder = `Add item${String.fromCharCode(8230)}`,
   addLabel = '+ Add',
   onSuggest,
+  collapsibleSelectedItems = false,
 }: EditableListProps) {
   const [newItem, setNewItem] = useState('');
+  const [selectedItemsOpen, setSelectedItemsOpen] = useState(false);
+  const selectedItemsId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (index: number, value: string) => {
@@ -52,6 +56,29 @@ export function EditableList({
     }
   };
 
+  const renderItemRows = () => items.map((item, index) => (
+    <div key={index} className="list-item">
+      <input
+        className="field-input"
+        type="text"
+        value={item}
+        onChange={(e) => handleChange(index, e.target.value)}
+        onBlur={(e) => handleBlur(index, e.target.value)}
+      />
+      <button
+        className="list-item-remove"
+        onClick={() => handleRemove(index)}
+        type="button"
+        aria-label="Remove item"
+      >
+        {String.fromCharCode(215)}
+      </button>
+    </div>
+  ));
+
+  const selectedCountLabel =
+    items.length === 1 ? '1 file selected' : `${items.length} files selected`;
+
   return (
     <div className="field-group">
       <div className="editable-field__header">
@@ -63,30 +90,39 @@ export function EditableList({
             onClick={onSuggest}
             title="Auto-fill"
           >
-            ✨ Auto-fill
+            {String.fromCodePoint(0x2728)} Auto-fill
           </button>
         )}
       </div>
-      <div className="editable-list">
-        {items.map((item, index) => (
-          <div key={index} className="list-item">
-            <input
-              className="field-input"
-              type="text"
-              value={item}
-              onChange={(e) => handleChange(index, e.target.value)}
-              onBlur={(e) => handleBlur(index, e.target.value)}
-            />
+      <div className={`editable-list${collapsibleSelectedItems ? ' editable-list--collapsible' : ''}`}>
+        {collapsibleSelectedItems && (
+          <div className="editable-list__selected-summary">
+            <span>{selectedCountLabel}</span>
             <button
-              className="list-item-remove"
-              onClick={() => handleRemove(index)}
               type="button"
-              aria-label="Remove item"
+              className="editable-list__selected-toggle"
+              onClick={() => setSelectedItemsOpen((open) => !open)}
+              aria-expanded={selectedItemsOpen}
+              aria-controls={selectedItemsId}
+              disabled={items.length === 0}
             >
-              ×
+              {selectedItemsOpen ? 'Hide selected files ▴' : 'Show selected files ▾'}
             </button>
           </div>
-        ))}
+        )}
+
+        {!collapsibleSelectedItems && renderItemRows()}
+
+        {collapsibleSelectedItems && selectedItemsOpen && (
+          <div
+            id={selectedItemsId}
+            className="editable-list__selected-panel"
+            aria-label={`${label} selected files`}
+          >
+            {renderItemRows()}
+          </div>
+        )}
+
         <div className="list-item list-item--add">
           <input
             ref={inputRef}
