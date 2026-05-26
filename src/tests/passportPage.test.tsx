@@ -158,7 +158,7 @@ describe("PassportPage — details subview", () => {
     ).toBeInTheDocument();
 
     expect(screen.getByText(/stored on this device only/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Memory Trail/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Context Passport/i).length).toBeGreaterThan(0);
   });
 
   it("Copy Passport writes the identity-first attachment text to the clipboard", async () => {

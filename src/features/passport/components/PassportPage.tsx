@@ -670,8 +670,8 @@ export function PassportPage() {
               it - that is the only way it travels.
             </p>
             <p style={PRIVACY_NOTE}>
-              Project state lives in <strong>Memory Trail</strong>, not here.
-              Passport is identity. Trail is the work in front of you.
+              Project state lives in <strong>Context Passport</strong>, not here.
+              AI Passport is identity. Context Passport is the work in front of you.
             </p>
           </section>
           <section style={DANGER_SECTION} aria-label="Delete Passport">
@@ -683,7 +683,7 @@ export function PassportPage() {
               <>
                 <p style={PRIVACY_NOTE}>
                   Remove your local AI Passport from this device. This does not
-                  delete projects, Memory Trail exports, or your Memory Vault.
+                  delete projects, Context Passport exports, or your Memory Vault.
                 </p>
 
                 <div style={ACTIONS}>
@@ -733,7 +733,6 @@ export function PassportPage() {
 }
 
 export default PassportPage;
-
 
 
 

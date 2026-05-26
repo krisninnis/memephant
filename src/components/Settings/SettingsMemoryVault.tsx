@@ -147,7 +147,7 @@ const STARTER_SUGGESTIONS: StarterSuggestion[] = [
     title: 'Private vault boundary',
     category: 'boundary',
     content:
-      'Do not include personal memory in project exports, Memory Trails, or AI handoffs unless I explicitly choose to share it.',
+      'Do not include personal memory in project exports, Context Passports, or AI handoffs unless I explicitly choose to share it.',
   },
   {
     id: 'starter-user-owned-ai-memory',
@@ -451,7 +451,7 @@ function buildFrontalLobePreview(profile: FrontalLobeProfile, customRulesText: s
   parts.push(
     '## Privacy Boundary\n' +
       'This Frontal Lobe profile is stored locally in Memephant. Do not include it in project exports, ' +
-      'Memory Trails, Memory Bridge, AI handoffs, cloud sync, or external systems unless I explicitly choose to share it.',
+      'Context Passports, Memory Bridge, AI handoffs, cloud sync, or external systems unless I explicitly choose to share it.',
   );
 
   return parts.join('\n\n');
@@ -609,7 +609,7 @@ function buildPersonalContextPassport(
   parts.push(
     '## Privacy Boundary\n' +
       'These instructions were manually copied by the user. Do not assume access to any other personal memory. ' +
-      'Never include private Vault contents in project exports, Memory Trails, Memory Bridge, AI handoffs, ' +
+      'Never include private Vault contents in project exports, Context Passports, Memory Bridge, AI handoffs, ' +
       'cloud sync, or external systems unless the user explicitly asks.',
   );
 
@@ -1228,7 +1228,7 @@ export function SettingsMemoryVault() {
         <div className="settings-trust-list">
           <div>- Stored locally in this browser/app only</div>
           <div>- Not synced to cloud</div>
-          <div>- Not included in project exports or Memory Trails</div>
+          <div>- Not included in project exports or Context Passports</div>
           <div>- Not included in project handoffs unless you explicitly choose that in a future feature</div>
           <div>- Not sent to any AI unless a future permission flow asks you first</div>
         </div>
@@ -1763,7 +1763,7 @@ export function SettingsMemoryVault() {
               <h3>Copy your AI working style</h3>
               <p>
                 Generate a manual prompt from preference, rule, and boundary memories.
-                This does not change project exports, Memory Trails, Memory Bridge, or cloud sync.
+                This does not change project exports, Context Passports, Memory Bridge, or cloud sync.
               </p>
             </div>
             <button
@@ -1799,7 +1799,7 @@ export function SettingsMemoryVault() {
             <h3>Copy personal AI instructions</h3>
             <p>
               Create a portable instruction prompt from the personal memories you choose. This is
-              separate from project Memory Trail and project exports. Nothing is shared until
+              separate from project Context Passport and project exports. Nothing is shared until
               you copy it.
             </p>
           </div>
@@ -2112,7 +2112,7 @@ export function SettingsMemoryVault() {
             ))}
           </div>
           <p className="memory-vault-form-note">
-            Manual copy actions only happen when you click them. Project exports, Memory Trails,
+            Manual copy actions only happen when you click them. Project exports, Context Passports,
             Memory Bridge, cloud sync, and Supabase do not receive Vault contents from this audit.
           </p>
         </section>

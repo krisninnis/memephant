@@ -4,7 +4,7 @@ import type { ProjectMemory } from '../types/memphant-types';
 
 const project: ProjectMemory = {
   id: 'memory-trail-project',
-  name: 'Memory Trail Project',
+  name: 'Context Passport Project',
   summary: 'A project continuity test.',
   currentState: 'Ready to hand off.',
   goals: ['Keep naming clear'],
@@ -19,17 +19,17 @@ const project: ProjectMemory = {
   schema_version: '1.2.0',
 };
 
-describe('ContextPassportModal visible Memory Trail naming', () => {
-  it('shows Memory Trail labels without changing the internal component name', () => {
+describe('ContextPassportModal visible Context Passport naming', () => {
+  it('shows Context Passport labels without changing the internal component name', () => {
     render(<ContextPassportModal project={project} onClose={jest.fn()} />);
 
-    expect(screen.getByRole('dialog', { name: 'Memory Trail' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Memory Trail' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Context Passport' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Context Passport' })).toBeInTheDocument();
     expect(screen.getByText(
-      'Memory Trail helps another AI continue your project from where you left off.',
+      'Context Passport helps another AI continue your project from where you left off.',
     )).toBeInTheDocument();
-    expect(screen.getByLabelText('Memory Trail for ChatGPT')).toBeInTheDocument();
-    expect(screen.queryByText('Context Passport')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Context Passport for ChatGPT')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Memory Trail' })).not.toBeInTheDocument();
   });
 
   it('keeps advanced writing options collapsed and opt-in', () => {
@@ -52,7 +52,7 @@ describe('ContextPassportModal visible Memory Trail naming', () => {
       'Remove or simplify common over-polished AI wording in copied passports.',
     )).toBeInTheDocument();
 
-    const preview = screen.getByLabelText('Memory Trail for ChatGPT') as HTMLTextAreaElement;
+    const preview = screen.getByLabelText('Context Passport for ChatGPT') as HTMLTextAreaElement;
     expect(preview.value).toContain('flow\u2014with');
 
     fireEvent.click(screen.getByLabelText('Avoid em dashes'));
@@ -90,7 +90,7 @@ describe('ContextPassportModal visible Memory Trail naming', () => {
       summary: 'It is important to note that this robust flow can streamline handoff.',
     }} onClose={jest.fn()} />);
 
-    const preview = screen.getByLabelText('Memory Trail for ChatGPT') as HTMLTextAreaElement;
+    const preview = screen.getByLabelText('Context Passport for ChatGPT') as HTMLTextAreaElement;
     expect(preview.value).toContain('It is important to note that this robust flow can streamline handoff.');
 
     fireEvent.click(screen.getByRole('button', { name: /Advanced writing options Show options/i }));

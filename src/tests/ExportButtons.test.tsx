@@ -153,12 +153,12 @@ describe('ExportButtons export preview', () => {
     )).toBeInTheDocument();
   });
 
-  it('labels the project continuity export as Memory Trail', () => {
+  it('labels the project continuity export as Context Passport', () => {
     render(<ExportButtons />);
 
-    expect(screen.getByRole('button', { name: /generate memory trail/i }))
+    expect(screen.getByRole('button', { name: /generate context passport/i }))
       .toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /generate context passport/i }))
+    expect(screen.queryByRole('button', { name: /generate memory trail/i }))
       .not.toBeInTheDocument();
   });
 

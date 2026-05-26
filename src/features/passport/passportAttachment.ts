@@ -125,7 +125,7 @@ export function buildPassportAttachmentPreview(
     'No API keys, private keys, recovery phrases, or secrets.',
     'No silent sharing or invented facts.',
     'Medical/legal/financial: general guidance; suggest professional checks.',
-    'Use Memory Trail for task/project context only; do not merge it into this Passport.',
+    'Use Context Passport for task/project context only; do not merge it into this Passport.',
   ];
 
   const compatibility = [
@@ -141,7 +141,7 @@ export function buildPassportAttachmentPreview(
     '# AI Passport',
     '',
     'User-provided profile for how AI should work with me.',
-    'Not a project brief, task update, repo summary, or Memory Trail.',
+    'Not a project brief, task update, repo summary, or Context Passport.',
     '',
     '## Basics',
     ...formatOptionalLine('Preferred name', preferredName),

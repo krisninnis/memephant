@@ -207,7 +207,7 @@ describe('Personal Memory Vault / project export boundary', () => {
     expectNoVaultSentinels(output);
   });
 
-  it('never includes Personal Memory Vault values in Memory Trail formats', () => {
+  it('never includes Personal Memory Vault values in Context Passport formats', () => {
     const passport = generateContextPassport(makeProject());
 
     for (const output of Object.values(passport.formats)) {
@@ -215,7 +215,7 @@ describe('Personal Memory Vault / project export boundary', () => {
     }
   });
 
-  it('never includes Personal Memory Vault values in custom Memory Trail formats', () => {
+  it('never includes Personal Memory Vault values in custom Context Passport formats', () => {
     const baseFormats: CustomPlatform['baseFormat'][] = [
       'markdown',
       'xml-like',

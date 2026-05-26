@@ -130,8 +130,8 @@ describe('generateContextPassport — structure', () => {
   it('includes required sections in Markdown format', () => {
     const passport = generateContextPassport(CLEAN_PROJECT);
     const md = passport.formats.markdown;
-    expect(md).toContain('# Memory Trail: Clean Project');
-    expect(md).not.toContain('Context Passport');
+    expect(md).toContain('# Context Passport: Clean Project');
+    expect(md).not.toContain('Memory Trail');
     expect(md).toContain('## Purpose');
     expect(md).toContain('## Current State');
     expect(md).toContain('## Goals');

@@ -88,7 +88,7 @@ describe('SettingsMemoryVault', () => {
     expect(screen.getByText('Off by default')).toBeInTheDocument();
     expect(screen.getAllByText('Disabled').length).toBeGreaterThan(0);
     expect(
-      screen.getByText(/Not included in project exports or Memory Trails/),
+      screen.getByText(/Not included in project exports or Context Passports/),
     ).toBeInTheDocument();
   });
 
@@ -1398,7 +1398,7 @@ describe('Frontal Lobe AI Working Style profile', () => {
   });
 
   // Test 12: existing Personal Memory Snapshot / AI Working Style tests still work
-  it('Frontal Lobe section coexists without breaking AI Working Style copy or Memory Trail copy', () => {
+  it('Frontal Lobe section coexists without breaking AI Working Style copy or Context Passport copy', () => {
     render(<SettingsMemoryVault />);
 
     const frontalSection = screen.getByLabelText('Frontal Lobe AI Working Style section');

@@ -111,7 +111,7 @@ export function SettingsPage() {
                 <div className="settings-trust-list">
                   <span>Local only</span>
                   <span>Not included in project exports</span>
-                  <span>Not included in Memory Trails</span>
+                  <span>Not included in Context Passports</span>
                 </div>
               </div>
               <button
