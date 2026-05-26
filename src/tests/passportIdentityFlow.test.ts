@@ -26,7 +26,7 @@ function resetStore(): void {
     flowStep: 'welcome',
     draft: {},
     isGenerating: false,
-    passportFlowSkipped: false,
+    passportFlowSkipped: true,
     isReeditingPassport: false,
   });
   localStorage.clear();
@@ -45,18 +45,20 @@ function shouldShowPassportFlow(
 
 // ── Test 1 ────────────────────────────────────────────────────────────────────
 
-describe('Test 1 -- first launch triggers passport flow', () => {
+describe('Test 1 -- first launch defers passport flow', () => {
   beforeEach(resetStore);
 
-  it('flowStep starts as "welcome" on a fresh store', () => {
-    const { flowStep, passport } = usePassportStore.getState();
+  it('flowStep starts as "welcome" with passport onboarding deferred on a fresh store', () => {
+    const { flowStep, passport, passportFlowSkipped } = usePassportStore.getState();
     expect(passport).toBeNull();
     expect(flowStep).toBe('welcome');
+    expect(passportFlowSkipped).toBe(true);
   });
 
-  it('gate shows flow when passport is null and hasSeenOnboarding is false', () => {
-    const showFlow = shouldShowPassportFlow(null, false, 'welcome');
-    expect(showFlow).toBe(true);
+  it('gate defers flow when passport is null and fresh onboarding has not been seen', () => {
+    const { passportFlowSkipped } = usePassportStore.getState();
+    const showFlow = shouldShowPassportFlow(null, false, 'welcome', passportFlowSkipped);
+    expect(showFlow).toBe(false);
   });
 
   it('all 3 calibration questions are defined', () => {

@@ -13,6 +13,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PassportStore, PassportFlowStep, PassportProfile } from './passport.types';
 import { createPassportData, getPassportConfiguration } from './passport.utils';
+import { devError } from '../../utils/devLogging';
 
 /** Duration of the "generating" animation beat (ms). Intentional -- do not remove. */
 const GENERATION_DELAY_MS = 2000;
@@ -28,7 +29,7 @@ export const usePassportStore = create<PassportStore>()(
       flowStep: 'welcome',
       draft: {},
       isGenerating: false,
-      passportFlowSkipped: false,
+      passportFlowSkipped: true,
       isReeditingPassport: false,
 
       // ── Actions ────────────────────────────────────────────────────────────
@@ -48,7 +49,7 @@ export const usePassportStore = create<PassportStore>()(
         const profile = draft as PassportProfile;
 
         if (!profile.communicationStyle || !profile.tone || !profile.focusArea) {
-          console.error('[PassportStore] generatePassport called with incomplete draft', draft);
+          devError('[PassportStore] generatePassport called with incomplete draft');
           return;
         }
 
