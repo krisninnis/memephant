@@ -249,6 +249,11 @@ export interface AppSettings {
     /** Opt-in crash/error reporting via Sentry. Default: false. */
     sendCrashReports: boolean;
   };
+  release: {
+    updateChannel: 'stable' | 'beta';
+    includeBetaBuilds: boolean;
+    autoInstallUpdates: boolean;
+  };
   localAi: {
     enabled: boolean;
     provider: 'ollama';
@@ -281,6 +286,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
     cloudSyncEnabled: false,
     secretsScannerLevel: 'standard',
     sendCrashReports: false,
+  },
+  release: {
+    updateChannel: 'stable',
+    includeBetaBuilds: false,
+    autoInstallUpdates: false,
   },
   localAi: {
     enabled: false,

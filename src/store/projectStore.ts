@@ -16,6 +16,7 @@ function mergeSettings(raw: unknown): AppSettings {
   const candidate = (raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null) ?? {};
   const general = (candidate.general as Partial<AppSettings['general']> | undefined) ?? {};
   const privacy = (candidate.privacy as Partial<AppSettings['privacy']> | undefined) ?? {};
+  const release = (candidate.release as Partial<AppSettings['release']> | undefined) ?? {};
   const localAi = (candidate.localAi as Partial<AppSettings['localAi']> | undefined) ?? {};
   const projects = (candidate.projects as Partial<AppSettings['projects']> | undefined) ?? {};
   const platforms =
@@ -29,6 +30,7 @@ function mergeSettings(raw: unknown): AppSettings {
     ...candidate,
     general: { ...DEFAULT_SETTINGS.general, ...general },
     privacy: { ...DEFAULT_SETTINGS.privacy, ...privacy },
+    release: { ...DEFAULT_SETTINGS.release, ...release },
     localAi: { ...DEFAULT_SETTINGS.localAi, ...localAi },
     projects: { ...DEFAULT_SETTINGS.projects, ...projects },
     platforms: {

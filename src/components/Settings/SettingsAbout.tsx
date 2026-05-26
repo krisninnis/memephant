@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import packageJson from '../../../package.json';
+import { useProjectStore } from '../../store/projectStore';
 import { PWAInstallButton } from '../PWAInstallButton';
 import { usePWA } from '../../hooks/usePWA';
 import {
@@ -103,6 +104,9 @@ function statusIcon(phase: UpdatePhase): string {
 }
 
 export function SettingsAbout() {
+  const settings = useProjectStore((s) => s.settings);
+  const updateSettings = useProjectStore((s) => s.updateSettings);
+  const showToast = useProjectStore((s) => s.showToast);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [phase, setPhase] = useState<UpdatePhase>('idle');
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
@@ -113,6 +117,11 @@ export function SettingsAbout() {
   const [desktopError, setDesktopError] = useState<string | null>(null);
 
   const { isChecking, updateAvailable, checkForUpdates, applyUpdate, lastChecked } = usePWA();
+  const release = settings.release;
+  const updateReleaseSettings = (updates: Partial<typeof release>) => {
+    updateSettings({ release: { ...release, ...updates } });
+    showToast('Release preference saved');
+  };
 
   useEffect(() => {
     if (isTauri()) {
@@ -426,6 +435,39 @@ export function SettingsAbout() {
           <div className="settings-trust-box" style={{ marginTop: 12 }}>
             Desktop updates are delivered through signed Tauri releases from GitHub. Vercel deploys
             update only the website/PWA and will not update this installed desktop app.
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-info">
+              <div className="setting-label">Release channel</div>
+              <div className="setting-description">
+                Prepared for future beta channels. Stable is the only active channel today.
+              </div>
+            </div>
+            <select
+              className="setting-select"
+              value={release.updateChannel}
+              onChange={(event) => updateReleaseSettings({
+                updateChannel: event.target.value as typeof release.updateChannel,
+                includeBetaBuilds: event.target.value === 'beta',
+              })}
+              title="Choose which future desktop release channel to follow"
+            >
+              <option value="stable">Stable</option>
+              <option value="beta">Beta (future)</option>
+            </select>
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-info">
+              <div className="setting-label">Auto-install updates</div>
+              <div className="setting-description">
+                Reserved for a future release. Updates remain manual and user-controlled.
+              </div>
+            </div>
+            <span className="setting-badge">
+              {release.autoInstallUpdates ? 'Prepared' : 'Off'}
+            </span>
           </div>
 
           <div className="setting-row">
