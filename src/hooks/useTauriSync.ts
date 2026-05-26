@@ -9,6 +9,7 @@ import {
   consumeCloudHydrationAutosaveSkip,
   replaceCloudHydrationAutosaveSkipIds,
 } from '../utils/cloudHydrationAutosave';
+import { devError, devWarn } from '../utils/devLogging';
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -29,7 +30,7 @@ function withUiTimeout<T>(
       if (settled) return;
       settled = true;
       timedOut = true;
-      console.warn('[useTauriSync] ui_timeout_fired', { label, timeoutMs, uiOnly: true });
+      devWarn('[useTauriSync] ui_timeout_fired', { label, timeoutMs, uiOnly: true });
       reject(new Error(message));
     }, timeoutMs);
 
@@ -37,7 +38,7 @@ function withUiTimeout<T>(
       (value) => {
         if (settled) {
           if (timedOut) {
-            console.warn('[useTauriSync] late_resolution_applying', { label, timeoutMs });
+            devWarn('[useTauriSync] late_resolution_applying', { label, timeoutMs });
             onLateSuccess?.(value);
           }
           return;
@@ -50,21 +51,21 @@ function withUiTimeout<T>(
       (error) => {
         if (settled) {
           if (timedOut) {
-            console.warn('[useTauriSync] late_rejection_ignored', { label, timeoutMs, error });
+            devWarn('[useTauriSync] late_rejection_ignored', { label, timeoutMs, error });
           }
           return;
         }
 
         settled = true;
         window.clearTimeout(timeoutId);
-        console.error('[useTauriSync] ui_timeout_rejected', { label, timeoutMs, error });
+        devError('[useTauriSync] ui_timeout_rejected', { label, timeoutMs, error });
         reject(error);
       },
     );
 
     window.setTimeout(() => {
       if (!settled) {
-        console.warn('[useTauriSync] underlying_request_still_in_flight', { label, timeoutMs });
+        devWarn('[useTauriSync] underlying_request_still_in_flight', { label, timeoutMs });
       }
     }, timeoutMs + 50);
   });
@@ -124,7 +125,7 @@ export function useTauriSync() {
             const store = useProjectStore.getState();
 
             if (event === 'SIGNED_OUT') {
-              console.warn('[CloudSync] ACCOUNT LOGOUT — clearing visible workspace');
+              devWarn('[CloudSync] ACCOUNT LOGOUT — clearing visible workspace');
               clearCloudHydrationAutosaveSkipIds();
               store.setProjects([]);
               store.resetCloudState();
@@ -167,7 +168,7 @@ export function useTauriSync() {
               store.setSubscriptionTier(sub.tier);
               store.setSubscriptionStatus(sub.status);
             } catch (err) {
-              console.error('Subscription fetch failed:', err);
+              devError('Subscription fetch failed:', err);
             }
 
             // Treat both restored sessions and fresh manual sign-ins as
@@ -183,7 +184,7 @@ export function useTauriSync() {
             // ACCOUNT ISOLATION: A different user (or first-time login) is taking
             // over. Immediately clear the previous user's projects from the store
             // so they are never visible to the incoming user, even briefly.
-            console.warn('[useTauriSync] ACCOUNT SWITCH DETECTED — clearing visible workspace');
+            devWarn('[useTauriSync] ACCOUNT SWITCH DETECTED — clearing visible workspace');
             clearCloudHydrationAutosaveSkipIds();
             store.setProjects([]);
 
@@ -193,12 +194,12 @@ export function useTauriSync() {
               // Pull ONLY — never push on login. The device may have projects from
               // a different account on disk. Local projects are ignored here; push
               // only happens when the user explicitly saves a project.
-              console.warn('[useTauriSync] LOCAL PROJECTS IGNORED ON LOGIN — pulling cloud state only');
+              devWarn('[useTauriSync] LOCAL PROJECTS IGNORED ON LOGIN — pulling cloud state only');
 
               const applyCloudResult = (merged: ProjectMemory[], conflicts: string[]) => {
                 const st = useProjectStore.getState();
 
-                console.warn(`[useTauriSync] CLOUD PROJECTS LOADED: ${merged.length} projects`);
+                devWarn(`[useTauriSync] CLOUD PROJECTS LOADED: ${merged.length} projects`);
 
                 // These projects came from cloud hydration, not a user edit.
                 // Skip the first autosave for each hydrated project so startup/login
@@ -225,7 +226,7 @@ export function useTauriSync() {
                 'Cloud restore timed out.',
                 'useTauriSync.account_entry_sync_cycle',
                 ({ merged: lateM, conflicts: lateC }) => {
-                  console.warn('[useTauriSync] LATE CLOUD RESULT ARRIVED — applying to store');
+                  devWarn('[useTauriSync] LATE CLOUD RESULT ARRIVED — applying to store');
                   useProjectStore.getState().setSyncStatus('synced');
                   applyCloudResult(lateM, lateC);
                 },
@@ -233,7 +234,7 @@ export function useTauriSync() {
 
               applyCloudResult(merged, conflicts);
             } catch (err) {
-              console.error('Cloud sync failed:', err);
+              devError('Cloud sync failed:', err);
               store.setSyncStatus('error');
               store.showToast('Cloud sync failed.', 'error');
             }
@@ -281,7 +282,7 @@ export function useTauriSync() {
     if (!project) return;
 
     if (consumeCloudHydrationAutosaveSkip(project.id)) {
-      console.warn('[useTauriSync] AUTOSAVE SKIPPED — cloud hydration', {
+      devWarn('[useTauriSync] AUTOSAVE SKIPPED — cloud hydration', {
         projectId: project.id,
       });
 

@@ -12,6 +12,7 @@ import {
 } from '../../services/cloudSync';
 import type { ProjectMemory } from '../../types/memphant-types';
 import { replaceCloudHydrationAutosaveSkipIds } from '../../utils/cloudHydrationAutosave';
+import { devError, devWarn } from '../../utils/devLogging';
 
 type AppEnv = {
   VITE_APP_URL?: string;
@@ -45,7 +46,7 @@ function withUiTimeout<T>(
       if (settled) return;
       settled = true;
       timedOut = true;
-      console.warn('[SettingsSync] ui_timeout_fired', { label, timeoutMs, uiOnly: true });
+      devWarn('[SettingsSync] ui_timeout_fired', { label, timeoutMs, uiOnly: true });
       reject(new Error(message));
     }, timeoutMs);
 
@@ -53,7 +54,7 @@ function withUiTimeout<T>(
       (value) => {
         if (settled) {
           if (timedOut) {
-            console.warn('[SettingsSync] late_resolution_applying', { label, timeoutMs });
+            devWarn('[SettingsSync] late_resolution_applying', { label, timeoutMs });
             onLateSuccess?.(value);
           }
           return;
@@ -65,20 +66,20 @@ function withUiTimeout<T>(
       (error) => {
         if (settled) {
           if (timedOut) {
-            console.warn('[SettingsSync] late_rejection_ignored', { label, timeoutMs, error });
+            devWarn('[SettingsSync] late_rejection_ignored', { label, timeoutMs, error });
           }
           return;
         }
         settled = true;
         window.clearTimeout(timeoutId);
-        console.error('[SettingsSync] ui_timeout_rejected', { label, timeoutMs, error });
+        devError('[SettingsSync] ui_timeout_rejected', { label, timeoutMs, error });
         reject(error);
       },
     );
 
     window.setTimeout(() => {
       if (!settled) {
-        console.warn('[SettingsSync] underlying_request_still_in_flight', { label, timeoutMs });
+        devWarn('[SettingsSync] underlying_request_still_in_flight', { label, timeoutMs });
       }
     }, timeoutMs + 50);
   });
@@ -296,7 +297,7 @@ export function SettingsSync() {
       setSubscriptionTier(sub.tier);
       setSubscriptionStatus(sub.status);
     } catch (err) {
-      console.error('[SettingsSync] subscription fetch error:', err);
+      devError('[SettingsSync] subscription fetch error:', err);
       setSubscriptionTier('free');
       setSubscriptionStatus('none');
     }
@@ -308,13 +309,13 @@ export function SettingsSync() {
       // ACCOUNT ISOLATION: Never push local projects into the cloud on sign-in.
       // The device may have projects from a different account on disk.
       // Always pull-only on login — push happens only on explicit user saves.
-      console.warn('[SettingsSync] LOCAL PROJECTS IGNORED ON LOGIN — pulling cloud state only');
+      devWarn('[SettingsSync] LOCAL PROJECTS IGNORED ON LOGIN — pulling cloud state only');
 
       const applySignInResult = (merged: ProjectMemory[], conflicts: string[]) => {
         const st = useProjectStore.getState();
         // Always replace the visible project list with this account's cloud view,
         // regardless of whether anything "changed" — local projects must not persist.
-        console.warn(`[SettingsSync] CLOUD PROJECTS LOADED: ${merged.length} projects`);
+        devWarn(`[SettingsSync] CLOUD PROJECTS LOADED: ${merged.length} projects`);
         replaceCloudHydrationAutosaveSkipIds(merged.map((project) => project.id));
         st.setProjects(merged);
         st.setActiveProject(merged.length > 0 ? merged[0].id : null);
@@ -337,7 +338,7 @@ export function SettingsSync() {
         'Cloud sync is taking longer than expected - the server may be waking up. Try syncing again.',
         'settings.signin_sync_cycle',
         ({ merged: lateM, conflicts: lateC }) => {
-          console.warn('[SettingsSync] LATE CLOUD RESULT ARRIVED — applying to store');
+          devWarn('[SettingsSync] LATE CLOUD RESULT ARRIVED — applying to store');
           applySignInResult(lateM, lateC);
         },
       );
@@ -348,7 +349,7 @@ export function SettingsSync() {
       setSyncStatus('error');
       setSyncErrorDetails(message);
       showToast(`Signed in, but cloud sync failed: ${message}`, 'error');
-      console.error('[SettingsSync] finishCloudSignIn error:', err);
+      devError('[SettingsSync] finishCloudSignIn error:', err);
     }
   }
 
@@ -439,7 +440,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
       setSyncStatus('error');
       // Surface the real error message rather than the generic "check connection"
       showToast(`Sync failed: ${message}`, 'error');
-      console.error('[SettingsSync] syncNow error — full detail:', err);
+      devError('[SettingsSync] syncNow error — full detail:', err);
     }
   }
 
@@ -461,7 +462,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
       showToast('Cloud disconnected. Local projects stay on this device.');
     } catch (err) {
       const message = errorMessage(err, 'Could not disconnect cloud backup.');
-      console.error('[SettingsSync] disconnect_cloud_error:', err);
+      devError('[SettingsSync] disconnect_cloud_error:', err);
       showToast(message, 'error');
       setCloudDisconnecting(false);
     } finally {
@@ -508,7 +509,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
       showToast('Logged out.');
     } catch (err) {
       const message = errorMessage(err, 'Could not log out.');
-      console.error('[SettingsSync] logout_error:', err);
+      devError('[SettingsSync] logout_error:', err);
       showToast(message, 'error');
     } finally {
       setLoggingOut(false);

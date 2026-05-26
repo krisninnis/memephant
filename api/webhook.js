@@ -68,7 +68,7 @@ async function upsertSubscription({ userId, customerId, subId, tier, status }) {
   );
 
   if (error) {
-    console.error('[webhook] Supabase upsert error:', error);
+    console.error('[webhook] Supabase upsert error:', error.message);
     throw new Error(error.message);
   }
 }
@@ -98,7 +98,6 @@ async function handleCheckoutComplete(session) {
   const status       = subscription.status; // 'active', 'trialing', etc.
 
   await upsertSubscription({ userId, customerId, subId, tier, status });
-  console.log(`[webhook] checkout complete → user ${userId} tier=${tier} status=${status}`);
 }
 
 /**
@@ -122,17 +121,15 @@ async function handleSubscriptionUpdated(subscription) {
       .single();
 
     if (!data?.user_id) {
-      console.warn('[webhook] subscription.updated — cannot resolve user for customer', customerId);
+      console.warn('[webhook] subscription.updated — cannot resolve user for customer');
       return;
     }
 
     await upsertSubscription({ userId: data.user_id, customerId, subId, tier, status });
-    console.log(`[webhook] subscription updated → user ${data.user_id} tier=${tier} status=${status}`);
     return;
   }
 
   await upsertSubscription({ userId, customerId, subId, tier, status });
-  console.log(`[webhook] subscription updated → user ${userId} tier=${tier} status=${status}`);
 }
 
 /**
@@ -149,7 +146,7 @@ async function handleSubscriptionDeleted(subscription) {
     .single();
 
   if (!data?.user_id) {
-    console.warn('[webhook] subscription.deleted — cannot resolve user for customer', customerId);
+    console.warn('[webhook] subscription.deleted — cannot resolve user for customer');
     return;
   }
 
@@ -160,7 +157,6 @@ async function handleSubscriptionDeleted(subscription) {
     tier:       'free',
     status:     'canceled',
   });
-  console.log(`[webhook] subscription deleted → user ${data.user_id} downgraded to free`);
 }
 
 /**
@@ -178,7 +174,7 @@ async function handlePaymentFailed(invoice) {
     .single();
 
   if (!data?.user_id) {
-    console.warn('[webhook] invoice.payment_failed — cannot resolve user for customer', customerId);
+    console.warn('[webhook] invoice.payment_failed — cannot resolve user for customer');
     return;
   }
 
@@ -189,7 +185,6 @@ async function handlePaymentFailed(invoice) {
     tier:       data.tier,   // keep existing tier, just mark past_due
     status:     'past_due',
   });
-  console.log(`[webhook] payment failed → user ${data.user_id} marked past_due`);
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -242,7 +237,6 @@ export default async function handler(req, res) {
 
       default:
         // Silently ignore events we don't care about
-        console.log(`[webhook] Ignored event type: ${event.type}`);
     }
 
     return res.status(200).json({ received: true });

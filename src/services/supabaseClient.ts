@@ -4,6 +4,7 @@
  * checks `cloudAvailable` before attempting any network calls.
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { devError, devWarn } from '../utils/devLogging';
 
 // In-process Promise queue — equivalent to processLock from @supabase/auth-js.
 // Avoids importing a transitive package directly (no type declarations in the
@@ -88,7 +89,7 @@ const instrumentedFetch: typeof fetch = async (input, init) => {
 
   if (isProjectsWrite) {
     inflightTimer = window.setTimeout(() => {
-      console.warn('[SupabaseHTTP][projects_write] timeout', {
+      devWarn('[SupabaseHTTP][projects_write] timeout', {
         requestId,
         method,
         path,
@@ -99,7 +100,7 @@ const instrumentedFetch: typeof fetch = async (input, init) => {
 
     if (signal) {
       abortListener = () => {
-        console.warn('[SupabaseHTTP][projects_write] aborted', {
+        devWarn('[SupabaseHTTP][projects_write] aborted', {
           requestId,
           method,
           path,
@@ -122,7 +123,7 @@ const instrumentedFetch: typeof fetch = async (input, init) => {
         return result
       } catch (err) {
         if (isProjectsWrite) {
-          console.error('[SupabaseHTTP][projects_write] fetch_error', {
+          devError('[SupabaseHTTP][projects_write] fetch_error', {
             requestId,
             method,
             path,
@@ -143,7 +144,7 @@ const instrumentedFetch: typeof fetch = async (input, init) => {
         return result
       } catch (err) {
         if (isProjectsWrite) {
-          console.error('[SupabaseHTTP][projects_write] fetch_error', {
+          devError('[SupabaseHTTP][projects_write] fetch_error', {
             requestId,
             method,
             path,
@@ -159,7 +160,7 @@ const instrumentedFetch: typeof fetch = async (input, init) => {
     return response
   } catch (err) {
     if (isProjectsWrite) {
-      console.error('[SupabaseHTTP][projects_write] fetch_error', {
+      devError('[SupabaseHTTP][projects_write] fetch_error', {
         requestId,
         method,
         path,

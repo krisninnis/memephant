@@ -28,6 +28,7 @@ import {
   queuedEntriesForUser,
 } from './syncQueue';
 import { getRuntimeEnv } from '../utils/runtimeEnv';
+import { devError, devWarn } from '../utils/devLogging';
 import { toCloudProjectData } from './toCloudProjectData';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -181,7 +182,7 @@ function classifyError(
 }
 
 function logSync(stage: CloudSyncStage, event: string, meta: SyncLogMeta = {}): void {
-  console.warn(`[CloudSync][${stage}] ${event}`, meta);
+  devWarn(`[CloudSync][${stage}] ${event}`, meta);
 }
 
 function logSyncError(
@@ -190,7 +191,7 @@ function logSyncError(
   err: unknown,
   meta: SyncLogMeta = {},
 ): void {
-  console.error(`[CloudSync][${stage}] ${event}`, {
+  devError(`[CloudSync][${stage}] ${event}`, {
     ...meta,
     kind: classifyError(err),
     error: normalizeError(err),
@@ -1596,11 +1597,6 @@ async function _runCycle(
   logSync('cycle', 'cycle_start', { reason, cycleId, userId, localCount: localProjects.length });
 
   if ((reason === 'signin' || reason === 'startup') && localProjects.length > 0) {
-    console.warn(
-      `[cloudSync] SAFETY: local projects received on ${reason} cycle — dropping ${localProjects.length} to prevent cross-account leak`,
-      { cycleId, userId, projectIds: localProjects.map((p) => p.id) },
-    );
-
     logSync('cycle', 'unsafe_local_projects_dropped', {
       reason,
       cycleId,
