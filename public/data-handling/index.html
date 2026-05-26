@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memephant Data Handling</title>
+  <meta name="description" content="How Memephant handles local project data, exports, cloud backup, and telemetry." />
+  <link rel="canonical" href="https://memephant.com/data-handling/" />
+  <style>
+    :root { color-scheme: dark; --bg:#0d0d1a; --card:#12121f; --border:#2a2a40; --text:#e8e8f4; --muted:#a7a7bf; --accent:#d97706; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; line-height:1.65; padding:32px 18px; }
+    main { width:min(880px,100%); margin:0 auto; padding:32px; border:1px solid var(--border); border-radius:18px; background:var(--card); }
+    h1,h2 { line-height:1.2; }
+    h1 { margin:0 0 8px; font-size:clamp(2rem,5vw,3rem); }
+    h2 { margin:28px 0 8px; }
+    p,li { color:var(--muted); }
+    strong { color:var(--text); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Data Handling Summary</h1>
+    <p>Memephant is local-first. This page summarizes the main data flows.</p>
+
+    <h2>Stored Locally</h2>
+    <ul>
+      <li>Project memory, checkpoints, and settings.</li>
+      <li>Personal Memory Vault data.</li>
+      <li>Passport profile data.</li>
+      <li>Optional offline sync queue data when cloud backup is enabled and temporarily unavailable.</li>
+    </ul>
+
+    <h2>User-Controlled Exports</h2>
+    <p>
+      Handoffs are generated locally and copied only when you click a copy/export action. Export
+      sanitisation and linked-folder path redaction are part of the export boundary.
+    </p>
+
+    <h2>Optional Network Features</h2>
+    <ul>
+      <li><strong>Cloud backup:</strong> requires sign-in and sends project data to the configured backend.</li>
+      <li><strong>Billing:</strong> uses hosted checkout and billing provider flows.</li>
+      <li><strong>Desktop updates:</strong> checks signed release metadata when used in the installed desktop app.</li>
+      <li><strong>Crash reporting:</strong> optional and disabled by default.</li>
+    </ul>
+
+    <h2>Not Included Automatically</h2>
+    <ul>
+      <li>Personal Memory Vault contents are not included in project exports by default.</li>
+      <li>Memephant does not send project data directly to AI providers.</li>
+      <li>Telemetry and analytics are not required to use the app.</li>
+    </ul>
+  </main>
+</body>
+</html>

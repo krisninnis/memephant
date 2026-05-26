@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memephant Privacy Policy</title>
+  <meta name="description" content="Memephant privacy policy and local-first data handling summary." />
+  <link rel="canonical" href="https://memephant.com/privacy/" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d1a;
+      --card: #12121f;
+      --border: #2a2a40;
+      --text: #e8e8f4;
+      --muted: #a7a7bf;
+      --accent: #d97706;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.65;
+      padding: 32px 18px;
+    }
+    main {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--card);
+    }
+    h1, h2 { line-height: 1.2; }
+    h1 { margin: 0 0 8px; font-size: clamp(2rem, 5vw, 3rem); }
+    h2 { margin: 28px 0 8px; color: #f4f4fb; }
+    p, li { color: var(--muted); }
+    a { color: var(--accent); }
+    .meta { margin: 0 0 24px; color: #74748f; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated: May 2026</p>
+
+    <p>
+      Memephant is local-first project continuity software. By default, project memory is stored on
+      your device and nothing is sent to an AI service automatically.
+    </p>
+
+    <h2>What Memephant Stores</h2>
+    <p>
+      Memephant stores project names, summaries, goals, decisions, notes, linked-folder metadata,
+      checkpoints, settings, and other project memory you choose to enter. Desktop project data is
+      stored in the operating system application data directory.
+    </p>
+
+    <h2>When Data Leaves Your Device</h2>
+    <p>Data leaves your device only when you choose a feature that requires it, such as:</p>
+    <ul>
+      <li>copying an export to your clipboard and pasting it into another service;</li>
+      <li>signing in and enabling optional cloud backup;</li>
+      <li>using hosted account, checkout, billing, or support flows;</li>
+      <li>enabling optional crash reporting.</li>
+    </ul>
+
+    <h2>Telemetry and Crash Reporting</h2>
+    <p>
+      Memephant does not use product analytics or ad tracking in the core app. Crash reporting is
+      optional, disabled by default, and intended to send error diagnostics rather than project
+      content. Do not enable it if you do not want diagnostic data sent to a third-party crash
+      reporting provider.
+    </p>
+
+    <h2>Local AI</h2>
+    <p>
+      Private Mode is optional. When enabled, Memephant connects to your configured local Ollama
+      endpoint on this device. Local AI is not required for normal use.
+    </p>
+
+    <h2>Cloud Backup</h2>
+    <p>
+      Cloud backup is optional and requires sign-in. If enabled, project data is transmitted over
+      HTTPS to the configured backend so it can sync across your devices.
+    </p>
+
+    <h2>Your Control</h2>
+    <ul>
+      <li>You can use Memephant without signing in.</li>
+      <li>You can download your data from the app.</li>
+      <li>You can clear local project data from the app.</li>
+      <li>You can disconnect cloud backup if you enabled it.</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>
+      Privacy questions can be sent to <a href="mailto:hello@memephant.com">hello@memephant.com</a>.
+    </p>
+  </main>
+</body>
+</html>

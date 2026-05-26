@@ -67,9 +67,11 @@ Before **every** export, Memephant scans the output and strips credentials match
 
 These patterns are hardcoded in the Rust backend and the TypeScript export utilities. They are **not** user-configurable and cannot be disabled.
 
-### No telemetry
+### Telemetry and diagnostics
 
-Memephant collects no analytics, crash reports, or usage data. The clipboard watcher is opt-in only and is never active by default.
+Memephant collects no product analytics or ad-tracking data in the core app.
+Crash reporting is optional, disabled by default, and controlled by the user in Settings.
+The clipboard watcher is opt-in only and is never active by default.
 
 ### Tauri security
 

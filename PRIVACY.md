@@ -21,6 +21,7 @@ Memephant can send data over the internet only in these optional cases:
 - If you sign in and enable Cloud Backup, your projects are sent to Supabase so they can sync across your devices.
 - If you subscribe to a paid plan, billing flows are handled through Stripe-hosted checkout and billing pages.
 - If you choose to use the web app instead of the desktop app, your browser will connect to the Memephant website and related backend endpoints.
+- If you explicitly enable crash reporting, diagnostic error reports may be sent to the configured crash reporting provider.
 
 Memephant does not send your project data to ChatGPT, Claude, Gemini, Grok, Perplexity, or any other AI service directly. You choose what to copy and paste into those services yourself.
 
@@ -44,9 +45,11 @@ If you link a project folder, Memephant scans local files and metadata to help b
 
 If you create an account, Memephant stores account and authentication data through Supabase Auth. If you subscribe to a paid plan, Stripe stores billing and subscription data needed to manage payments.
 
-## Analytics and tracking
+## Analytics, telemetry, and crash reporting
 
-This repository does not show product analytics or ad-tracking code in the core app. Cloud requests that support sign-in, sync, auth callbacks, subscriptions, and account management are still part of the product when those features are used.
+Memephant does not use product analytics or ad-tracking code in the core app.
+Crash reporting is optional, disabled by default, and controlled in Settings.
+Cloud requests that support sign-in, sync, auth callbacks, subscriptions, and account management are still part of the product when those features are used.
 
 ## Your control
 

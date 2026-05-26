@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memephant Local-First Model</title>
+  <meta name="description" content="Memephant's local-first model for project continuity." />
+  <link rel="canonical" href="https://memephant.com/local-first/" />
+  <style>
+    :root { color-scheme: dark; --bg:#0d0d1a; --card:#12121f; --border:#2a2a40; --text:#e8e8f4; --muted:#a7a7bf; --accent:#d97706; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; line-height:1.65; padding:32px 18px; }
+    main { width:min(880px,100%); margin:0 auto; padding:32px; border:1px solid var(--border); border-radius:18px; background:var(--card); }
+    h1,h2 { line-height:1.2; }
+    h1 { margin:0 0 8px; font-size:clamp(2rem,5vw,3rem); }
+    h2 { margin:28px 0 8px; }
+    p,li { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Local-First by Design</h1>
+    <p>
+      Memephant is built around a simple idea: your project context should start on your device,
+      stay understandable, and move only when you choose to move it.
+    </p>
+
+    <h2>What Local-First Means Here</h2>
+    <ul>
+      <li>The desktop app stores project memory in local application data.</li>
+      <li>AI handoffs are generated locally and copied by the user.</li>
+      <li>Cloud backup is optional rather than required.</li>
+      <li>Local AI is optional and points at a local Ollama endpoint.</li>
+    </ul>
+
+    <h2>What It Does Not Mean</h2>
+    <ul>
+      <li>It does not mean every optional feature is offline-only.</li>
+      <li>It does not mean copied exports are controlled after you paste them into another tool.</li>
+      <li>It does not replace normal backups, security review, or source control.</li>
+    </ul>
+  </main>
+</body>
+</html>
