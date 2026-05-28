@@ -2493,6 +2493,46 @@ select {
   line-height: 1.35;
 }
 
+.build-update-btn {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(34, 197, 94, 0.11), rgba(14, 165, 233, 0.07)),
+    rgba(15, 23, 42, 0.34);
+  color: rgba(248, 250, 252, 0.94);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.build-update-btn:hover:not(:disabled) {
+  border-color: rgba(74, 222, 128, 0.42);
+  transform: translateY(-1px);
+}
+
+.build-update-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.build-update-btn span {
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.build-update-btn small {
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 .workflow-mode-selector {
   display: grid;
   gap: 9px;
@@ -2903,6 +2943,64 @@ select {
 }
 
 .launch-passport-textarea {
+  min-height: 220px;
+}
+
+.build-update-modal {
+  width: min(980px, 100%);
+}
+
+.build-update-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.build-update-section {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.build-update-section div {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.build-update-section h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.build-update-section span {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.1);
+  color: rgba(187, 247, 208, 0.92);
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+.build-update-section p {
+  margin: 0;
+  color: rgba(203, 213, 225, 0.78);
+  font-size: 0.76rem;
+  line-height: 1.42;
+  white-space: pre-wrap;
+}
+
+.build-update-textarea {
   min-height: 220px;
 }
 

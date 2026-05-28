@@ -56,6 +56,7 @@ import {
 import type { AIWorkflowMode, ExportMode, HandoffMode } from '../../types/memphant-types';
 import { ContextPassportModal } from './ContextPassportModal';
 import { LaunchPassportModal } from './LaunchPassportModal';
+import { BuildUpdateModal } from './BuildUpdateModal';
 import { ExportDiffPanel } from './ExportDiffPanel';
 import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
 import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
@@ -161,6 +162,7 @@ export function ExportButtons() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [passportOpen, setPassportOpen] = useState(false);
   const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
+  const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [passportUnlocked, setPassportUnlocked] = useState(false);
@@ -800,6 +802,17 @@ export function ExportButtons() {
         <small>Launch posts, demo outline, and checklist from this project</small>
       </button>
 
+      <button
+        type="button"
+        className="build-update-btn"
+        onClick={() => setBuildUpdateOpen(true)}
+        disabled={!activeProject}
+        title="Generate progress posts and release updates from this project context"
+      >
+        <span>Generate Build Update</span>
+        <small>Progress posts, release notes, and feedback requests</small>
+      </button>
+
       <div className="frontal-lobe-export-status" aria-live="polite">
         {frontalLobeStatus}
       </div>
@@ -1237,6 +1250,13 @@ export function ExportButtons() {
         <LaunchPassportModal
           project={activeProject}
           onClose={() => setLaunchPassportOpen(false)}
+        />
+      )}
+
+      {buildUpdateOpen && activeProject && (
+        <BuildUpdateModal
+          project={activeProject}
+          onClose={() => setBuildUpdateOpen(false)}
         />
       )}
 

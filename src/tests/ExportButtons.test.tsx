@@ -176,7 +176,8 @@ describe('ExportButtons export preview', () => {
   it('stores the selected AI Workflow Mode on the project', () => {
     render(<ExportButtons />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Build/i }));
+    const workflowModes = screen.getByLabelText('AI Workflow Mode');
+    fireEvent.click(within(workflowModes).getByRole('button', { name: /Build/i }));
 
     expect(mockProjectStoreState.updateProject).toHaveBeenCalledWith(
       'export-preview-project',
@@ -214,7 +215,7 @@ describe('ExportButtons export preview', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Launch Passport' });
     expect(within(dialog).getByText(
-      'Reusable launch assets generated from this project context. Review before posting.',
+      /Launch Passport is for explaining and sharing the project/i,
     )).toBeInTheDocument();
     expect(within(dialog).getByText('X/Twitter launch post')).toBeInTheDocument();
     const launchText = within(dialog).getByLabelText('Launch Passport export text') as HTMLTextAreaElement;
@@ -227,6 +228,37 @@ describe('ExportButtons export preview', () => {
     });
     await waitFor(() => {
       expect(within(dialog).getByRole('button', { name: 'Copied Launch Passport' }))
+      .toBeInTheDocument();
+    });
+  });
+
+  it('opens and copies a Build Update generated from project context', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+
+    render(<ExportButtons />);
+
+    fireEvent.click(screen.getByRole('button', { name: /generate build update/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Build Update' });
+    expect(within(dialog).getByText(
+      'Ongoing progress posts generated from this project context. Review before sharing.',
+    )).toBeInTheDocument();
+    expect(within(dialog).getByText('X/Twitter build update')).toBeInTheDocument();
+    expect(within(dialog).getByText('X/Twitter')).toBeInTheDocument();
+    const updateText = within(dialog).getByLabelText('Build Update export text') as HTMLTextAreaElement;
+    expect(updateText.value).toContain('Export Preview Project');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Build Update' }));
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('# Build Update'));
+    });
+    await waitFor(() => {
+      expect(within(dialog).getByRole('button', { name: 'Copied Build Update' }))
         .toBeInTheDocument();
     });
   });
