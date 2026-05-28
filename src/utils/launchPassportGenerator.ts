@@ -5,6 +5,7 @@ import {
   filterPublicDecisions,
   publicAssetName,
 } from './contextQuality';
+import { getContentQualityWarning } from './contentReadiness';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type LaunchPassportSectionId =
@@ -28,6 +29,7 @@ export type LaunchPassportSection = {
 export type LaunchPassport = {
   projectName: string;
   generatedAt: string;
+  qualityWarning: string | null;
   sections: LaunchPassportSection[];
   markdown: string;
 };
@@ -79,6 +81,7 @@ export function generateLaunchPassport(
   const assets = cleanList(project.importantAssets).map(publicAssetName);
   const instructions = cleanText(project.aiInstructions);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
+  const qualityWarning = getContentQualityWarning(project);
   const keyGoal = goals[0] ?? 'help users get value faster';
   const keyNextStep = nextSteps[0] ?? 'collect feedback';
   const contextSignals = firstItems([
@@ -210,6 +213,7 @@ export function generateLaunchPassport(
     '',
     `Generated: ${generatedAt}`,
     '',
+    ...(qualityWarning ? [`> ${qualityWarning}`, ''] : []),
     ...sections.flatMap((section) => [
       `## ${section.title}`,
       '',
@@ -221,6 +225,7 @@ export function generateLaunchPassport(
   return {
     projectName: name,
     generatedAt,
+    qualityWarning,
     sections,
     markdown,
   };

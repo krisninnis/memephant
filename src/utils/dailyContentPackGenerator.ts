@@ -6,6 +6,7 @@ import {
   filterPublicDecisions,
   publicAssetName,
 } from './contextQuality';
+import { getContentQualityWarning } from './contentReadiness';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type DailyContentPackSectionId =
@@ -30,6 +31,7 @@ export type DailyContentPackSection = {
 export type DailyContentPack = {
   projectName: string;
   generatedAt: string;
+  qualityWarning: string | null;
   sections: DailyContentPackSection[];
   markdown: string;
 };
@@ -80,6 +82,7 @@ export function generateDailyContentPack(
   const assets = cleanList(project.importantAssets).map(publicAssetName);
   const changes = recentChangeSummary(project.changelog);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
+  const qualityWarning = getContentQualityWarning(project);
   const dailySignals = firstItems([
     ...changes,
     ...inProgress.map((item) => `Worked on ${item}`),
@@ -226,6 +229,7 @@ export function generateDailyContentPack(
     '',
     `Generated: ${generatedAt}`,
     '',
+    ...(qualityWarning ? [`> ${qualityWarning}`, ''] : []),
     ...sections.flatMap((section) => [
       `## ${section.title}`,
       '',
@@ -239,6 +243,7 @@ export function generateDailyContentPack(
   return {
     projectName: name,
     generatedAt,
+    qualityWarning,
     sections,
     markdown,
   };

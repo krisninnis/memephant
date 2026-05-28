@@ -6,6 +6,7 @@ import {
   filterPublicDecisions,
   publicAssetName,
 } from './contextQuality';
+import { getContentQualityWarning } from './contentReadiness';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type BuildUpdateSectionId =
@@ -30,6 +31,7 @@ export type BuildUpdateSection = {
 export type BuildUpdate = {
   projectName: string;
   generatedAt: string;
+  qualityWarning: string | null;
   sections: BuildUpdateSection[];
   markdown: string;
 };
@@ -80,6 +82,7 @@ export function generateBuildUpdate(
   const assets = cleanList(project.importantAssets).map(publicAssetName);
   const changes = recentChangeSummary(project.changelog);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
+  const qualityWarning = getContentQualityWarning(project);
   const shippedItems = firstItems([
     ...changes,
     ...inProgress.map((item) => `Worked on ${item}`),
@@ -240,6 +243,7 @@ export function generateBuildUpdate(
     '',
     `Generated: ${generatedAt}`,
     '',
+    ...(qualityWarning ? [`> ${qualityWarning}`, ''] : []),
     ...sections.flatMap((section) => [
       `## ${section.title}`,
       '',
@@ -253,6 +257,7 @@ export function generateBuildUpdate(
   return {
     projectName: name,
     generatedAt,
+    qualityWarning,
     sections,
     markdown,
   };

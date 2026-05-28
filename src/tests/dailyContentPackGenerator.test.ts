@@ -111,4 +111,14 @@ describe('generateDailyContentPack', () => {
     expect(pack.markdown).not.toContain('Copied project context');
     expect(pack.markdown).toContain('Shipped Daily Content Pack preview.');
   });
+
+  it('adds a content quality warning when positioning context is weak', () => {
+    const pack = generateDailyContentPack({
+      ...project,
+      summary: 'Write 1-2 sentences describing what is true right now after this session.',
+    }, '2026-05-28T12:00:00.000Z');
+
+    expect(pack.qualityWarning).toBe('Content quality may be limited because the project summary is incomplete.');
+    expect(pack.markdown).toContain('> Content quality may be limited because the project summary is incomplete.');
+  });
 });

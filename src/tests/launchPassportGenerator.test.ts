@@ -84,4 +84,14 @@ describe('generateLaunchPassport', () => {
     expect(passport.markdown).toContain('Record a handoff demo clip');
     expect(passport.markdown).toContain('Keep Context Passport as the main demo moment.');
   });
+
+  it('adds a content quality warning when positioning context is weak', () => {
+    const passport = generateLaunchPassport({
+      ...project,
+      summary: 'Write 1-2 sentences describing what is true right now after this session.',
+    }, '2026-05-28T12:00:00.000Z');
+
+    expect(passport.qualityWarning).toBe('Content quality may be limited because the project summary is incomplete.');
+    expect(passport.markdown).toContain('> Content quality may be limited because the project summary is incomplete.');
+  });
 });

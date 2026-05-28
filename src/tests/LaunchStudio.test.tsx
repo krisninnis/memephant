@@ -45,9 +45,23 @@ describe('LaunchStudio', () => {
       'Turn this project context into launch posts, build updates, demo scripts, and feedback requests.',
     )).toBeInTheDocument();
     expect(screen.getByText('Project: Launch Studio Project')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Check Content Readiness/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Launch Passport/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Build Update/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Daily Content Pack/i })).toBeInTheDocument();
+  });
+
+  it('opens Content Readiness with score, weak areas, and suggestions', () => {
+    render(<LaunchStudio />);
+
+    fireEvent.click(screen.getByRole('button', { name: /check content readiness/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Content Readiness' });
+    expect(within(dialog).getByLabelText('Overall readiness score')).toHaveTextContent('/100');
+    expect(within(dialog).getByText('Strengths')).toBeInTheDocument();
+    expect(within(dialog).getByText('Weak areas')).toBeInTheDocument();
+    expect(within(dialog).getByText('Suggested improvements')).toBeInTheDocument();
+    expect(within(dialog).getByText('Missing positioning signals')).toBeInTheDocument();
   });
 
   it('opens and copies a Launch Passport generated from project context', async () => {
@@ -117,6 +131,8 @@ describe('LaunchStudio', () => {
     render(<LaunchStudio />);
 
     expect(screen.getByRole('heading', { name: 'Open a project first' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Check Content Readiness/i }))
+      .not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Generate Launch Passport/i }))
       .not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Generate Daily Content Pack/i }))

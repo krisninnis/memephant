@@ -123,4 +123,14 @@ describe('generateBuildUpdate', () => {
     expect(releaseNotes?.content.match(/Added Launch Passport polish\./g)).toHaveLength(1);
     expect(update.markdown).toContain('Refined workflow mode guidance.');
   });
+
+  it('adds a content quality warning when positioning context is weak', () => {
+    const update = generateBuildUpdate({
+      ...project,
+      summary: 'Write 1-2 sentences describing what is true right now after this session.',
+    }, '2026-05-28T12:00:00.000Z');
+
+    expect(update.qualityWarning).toBe('Content quality may be limited because the project summary is incomplete.');
+    expect(update.markdown).toContain('> Content quality may be limited because the project summary is incomplete.');
+  });
 });

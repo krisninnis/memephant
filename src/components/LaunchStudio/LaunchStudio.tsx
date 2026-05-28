@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useActiveProject } from '../../hooks/useActiveProject';
 import { LaunchPassportModal } from '../Workspace/LaunchPassportModal';
 import { BuildUpdateModal } from '../Workspace/BuildUpdateModal';
+import { ContentReadinessModal } from './ContentReadinessModal';
 import { DailyContentPackModal } from './DailyContentPackModal';
 
 export function LaunchStudio() {
@@ -9,6 +10,7 @@ export function LaunchStudio() {
   const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
   const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
   const [dailyContentPackOpen, setDailyContentPackOpen] = useState(false);
+  const [contentReadinessOpen, setContentReadinessOpen] = useState(false);
 
   return (
     <div className="workspace-scroll">
@@ -39,6 +41,25 @@ export function LaunchStudio() {
           </section>
         ) : (
           <section className="launch-studio__grid" aria-label="Launch Studio tools">
+            <article className="launch-studio-card">
+              <div>
+                <h2>Content Readiness</h2>
+                <p>
+                  Check whether the project has enough positioning clarity to
+                  generate useful launch and social content.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="content-readiness-btn"
+                onClick={() => setContentReadinessOpen(true)}
+                title="Evaluate content readiness from local project context"
+              >
+                <span>Check Content Readiness</span>
+                <small>Score, weak areas, missing signals, suggestions</small>
+              </button>
+            </article>
+
             <article className="launch-studio-card">
               <div>
                 <h2>Launch Passport</h2>
@@ -103,6 +124,13 @@ export function LaunchStudio() {
         <LaunchPassportModal
           project={activeProject}
           onClose={() => setLaunchPassportOpen(false)}
+        />
+      )}
+
+      {contentReadinessOpen && activeProject && (
+        <ContentReadinessModal
+          project={activeProject}
+          onClose={() => setContentReadinessOpen(false)}
         />
       )}
 
