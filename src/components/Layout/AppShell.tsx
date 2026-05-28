@@ -12,6 +12,7 @@ import Toast from './Toast';
 import WelcomeScreen from './WelcomeScreen';
 import SettingsPage from '../Settings/SettingsPage';
 import SettingsMemoryVault from '../Settings/SettingsMemoryVault';
+import LaunchStudio from '../LaunchStudio/LaunchStudio';
 import TourOverlay from '../Tour/TourOverlay';
 import { CommandPalette } from '../CommandPalette/CommandPalette';
 import { PWAInstallButton } from '../PWAInstallButton';
@@ -194,6 +195,8 @@ export function AppShell() {
           </div>
         ) : currentView === 'passport' ? (
           <PassportPage />
+        ) : currentView === 'launch-studio' ? (
+          <LaunchStudio />
         ) : showWelcome ? (
           <WelcomeScreen />
         ) : (
@@ -282,7 +285,8 @@ export function AppShell() {
 
       {(currentView === 'settings' ||
         currentView === 'memory-vault' ||
-        currentView === 'passport') && (
+        currentView === 'passport' ||
+        currentView === 'launch-studio') && (
         <button
           type="button"
           className="mobile-projects-fab"

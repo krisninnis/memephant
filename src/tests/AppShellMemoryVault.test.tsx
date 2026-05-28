@@ -13,6 +13,7 @@ jest.mock('../services/tauriActions', () => ({
   createProjectFromTemplate: jest.fn(async () => undefined),
   importProjectFromFile: jest.fn(async () => undefined),
   deleteProject: jest.fn(async () => undefined),
+  copyExportToClipboard: jest.fn(async () => undefined),
 }));
 
 jest.mock('../components/CommandPalette/CommandPalette', () => ({
@@ -110,5 +111,24 @@ describe('AppShell Memory Vault navigation', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Your data rights layer')).toBeInTheDocument();
     expect(screen.getByText('Consent and licensing preview')).toBeInTheDocument();
+  });
+
+  it('shows Launch Studio as a separate top-level navigation option', () => {
+    render(<AppShell />);
+
+    expect(
+      screen.getByRole('button', { name: /Launch Studio Launch posts and build updates/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens Launch Studio from top-level navigation', () => {
+    render(<AppShell />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Launch Studio Launch posts and build updates/i }),
+    );
+
+    expect(screen.getByRole('heading', { name: 'Launch Studio' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Open a project first' })).toBeInTheDocument();
   });
 });

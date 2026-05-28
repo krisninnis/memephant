@@ -8,7 +8,7 @@ import { ensureProjectStableIds } from '../utils/stableItemIds';
 export type SyncStatus = 'saved_local' | 'pending' | 'syncing' | 'synced' | 'error';
 export type SubscriptionTier = 'free' | 'pro' | 'team';
 export type SubscriptionStatus = 'none' | 'active' | 'trialing' | 'past_due' | 'canceled';
-export type AppView = 'projects' | 'settings' | 'memory-vault' | 'passport';
+export type AppView = 'projects' | 'settings' | 'memory-vault' | 'passport' | 'launch-studio';
 
 const SETTINGS_STORAGE_KEY = 'mph_settings_v1';
 

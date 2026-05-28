@@ -55,8 +55,6 @@ import {
 } from '../../utils/platformRegistry';
 import type { AIWorkflowMode, ExportMode, HandoffMode } from '../../types/memphant-types';
 import { ContextPassportModal } from './ContextPassportModal';
-import { LaunchPassportModal } from './LaunchPassportModal';
-import { BuildUpdateModal } from './BuildUpdateModal';
 import { ExportHistoryModal } from './ExportHistoryModal';
 import { ExportDiffPanel } from './ExportDiffPanel';
 import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
@@ -162,8 +160,6 @@ export function ExportButtons() {
   const [manifestLoading, setManifestLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [passportOpen, setPassportOpen] = useState(false);
-  const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
-  const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
   const [exportHistoryOpen, setExportHistoryOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -795,28 +791,6 @@ export function ExportButtons() {
 
       <button
         type="button"
-        className="launch-passport-btn"
-        onClick={() => setLaunchPassportOpen(true)}
-        disabled={!activeProject}
-        title="Generate launch copy and checklist assets from this project context"
-      >
-        <span>Generate Launch Passport</span>
-        <small>Launch posts, demo outline, and checklist from this project</small>
-      </button>
-
-      <button
-        type="button"
-        className="build-update-btn"
-        onClick={() => setBuildUpdateOpen(true)}
-        disabled={!activeProject}
-        title="Generate progress posts and release updates from this project context"
-      >
-        <span>Generate Build Update</span>
-        <small>Progress posts, release notes, and feedback requests</small>
-      </button>
-
-      <button
-        type="button"
         className="export-history-btn"
         onClick={() => setExportHistoryOpen(true)}
         disabled={!activeProject}
@@ -1256,20 +1230,6 @@ export function ExportButtons() {
         <ContextPassportModal
           project={activeProject}
           onClose={() => setPassportOpen(false)}
-        />
-      )}
-
-      {launchPassportOpen && activeProject && (
-        <LaunchPassportModal
-          project={activeProject}
-          onClose={() => setLaunchPassportOpen(false)}
-        />
-      )}
-
-      {buildUpdateOpen && activeProject && (
-        <BuildUpdateModal
-          project={activeProject}
-          onClose={() => setBuildUpdateOpen(false)}
         />
       )}
 

@@ -402,6 +402,73 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             Private personal memory
           </span>
         </button>
+
+        <button
+          type="button"
+          className={`sidebar-nav-card${currentView === "launch-studio" ? " sidebar-nav-card--active" : ""}`}
+          aria-current={currentView === "launch-studio" ? "page" : undefined}
+          onClick={() => {
+            setCurrentView("launch-studio");
+            onNavigate?.();
+          }}
+          title="Open Launch Studio"
+          style={{
+            width: "100%",
+            cursor: "pointer",
+            background:
+              currentView === "launch-studio"
+                ? "linear-gradient(135deg, rgba(217,119,6,0.2), rgba(14,165,233,0.12))"
+                : "rgba(255,255,255,0.03)",
+            border:
+              currentView === "launch-studio"
+                ? "1px solid rgba(245,158,11,0.28)"
+                : "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "18px",
+            padding: "1rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: "0.38rem",
+            transition: "all 0.22s ease",
+            boxShadow:
+              currentView === "launch-studio"
+                ? "0 0 22px rgba(245,158,11,0.08)"
+                : "none",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.borderColor = "rgba(245,158,11,0.22)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.borderColor =
+              currentView === "launch-studio"
+                ? "rgba(245,158,11,0.28)"
+                : "rgba(255,255,255,0.08)";
+          }}
+        >
+          <span
+            style={{
+              color: "#f8fafc",
+              fontSize: "1rem",
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Launch Studio
+          </span>
+
+          <span
+            style={{
+              color: "#94a3b8",
+              fontSize: "0.76rem",
+              lineHeight: 1.5,
+              textAlign: "left",
+            }}
+          >
+            Launch posts and build updates
+          </span>
+        </button>
       </div>
 
       <div className="sidebar-actions">

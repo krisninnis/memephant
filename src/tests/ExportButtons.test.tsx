@@ -209,59 +209,15 @@ describe('ExportButtons export preview', () => {
     );
   });
 
-  it('opens and copies a Launch Passport generated from project context', async () => {
+  it('keeps launch tools out of the core workspace export controls', () => {
     render(<ExportButtons />);
 
-    fireEvent.click(screen.getByRole('button', { name: /generate launch passport/i }));
-
-    const dialog = screen.getByRole('dialog', { name: 'Launch Passport' });
-    expect(within(dialog).getByText(
-      /Launch Passport is for explaining and sharing the project/i,
-    )).toBeInTheDocument();
-    expect(within(dialog).getByText('X/Twitter launch post')).toBeInTheDocument();
-    const launchText = within(dialog).getByLabelText('Launch Passport export text') as HTMLTextAreaElement;
-    expect(launchText.value).toContain('Export Preview Project');
-
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Launch Passport' }));
-
-    await waitFor(() => {
-      expect(copyExportToClipboard).toHaveBeenCalledWith(
-        expect.stringContaining('# Launch Passport'),
-        'launch-passport',
-      );
-    });
-    await waitFor(() => {
-      expect(within(dialog).getByRole('button', { name: 'Copied Launch Passport' }))
-      .toBeInTheDocument();
-    });
-  });
-
-  it('opens and copies a Build Update generated from project context', async () => {
-    render(<ExportButtons />);
-
-    fireEvent.click(screen.getByRole('button', { name: /generate build update/i }));
-
-    const dialog = screen.getByRole('dialog', { name: 'Build Update' });
-    expect(within(dialog).getByText(
-      'Ongoing progress posts generated from this project context. Review before sharing.',
-    )).toBeInTheDocument();
-    expect(within(dialog).getByText('X/Twitter build update')).toBeInTheDocument();
-    expect(within(dialog).getByText('X/Twitter')).toBeInTheDocument();
-    const updateText = within(dialog).getByLabelText('Build Update export text') as HTMLTextAreaElement;
-    expect(updateText.value).toContain('Export Preview Project');
-
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Build Update' }));
-
-    await waitFor(() => {
-      expect(copyExportToClipboard).toHaveBeenCalledWith(
-        expect.stringContaining('# Build Update'),
-        'build-update',
-      );
-    });
-    await waitFor(() => {
-      expect(within(dialog).getByRole('button', { name: 'Copied Build Update' }))
-      .toBeInTheDocument();
-    });
+    expect(screen.queryByRole('button', { name: /generate launch passport/i }))
+      .not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /generate build update/i }))
+      .not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /export history/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /inspect export/i })).toBeInTheDocument();
   });
 
   it('opens Export History and compares current state to a previous export', () => {
