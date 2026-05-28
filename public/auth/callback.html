@@ -124,7 +124,7 @@
       </div>
 
       <div class="instructions" id="instructions"></div>
-      <button class="close-btn" id="close-btn" onclick="window.close()">Close this tab and return to Memephant</button>
+      <button class="close-btn" id="close-btn" type="button">Return to Memephant</button>
 
       <div class="wordmark">Memephant - Remember everything. Explain nothing.</div>
     </div>
@@ -137,6 +137,10 @@
         const spinnerEl = document.getElementById('spinner');
         const instrEl = document.getElementById('instructions');
         const closeBtn = document.getElementById('close-btn');
+
+        closeBtn.addEventListener('click', () => {
+          window.location.assign('/');
+        });
 
         function showSuccess(msg, instructions) {
           spinnerEl.style.display = 'none';
@@ -197,7 +201,7 @@
           if (data?.session) {
             showSuccess('You are signed in.', `
               <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.<br><br>
-              <strong>Web users:</strong> your session is saved. You can close this tab.
+              <strong>Web users:</strong> your session is saved. Return to Memephant to continue.
             `);
             return;
           }
@@ -212,7 +216,7 @@
             if (exchanged?.session) {
               showSuccess('You are signed in.', `
                 <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.<br><br>
-                <strong>Web users:</strong> your session is saved. You can close this tab.
+                <strong>Web users:</strong> your session is saved. Return to Memephant to continue.
               `);
               return;
             }

@@ -38,6 +38,14 @@ describe('auth callback safety', () => {
     expect(callbackHtml).toContain("provider_token=[redacted]");
   });
 
+  it('returns to Memephant without calling window.close', () => {
+    expect(callbackHtml).toContain('Return to Memephant');
+    expect(callbackHtml).toContain("window.location.assign('/')");
+    expect(callbackHtml).not.toContain('window.close');
+    expect(callbackHtml).not.toContain('Close this tab');
+    expect(callbackHtml).not.toContain('You can close this tab');
+  });
+
   it('prevents service worker caching for auth callback routes', () => {
     expect(serviceWorker).toContain("const CACHE_NAME = 'memephant-v3'");
     expect(serviceWorker).toContain("url.pathname === '/auth/callback'");
