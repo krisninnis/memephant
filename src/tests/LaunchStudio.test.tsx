@@ -18,6 +18,7 @@ const mockProject: ProjectMemory = {
   changelog: [],
   checkpoints: [],
   platformState: {},
+  workflowMode: 'launch',
 };
 
 let activeProject: ProjectMemory | undefined = mockProject;
@@ -46,6 +47,7 @@ describe('LaunchStudio', () => {
     expect(screen.getByText('Project: Launch Studio Project')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Launch Passport/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Build Update/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Generate Daily Content Pack/i })).toBeInTheDocument();
   });
 
   it('opens and copies a Launch Passport generated from project context', async () => {
@@ -88,6 +90,27 @@ describe('LaunchStudio', () => {
     });
   });
 
+  it('opens and copies a Daily Content Pack generated from project context', async () => {
+    render(<LaunchStudio />);
+
+    fireEvent.click(screen.getByRole('button', { name: /generate daily content pack/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Daily Content Pack' });
+    expect(within(dialog).getByText('X post')).toBeInTheDocument();
+    expect(within(dialog).getByText('Problem/solution post')).toBeInTheDocument();
+    const packText = within(dialog).getByLabelText('Daily Content Pack export text') as HTMLTextAreaElement;
+    expect(packText.value).toContain('Launch Studio Project');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Daily Content Pack' }));
+
+    await waitFor(() => {
+      expect(copyExportToClipboard).toHaveBeenCalledWith(
+        expect.stringContaining('# Daily Content Pack'),
+        'daily-content-pack',
+      );
+    });
+  });
+
   it('shows an empty state when no project is active', () => {
     activeProject = undefined;
 
@@ -95,6 +118,8 @@ describe('LaunchStudio', () => {
 
     expect(screen.getByRole('heading', { name: 'Open a project first' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Generate Launch Passport/i }))
+      .not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Generate Daily Content Pack/i }))
       .not.toBeInTheDocument();
   });
 });

@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useActiveProject } from '../../hooks/useActiveProject';
 import { LaunchPassportModal } from '../Workspace/LaunchPassportModal';
 import { BuildUpdateModal } from '../Workspace/BuildUpdateModal';
+import { DailyContentPackModal } from './DailyContentPackModal';
 
 export function LaunchStudio() {
   const activeProject = useActiveProject();
   const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
   const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
+  const [dailyContentPackOpen, setDailyContentPackOpen] = useState(false);
 
   return (
     <div className="workspace-scroll">
@@ -74,6 +76,25 @@ export function LaunchStudio() {
                 <small>Progress posts, release notes, and feedback requests</small>
               </button>
             </article>
+
+            <article className="launch-studio-card">
+              <div>
+                <h2>Daily Content Pack</h2>
+                <p>
+                  Generate today&apos;s copy-ready social ideas from current context,
+                  recent progress, goals, workflow mode, and next steps.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="daily-content-pack-btn"
+                onClick={() => setDailyContentPackOpen(true)}
+                title="Generate a local daily content pack from this project context"
+              >
+                <span>Generate Daily Content Pack</span>
+                <small>X, LinkedIn, Reddit, meme idea, replies, demo caption</small>
+              </button>
+            </article>
           </section>
         )}
       </main>
@@ -89,6 +110,13 @@ export function LaunchStudio() {
         <BuildUpdateModal
           project={activeProject}
           onClose={() => setBuildUpdateOpen(false)}
+        />
+      )}
+
+      {dailyContentPackOpen && activeProject && (
+        <DailyContentPackModal
+          project={activeProject}
+          onClose={() => setDailyContentPackOpen(false)}
         />
       )}
     </div>
