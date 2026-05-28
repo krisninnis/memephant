@@ -13,8 +13,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
-  const supabaseUrl  = process.env.VITE_SUPABASE_URL  ?? '';
-  const supabaseAnon = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+  const supabaseUrl = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';
+  const supabaseAnon = process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '';
 
   // Inject meta tags into the static HTML so the client-side script
   // can read the credentials without them being hardcoded.
@@ -26,9 +26,16 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  const escapeAttribute = (value: string) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
   const metaTags = `
-    <meta name="supa-url"  content="${supabaseUrl}">
-    <meta name="supa-anon" content="${supabaseAnon}">
+    <meta name="supa-url"  content="${escapeAttribute(supabaseUrl)}">
+    <meta name="supa-anon" content="${escapeAttribute(supabaseAnon)}">
   `;
 
   // Insert meta tags right after <head>

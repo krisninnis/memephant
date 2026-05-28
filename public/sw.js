@@ -4,7 +4,7 @@
  * Strategy: Cache-first for assets, network-first for navigation.
  */
 
-const CACHE_NAME = 'memephant-v2';
+const CACHE_NAME = 'memephant-v3';
 
 // App shell files to pre-cache on install
 const PRECACHE_URLS = [
@@ -57,6 +57,13 @@ self.addEventListener('fetch', (event) => {
   if (!request.url.startsWith('http')) return;
 
   const url = new URL(request.url);
+
+  // Auth callbacks can contain OAuth codes in the query and tokens in the
+  // browser hash. Never cache these pages or fall back to a stale callback.
+  if (url.pathname === '/auth/callback' || url.pathname === '/api/auth-callback') {
+    event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
 
   // Navigation requests (HTML pages) — network first, fall back to cached index
   if (request.mode === 'navigate') {

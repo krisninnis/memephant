@@ -155,11 +155,37 @@
           statusText.textContent = msg;
         }
 
+        function clearSensitiveHash() {
+          if (!window.location.hash) return;
+
+          window.history.replaceState(
+            null,
+            document.title,
+            window.location.pathname + window.location.search,
+          );
+        }
+
+        function getSafeErrorMessage(err) {
+          if (!err || typeof err !== 'object') return 'The auth callback could not be completed.';
+          const message = err.message || 'The auth callback could not be completed.';
+          return String(message)
+            .replace(/access_token=[^&#\s]+/gi, 'access_token=[redacted]')
+            .replace(/refresh_token=[^&#\s]+/gi, 'refresh_token=[redacted]')
+            .replace(/provider_token=[^&#\s]+/gi, 'provider_token=[redacted]');
+        }
+
         try {
-          const SUPABASE_URL = document.querySelector('meta[name="supa-url"]')?.content
-            || 'https://YOUR_PROJECT.supabase.co';
-          const SUPABASE_ANON = document.querySelector('meta[name="supa-anon"]')?.content
-            || 'YOUR_ANON_KEY';
+          const hash = new URLSearchParams(window.location.hash.replace('#', ''));
+          const hashAccessToken = hash.get('access_token');
+          clearSensitiveHash();
+
+          const SUPABASE_URL = document.querySelector('meta[name="supa-url"]')?.content || '';
+          const SUPABASE_ANON = document.querySelector('meta[name="supa-anon"]')?.content || '';
+
+          if (!SUPABASE_URL || !SUPABASE_ANON) {
+            showError('Auth is not configured for this deployment.');
+            return;
+          }
 
           const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
             auth: { persistSession: true, autoRefreshToken: true },
@@ -195,9 +221,7 @@
             return;
           }
 
-          const hash = new URLSearchParams(window.location.hash.replace('#', ''));
-          const token = hash.get('access_token');
-          if (token) {
+          if (hashAccessToken) {
             showSuccess('You are signed in.', `
               <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.
             `);
@@ -206,8 +230,8 @@
 
           showError('No session was received. Please go back and try again.');
         } catch (err) {
-          console.error('[Memephant] Auth callback error:', err);
-          showError('Something went wrong: ' + (err.message || String(err)));
+          console.error('[Memephant] Auth callback error:', getSafeErrorMessage(err));
+          showError('Something went wrong: ' + getSafeErrorMessage(err));
         }
       })();
     </script>

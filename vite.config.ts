@@ -61,7 +61,9 @@ export default defineConfig(async () => ({
 
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globIgnores: ["auth/callback.html"],
         cleanupOutdatedCaches: true,
+        navigateFallbackDenylist: [/^\/auth\/callback/, /^\/api\/auth-callback/],
         skipWaiting: false,
       },
 
