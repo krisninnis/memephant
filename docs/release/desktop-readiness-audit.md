@@ -58,7 +58,8 @@ This is a preparation audit only. It does not approve, submit, notarize, or publ
 - Export secret redaction and linked-folder path redaction have focused tests.
 - Personal Memory Vault and Passport boundaries have focused tests.
 - Crash reporting is opt-in and default-off, but legal/security wording must stay aligned with that behavior.
-- Console logging is still fairly verbose in cloud/sync/updater paths; before store submission, decide which logs are acceptable in production builds.
+- Noisy cloud sync and webhook diagnostics have been reduced or gated behind development/debug logging.
+- Before store submission, complete one final production-console pass across updater, desktop actions, and support flows.
 
 ## Production-Ready Already
 
