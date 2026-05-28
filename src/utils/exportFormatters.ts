@@ -13,6 +13,7 @@ import type {
 } from '../types/memphant-types';
 import { getPlatformConfig } from './platformRegistry';
 import { isMemphantPlaceholderValue } from './memphantPlaceholders';
+import { getWorkflowModeExportBlock } from './workflowModes';
 
 const STANDARD_PATTERNS = [
   // OpenAI
@@ -1291,10 +1292,13 @@ export function formatForPlatform(
   recentActivity?: string,
   frontalLobeBlock?: string,
 ): string {
-  if (mode === 'quick') return formatQuickStart(project, task, frontalLobeBlock);
-  if (mode === 'delta') return appendFrontalLobe(formatDelta(project, task), frontalLobeBlock);
-  if (mode === 'specialist') return appendFrontalLobe(formatSpecialist(project, task), frontalLobeBlock);
-  if (mode === 'smart') return appendFrontalLobe(formatSmartExport(project, platform, task, platformConfig, recentActivity), frontalLobeBlock);
+  if (mode === 'quick') return appendFrontalLobe(appendWorkflowMode(formatQuickStart(project, task), project), frontalLobeBlock);
+  if (mode === 'delta') return appendFrontalLobe(appendWorkflowMode(formatDelta(project, task), project), frontalLobeBlock);
+  if (mode === 'specialist') return appendFrontalLobe(appendWorkflowMode(formatSpecialist(project, task), project), frontalLobeBlock);
+  if (mode === 'smart') return appendFrontalLobe(
+    appendWorkflowMode(formatSmartExport(project, platform, task, platformConfig, recentActivity), project),
+    frontalLobeBlock,
+  );
 
   let output: string;
 
@@ -1324,7 +1328,7 @@ export function formatForPlatform(
       output = formatGenericForPlatform(project, platform, task, platformConfig);
   }
 
-  return appendFrontalLobe(output, frontalLobeBlock);
+  return appendFrontalLobe(appendWorkflowMode(output, project), frontalLobeBlock);
 }
 
 /**
@@ -1336,4 +1340,10 @@ function appendFrontalLobe(base: string, block?: string): string {
   if (!block || !block.trim()) return base;
   if (/^# AI Working Style\s*$/m.test(base)) return base;
   return base + '\n\n' + sanitize(block);
+}
+
+function appendWorkflowMode(base: string, project: ProjectMemory): string {
+  const block = getWorkflowModeExportBlock(project.workflowMode);
+  if (!block || /^# AI Workflow Mode\s*$/m.test(base)) return base;
+  return `${base}\n\n${sanitize(block)}`;
 }

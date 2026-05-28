@@ -53,7 +53,7 @@ import {
   getEnabledPlatforms,
   getPlatformConfig,
 } from '../../utils/platformRegistry';
-import type { ExportMode, HandoffMode } from '../../types/memphant-types';
+import type { AIWorkflowMode, ExportMode, HandoffMode } from '../../types/memphant-types';
 import { ContextPassportModal } from './ContextPassportModal';
 import { LaunchPassportModal } from './LaunchPassportModal';
 import { ExportDiffPanel } from './ExportDiffPanel';
@@ -61,6 +61,7 @@ import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
 import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
 import { applyPassportStyleSettings } from '../../utils/passportStyleTransform';
 import { DEMO_PROJECT_ID } from '../../utils/demoProject';
+import { WORKFLOW_MODES, getWorkflowModeConfig } from '../../utils/workflowModes';
 
 function formatSyncAge(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
@@ -309,6 +310,15 @@ export function ExportButtons() {
         ? `No tracked changes since your last ${selectedPlatform.name} copy.`
         : `Your first copy for ${selectedPlatform.name} will create a checkpoint snapshot.`;
   const isDemoProject = activeProject?.id === DEMO_PROJECT_ID;
+  const activeWorkflowMode = getWorkflowModeConfig(activeProject?.workflowMode);
+
+  const handleWorkflowModeChange = useCallback((mode: AIWorkflowMode) => {
+    if (!activeProject) return;
+
+    updateProject(activeProject.id, {
+      workflowMode: activeProject.workflowMode === mode ? undefined : mode,
+    });
+  }, [activeProject, updateProject]);
 
   const handleSelectPlatform = (platformId: string) => {
     if (platformId !== selectedPlatform.id) {
@@ -741,6 +751,42 @@ export function ExportButtons() {
             Gemini, Grok, Cursor, or another AI to continue.
           </span>
         </div>
+      )}
+
+      {activeProject && (
+        <section className="workflow-mode-selector" aria-label="AI Workflow Mode">
+          <div className="workflow-mode-selector__header">
+            <div>
+              <strong>AI Workflow Mode</strong>
+              <span>How should the next AI think about this project?</span>
+            </div>
+            {activeWorkflowMode && (
+              <span className="workflow-mode-selector__badge">{activeWorkflowMode.label}</span>
+            )}
+          </div>
+          <div className="workflow-mode-selector__grid">
+            {WORKFLOW_MODES.map((mode) => {
+              const selected = activeProject.workflowMode === mode.id;
+
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  className={`workflow-mode-selector__option${selected ? ' workflow-mode-selector__option--active' : ''}`}
+                  onClick={() => handleWorkflowModeChange(mode.id)}
+                  aria-pressed={selected}
+                  title={`Recommended for ${mode.recommendedFor}`}
+                >
+                  <span>{mode.label.replace(' Mode', '')}</span>
+                  <small>{mode.recommendedFor}</small>
+                </button>
+              );
+            })}
+          </div>
+          {activeWorkflowMode && (
+            <p className="workflow-mode-selector__help">{activeWorkflowMode.guidance}</p>
+          )}
+        </section>
       )}
 
       <button

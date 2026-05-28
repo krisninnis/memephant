@@ -1,4 +1,5 @@
 import type { Decision, ProjectMemory } from '../types/memphant-types';
+import { getWorkflowModeConfig } from './workflowModes';
 
 export type LaunchPassportSectionId =
   | 'positioning'
@@ -96,6 +97,7 @@ export function generateLaunchPassport(
   const openQuestions = cleanList(project.openQuestions);
   const assets = cleanList(project.importantAssets).map(publicAssetName);
   const instructions = cleanText(project.aiInstructions);
+  const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const keyGoal = goals[0] ?? 'help users get value faster';
   const keyNextStep = nextSteps[0] ?? 'collect feedback';
   const contextSignals = firstItems([
@@ -119,6 +121,7 @@ export function generateLaunchPassport(
         summary,
         '',
         `Current focus: ${currentState}`,
+        ...(workflowMode ? [`Workflow mode: ${workflowMode.label} (${workflowMode.focus}).`] : []),
         `Built for people who need to ${keyGoal}.`,
         '',
         `I would love feedback on whether this makes the value obvious quickly.`,
@@ -136,6 +139,7 @@ export function generateLaunchPassport(
         `I built ${name} to solve this problem: ${summary}`,
         '',
         `Current state: ${currentState}`,
+        ...(workflowMode ? [`Current working lens: ${workflowMode.label} - ${workflowMode.guidance}`] : []),
         '',
         'What it is trying to do:',
         bulletList(firstItems(goals, 4)),

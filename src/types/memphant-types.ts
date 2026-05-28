@@ -18,6 +18,7 @@ export type BuiltInPlatformId =
 export type Platform = string;
 export type ExportMode = 'quick' | 'full' | 'delta' | 'specialist' | 'smart';
 export type PlatformCategory = 'chat' | 'dev' | 'local' | 'custom';
+export type AIWorkflowMode = 'build' | 'debug' | 'launch' | 'research' | 'investor';
 
 // -- Agent Handoff -------------------------------------------------------------
 
@@ -172,6 +173,8 @@ export interface ProjectCheckpointSnapshot {
   openQuestion?: string;
   /** Most recent AI session on this project. Written on every export copy. */
   lastAiSession?: LastAiSession;
+  /** Lightweight context preset for how the next AI should think about the project. */
+  workflowMode?: AIWorkflowMode;
 }
 
 export interface ProjectCheckpoint {

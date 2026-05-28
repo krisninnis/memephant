@@ -10,6 +10,7 @@ import type {
   ProjectRestorePoint,
 } from '../types/memphant-types';
 import { SCHEMA_VERSION } from '../types/memphant-types';
+import { isAIWorkflowMode } from './workflowModes';
 
 type LegacyProject = Partial<ProjectMemory> & Record<string, unknown>;
 
@@ -211,6 +212,7 @@ export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
       typeof raw.lastSessionSummary === 'string' ? raw.lastSessionSummary : undefined,
     openQuestion:
       typeof raw.openQuestion === 'string' ? raw.openQuestion : undefined,
+    workflowMode: isAIWorkflowMode(raw.workflowMode) ? raw.workflowMode : undefined,
     nextIds: normalizeNextIds(raw.nextIds),
     checkpoints: normalizeCheckpoints(raw.checkpoints),
     restorePoints: normalizeRestorePoints(raw.restorePoints),

@@ -13,6 +13,27 @@
  */
 
 import type { ProjectMemory, Decision, ChangelogEntry } from '../types/memphant-types';
+import { getWorkflowModeConfig } from './workflowModes';
+
+function workflowModeMarkdown(project: ProjectMemory): string | null {
+  const mode = getWorkflowModeConfig(project.workflowMode);
+  if (!mode) return null;
+
+  return [
+    `## AI Workflow Mode`,
+    `**${mode.label}**`,
+    '',
+    `Focus: ${mode.focus}.`,
+    `Guidance: ${mode.guidance}`,
+  ].join('\n');
+}
+
+function pushWorkflowModeSection(lines: string[], project: ProjectMemory): void {
+  const block = workflowModeMarkdown(project);
+  if (!block) return;
+  lines.push(block);
+  lines.push('');
+}
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -137,6 +158,8 @@ function buildMarkdown(project: ProjectMemory, generatedAt: string): string {
   lines.push(clean(project.currentState || '_(not set)_', project));
   lines.push('');
 
+  pushWorkflowModeSection(lines, project);
+
   if (project.inProgress && project.inProgress.length > 0) {
     lines.push(`## In Progress`);
     lines.push(bulletList(project.inProgress, project));
@@ -202,6 +225,8 @@ function buildChatGPT(project: ProjectMemory): string {
   lines.push(`## Current State`);
   lines.push(clean(project.currentState || '_(not set)_', project));
   lines.push('');
+
+  pushWorkflowModeSection(lines, project);
 
   if (project.inProgress && project.inProgress.length > 0) {
     lines.push(`## In Progress`);
@@ -271,6 +296,16 @@ function buildClaude(project: ProjectMemory, generatedAt: string): string {
   lines.push(`    ${clean(project.currentState || '(not set)', project)}`);
   lines.push(`  </current_state>`);
   lines.push('');
+
+  const workflowMode = getWorkflowModeConfig(project.workflowMode);
+  if (workflowMode) {
+    lines.push(`  <workflow_mode>`);
+    lines.push(`    <label>${sanitize(workflowMode.label)}</label>`);
+    lines.push(`    <focus>${sanitize(workflowMode.focus)}</focus>`);
+    lines.push(`    <guidance>${sanitize(workflowMode.guidance)}</guidance>`);
+    lines.push(`  </workflow_mode>`);
+    lines.push('');
+  }
 
   if (project.inProgress && project.inProgress.length > 0) {
     lines.push(`  <in_progress>`);
@@ -370,6 +405,14 @@ function buildCodex(project: ProjectMemory, generatedAt: string): string {
 
   lines.push(`STATUS: ${clean(project.currentState || '(not set)', project)}`);
   lines.push('');
+
+  const workflowMode = getWorkflowModeConfig(project.workflowMode);
+  if (workflowMode) {
+    lines.push(`WORKFLOW_MODE: ${sanitize(workflowMode.label)}`);
+    lines.push(`WORKFLOW_FOCUS: ${sanitize(workflowMode.focus)}`);
+    lines.push(`WORKFLOW_GUIDANCE: ${sanitize(workflowMode.guidance)}`);
+    lines.push('');
+  }
 
   if (project.inProgress && project.inProgress.length > 0) {
     lines.push(`IN_PROGRESS:`);
@@ -492,6 +535,8 @@ function buildCustomMarkdown(project: ProjectMemory, platform: CustomPlatform): 
   lines.push(`## Current State`);
   lines.push(clean(project.currentState || '_(not set)_', project));
   lines.push('');
+
+  pushWorkflowModeSection(lines, project);
 
   if (project.inProgress && project.inProgress.length > 0) {
     lines.push(`## In Progress`);

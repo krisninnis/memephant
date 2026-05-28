@@ -126,6 +126,7 @@ describe('ExportButtons export preview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockProjectStoreState.targetPlatform = 'claude';
+    delete mockProject.workflowMode;
     mockPassportLockEnabled = false;
     (formatForPlatform as jest.Mock).mockReturnValue('EXACT_EXPORT_TEXT');
   });
@@ -170,6 +171,34 @@ describe('ExportButtons export preview', () => {
     expect(screen.getByText(
       /Generate a Context Passport, inspect it, then paste it into ChatGPT, Claude,/,
     )).toBeInTheDocument();
+  });
+
+  it('stores the selected AI Workflow Mode on the project', () => {
+    render(<ExportButtons />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Build/i }));
+
+    expect(mockProjectStoreState.updateProject).toHaveBeenCalledWith(
+      'export-preview-project',
+      { workflowMode: 'build' },
+    );
+  });
+
+  it('shows the active AI Workflow Mode and lets users clear it', () => {
+    mockProject.workflowMode = 'debug';
+
+    render(<ExportButtons />);
+
+    expect(screen.getByText('Debug Mode')).toBeInTheDocument();
+    expect(screen.getByText(/Prioritise evidence, reproduction steps/i)).toBeInTheDocument();
+
+    const workflowModes = screen.getByLabelText('AI Workflow Mode');
+    fireEvent.click(within(workflowModes).getByRole('button', { name: /Debug/i }));
+
+    expect(mockProjectStoreState.updateProject).toHaveBeenCalledWith(
+      'export-preview-project',
+      { workflowMode: undefined },
+    );
   });
 
   it('opens and copies a Launch Passport generated from project context', async () => {
