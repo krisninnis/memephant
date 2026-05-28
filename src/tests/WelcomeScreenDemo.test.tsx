@@ -55,6 +55,11 @@ describe('WelcomeScreen demo project entry', () => {
   it('creates and opens the built-in demo project from the welcome screen', async () => {
     render(<WelcomeScreen />);
 
+    expect(screen.getByText(
+      'Carry serious project context between AI tools without starting from zero.',
+    )).toBeInTheDocument();
+    expect(screen.getByText('Generate a Context Passport')).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: /try demo project/i }));
 
     await waitFor(() => expect(saveToDisk).toHaveBeenCalledTimes(1));

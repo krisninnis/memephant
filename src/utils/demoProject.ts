@@ -84,6 +84,7 @@ export function createDemoProject(timestamp = new Date().toISOString()): Project
       },
     ],
     platformState: {},
+    workflowMode: 'launch',
     nextIds: {
       D: 3,
       R: 1,

@@ -11,6 +11,7 @@ describe('demo project seed', () => {
     expect(project.nextSteps.length).toBeGreaterThanOrEqual(3);
     expect(project.importantAssets).toContain('src/components/Workspace/ContextPassportModal.tsx');
     expect(project.aiInstructions).toContain('privacy-first');
+    expect(project.workflowMode).toBe('launch');
     expect(project.platformState).toEqual({});
     expect(project.changelog[0]).toMatchObject({
       action: 'added',

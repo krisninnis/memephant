@@ -53,7 +53,8 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
           <div>
             <h2>Launch Passport</h2>
             <p>
-              Reusable launch assets generated from this project context. Review before posting.
+              Reusable launch assets generated from this project context. Context Passport is for
+              AI handoff; Launch Passport is for explaining and sharing the project.
             </p>
           </div>
           <button

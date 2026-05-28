@@ -222,14 +222,14 @@ export function WelcomeScreen() {
 
           <h1 className="welcome-title">Memephant</h1>
           <p className="welcome-tagline">
-            Remember your projects so your AIs do not have to.
+            Carry serious project context between AI tools without starting from zero.
           </p>
 
           <div className="welcome-flow">
             <div className="welcome-flow__step">
               <span className="welcome-flow__number">1</span>
               <div>
-                <strong>Build project memory</strong>
+                <strong>Load project context</strong>
                 <div>
                   {desktopApp
                     ? 'Scan a folder or describe the project once.'
@@ -240,15 +240,15 @@ export function WelcomeScreen() {
             <div className="welcome-flow__step">
               <span className="welcome-flow__number">2</span>
               <div>
-                <strong>Copy for any AI</strong>
-                <div>Claude, ChatGPT, Grok, Gemini, or another tool.</div>
+                <strong>Generate a Context Passport</strong>
+                <div>Inspect exactly what will be copied before anything leaves your device.</div>
               </div>
             </div>
             <div className="welcome-flow__step">
               <span className="welcome-flow__number">3</span>
               <div>
-                <strong>Paste replies back safely</strong>
-                <div>Review diffs before Memephant updates anything.</div>
+                <strong>Paste into another AI</strong>
+                <div>ChatGPT, Claude, Gemini, Grok, Cursor, or another tool can continue.</div>
               </div>
             </div>
           </div>
@@ -262,7 +262,7 @@ export function WelcomeScreen() {
               <span className="welcome-btn__text">
                 Try Demo Project
                 <small className="welcome-btn__subtitle">
-                  See a populated project and generate a Context Passport
+                  Open a realistic project and copy a Context Passport in under a minute
                 </small>
               </span>
             </button>
