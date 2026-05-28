@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { ProjectMemory } from '../../types/memphant-types';
+import { copyExportToClipboard } from '../../services/tauriActions';
 import { generateLaunchPassport } from '../../utils/launchPassportGenerator';
 
 interface LaunchPassportModalProps {
@@ -31,7 +32,7 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(passport.markdown);
+      await copyExportToClipboard(passport.markdown, 'launch-passport');
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {

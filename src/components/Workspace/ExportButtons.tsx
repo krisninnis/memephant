@@ -57,6 +57,7 @@ import type { AIWorkflowMode, ExportMode, HandoffMode } from '../../types/mempha
 import { ContextPassportModal } from './ContextPassportModal';
 import { LaunchPassportModal } from './LaunchPassportModal';
 import { BuildUpdateModal } from './BuildUpdateModal';
+import { ExportHistoryModal } from './ExportHistoryModal';
 import { ExportDiffPanel } from './ExportDiffPanel';
 import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
 import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
@@ -163,6 +164,7 @@ export function ExportButtons() {
   const [passportOpen, setPassportOpen] = useState(false);
   const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
   const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
+  const [exportHistoryOpen, setExportHistoryOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [passportUnlocked, setPassportUnlocked] = useState(false);
@@ -813,6 +815,17 @@ export function ExportButtons() {
         <small>Progress posts, release notes, and feedback requests</small>
       </button>
 
+      <button
+        type="button"
+        className="export-history-btn"
+        onClick={() => setExportHistoryOpen(true)}
+        disabled={!activeProject}
+        title="Review previous export checkpoints and compare what changed"
+      >
+        <span>Export History</span>
+        <small>Compare current project state with previous AI handoffs</small>
+      </button>
+
       <div className="frontal-lobe-export-status" aria-live="polite">
         {frontalLobeStatus}
       </div>
@@ -1257,6 +1270,13 @@ export function ExportButtons() {
         <BuildUpdateModal
           project={activeProject}
           onClose={() => setBuildUpdateOpen(false)}
+        />
+      )}
+
+      {exportHistoryOpen && activeProject && (
+        <ExportHistoryModal
+          project={activeProject}
+          onClose={() => setExportHistoryOpen(false)}
         />
       )}
 

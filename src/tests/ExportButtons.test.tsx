@@ -127,6 +127,13 @@ describe('ExportButtons export preview', () => {
     jest.clearAllMocks();
     mockProjectStoreState.targetPlatform = 'claude';
     delete mockProject.workflowMode;
+    mockProject.summary = 'A project for export preview tests.';
+    mockProject.currentState = 'Testing export inspector.';
+    mockProject.goals = ['Preview before copying'];
+    mockProject.nextSteps = ['Copy safely'];
+    mockProject.changelog = [];
+    mockProject.checkpoints = [];
+    mockProject.platformState = {};
     mockPassportLockEnabled = false;
     (formatForPlatform as jest.Mock).mockReturnValue('EXACT_EXPORT_TEXT');
   });
@@ -203,12 +210,6 @@ describe('ExportButtons export preview', () => {
   });
 
   it('opens and copies a Launch Passport generated from project context', async () => {
-    const writeText = jest.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText },
-      configurable: true,
-    });
-
     render(<ExportButtons />);
 
     fireEvent.click(screen.getByRole('button', { name: /generate launch passport/i }));
@@ -224,7 +225,10 @@ describe('ExportButtons export preview', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Launch Passport' }));
 
     await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('# Launch Passport'));
+      expect(copyExportToClipboard).toHaveBeenCalledWith(
+        expect.stringContaining('# Launch Passport'),
+        'launch-passport',
+      );
     });
     await waitFor(() => {
       expect(within(dialog).getByRole('button', { name: 'Copied Launch Passport' }))
@@ -233,12 +237,6 @@ describe('ExportButtons export preview', () => {
   });
 
   it('opens and copies a Build Update generated from project context', async () => {
-    const writeText = jest.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText },
-      configurable: true,
-    });
-
     render(<ExportButtons />);
 
     fireEvent.click(screen.getByRole('button', { name: /generate build update/i }));
@@ -255,12 +253,63 @@ describe('ExportButtons export preview', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Build Update' }));
 
     await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('# Build Update'));
+      expect(copyExportToClipboard).toHaveBeenCalledWith(
+        expect.stringContaining('# Build Update'),
+        'build-update',
+      );
     });
     await waitFor(() => {
       expect(within(dialog).getByRole('button', { name: 'Copied Build Update' }))
-        .toBeInTheDocument();
+      .toBeInTheDocument();
     });
+  });
+
+  it('opens Export History and compares current state to a previous export', () => {
+    mockProject.summary = 'Updated summary';
+    mockProject.currentState = 'Updated state after the export.';
+    mockProject.goals = ['Preview before copying', 'Explain export history'];
+    mockProject.nextSteps = ['Record demo'];
+    mockProject.workflowMode = 'launch';
+    mockProject.changelog = [
+      {
+        timestamp: '2026-05-28T11:00:00.000Z',
+        field: 'goals',
+        action: 'added',
+        summary: 'Added Export History compare view.',
+      },
+    ];
+    mockProject.checkpoints = [
+      {
+        id: 'checkpoint-1',
+        platform: 'claude',
+        timestamp: '2026-05-28T10:00:00.000Z',
+        summary: 'A project for export preview tests.',
+        hash: 'hash-1',
+        snapshot: {
+          ...mockProject,
+          summary: 'A project for export preview tests.',
+          currentState: 'Testing export inspector.',
+          goals: ['Preview before copying'],
+          nextSteps: ['Copy safely'],
+          workflowMode: 'build',
+          changelog: [],
+        },
+      },
+    ];
+
+    render(<ExportButtons />);
+
+    fireEvent.click(screen.getByRole('button', { name: /export history/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Export History' });
+    expect(within(dialog).getByText(/Stored locally from export checkpoints/i))
+      .toBeInTheDocument();
+    expect(within(dialog).getByText('Last exported to Claude: 28 May, 11:00')).toBeInTheDocument();
+    expect(within(dialog).getByText('Workflow Mode: Launch Mode')).toBeInTheDocument();
+    expect(within(dialog).getByText('Added Export History compare view.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Project summary')).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/Then:/).length).toBeGreaterThan(0);
+    expect(within(dialog).getAllByText(/Now:/).length).toBeGreaterThan(0);
   });
 
   it('preview contains the exact export text', async () => {

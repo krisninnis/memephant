@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { ProjectMemory } from '../../types/memphant-types';
+import { copyExportToClipboard } from '../../services/tauriActions';
 import { generateBuildUpdate } from '../../utils/buildUpdateGenerator';
 
 interface BuildUpdateModalProps {
@@ -31,7 +32,7 @@ export function BuildUpdateModal({ project, onClose }: BuildUpdateModalProps) {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(update.markdown);
+      await copyExportToClipboard(update.markdown, 'build-update');
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
