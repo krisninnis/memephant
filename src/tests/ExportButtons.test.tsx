@@ -141,7 +141,8 @@ describe('ExportButtons export preview', () => {
   it('opens the export preview', async () => {
     const dialog = await openPreview();
 
-    expect(screen.getByText(/Review the exact handoff/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nothing leaves your device until you choose Copy export/i))
+      .toBeInTheDocument();
     expect(within(dialog).getByText('Claude')).toBeInTheDocument();
   });
 
@@ -160,6 +161,15 @@ describe('ExportButtons export preview', () => {
       .toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /generate memory trail/i }))
       .not.toBeInTheDocument();
+  });
+
+  it('explains the next cross-AI handoff step near export controls', () => {
+    render(<ExportButtons />);
+
+    expect(screen.getByText('Next step')).toBeInTheDocument();
+    expect(screen.getByText(
+      /Generate a Context Passport, inspect it, then paste it into ChatGPT, Claude,/,
+    )).toBeInTheDocument();
   });
 
   it('preview contains the exact export text', async () => {

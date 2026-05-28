@@ -59,6 +59,7 @@ import { ExportDiffPanel } from './ExportDiffPanel';
 import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
 import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
 import { applyPassportStyleSettings } from '../../utils/passportStyleTransform';
+import { DEMO_PROJECT_ID } from '../../utils/demoProject';
 
 function formatSyncAge(isoString: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime();
@@ -297,6 +298,7 @@ export function ExportButtons() {
       : syncLabel
         ? `No tracked changes since your last ${selectedPlatform.name} copy.`
         : `Your first copy for ${selectedPlatform.name} will create a checkpoint snapshot.`;
+  const isDemoProject = activeProject?.id === DEMO_PROJECT_ID;
 
   const handleSelectPlatform = (platformId: string) => {
     if (platformId !== selectedPlatform.id) {
@@ -712,6 +714,16 @@ export function ExportButtons() {
         >
           🗺️ Generate Context Passport
         </button>
+      )}
+
+      {activeProject && (
+        <div className="export-core-loop-hint">
+          <strong>{isDemoProject ? 'Demo next step' : 'Next step'}</strong>
+          <span>
+            Generate a Context Passport, inspect it, then paste it into ChatGPT, Claude,
+            Gemini, Grok, Cursor, or another AI to continue.
+          </span>
+        </div>
       )}
 
       <div className="frontal-lobe-export-status" aria-live="polite">
@@ -1147,7 +1159,10 @@ export function ExportButtons() {
             <div className="export-preview-modal__header">
               <div>
                 <h2 id="export-preview-title">Inspect export</h2>
-                <p>Review the exact handoff before anything goes to your clipboard.</p>
+                <p>
+                  This is the exact text Memephant will copy. Nothing leaves your device until you
+                  choose Copy export.
+                </p>
               </div>
               <button
                 type="button"

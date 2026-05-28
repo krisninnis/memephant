@@ -2403,6 +2403,24 @@ select {
   line-height: 1.35;
 }
 
+.export-core-loop-hint {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(217, 119, 6, 0.26);
+  border-radius: 10px;
+  background: rgba(217, 119, 6, 0.08);
+  color: rgba(255, 247, 237, 0.92);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.export-core-loop-hint strong {
+  color: #fed7aa;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
 .frontal-lobe-export-toggle {
   display: flex;
   align-items: center;
