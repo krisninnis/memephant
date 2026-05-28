@@ -1,4 +1,10 @@
 import type { Decision, ProjectMemory } from '../types/memphant-types';
+import {
+  cleanPublicList,
+  cleanPublicText,
+  filterPublicDecisions,
+  publicAssetName,
+} from './contextQuality';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type LaunchPassportSectionId =
@@ -26,34 +32,12 @@ export type LaunchPassport = {
   markdown: string;
 };
 
-const SECRET_PATTERNS = [
-  /sk_live_[A-Za-z0-9_]+/g,
-  /xox[baprs]-[A-Za-z0-9-]+/g,
-  /ghp_[A-Za-z0-9_]+/g,
-  /api[_-]?key\s*[=:]\s*\S+/gi,
-  /token\s*[=:]\s*\S+/gi,
-  /secret\s*[=:]\s*\S+/gi,
-  /password\s*[=:]\s*\S+/gi,
-];
-
 function cleanText(value: string | undefined, fallback = ''): string {
-  const text = (value || fallback).replace(/\s+/g, ' ').trim();
-  return SECRET_PATTERNS.reduce(
-    (current, pattern) => current.replace(pattern, '[redacted]'),
-    text,
-  );
+  return cleanPublicText(value, fallback);
 }
 
 function cleanList(items: string[] | undefined, fallback: string[] = []): string[] {
-  return (items && items.length > 0 ? items : fallback)
-    .map((item) => cleanText(item))
-    .filter(Boolean);
-}
-
-function publicAssetName(asset: string): string {
-  const cleaned = cleanText(asset);
-  const parts = cleaned.replace(/\\/g, '/').split('/').filter(Boolean);
-  return parts[parts.length - 1] ?? cleaned;
+  return cleanPublicList(items, fallback);
 }
 
 function firstItems(items: string[], count: number): string[] {
@@ -67,10 +51,7 @@ function sentenceList(items: string[]): string {
 }
 
 function decisionSummary(decisions: Decision[]): string {
-  const useful = decisions
-    .map((decision) => cleanText(decision.decision))
-    .filter(Boolean)
-    .slice(-2);
+  const useful = filterPublicDecisions(decisions, 2);
 
   return useful.length > 0 ? sentenceList(useful) : 'the decisions already captured in the project';
 }

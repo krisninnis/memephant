@@ -62,4 +62,65 @@ describe('generateBuildUpdate', () => {
     expect(update.markdown).toContain('[redacted]');
     expect(update.markdown).not.toContain('super-secret-token');
   });
+
+  it('filters placeholder scaffolding from public update drafts', () => {
+    const update = generateBuildUpdate({
+      ...project,
+      summary: 'Write 1-2 sentences describing what is true right now after this session.',
+      currentState: 'Project just created',
+      nextSteps: [
+        'List the immediate next actions that should happen after this session',
+        'Record a Context Passport handoff clip',
+      ],
+      openQuestions: [
+        'The single most important unresolved question or decision needed to move forward',
+        'Does the copy make the handoff feel real?',
+      ],
+    }, '2026-05-28T12:00:00.000Z');
+
+    expect(update.markdown).not.toContain('Write 1-2 sentences');
+    expect(update.markdown).not.toContain('Project just created');
+    expect(update.markdown).not.toContain('List the immediate next actions');
+    expect(update.markdown).not.toContain('single most important unresolved question');
+    expect(update.markdown).toContain('Record a Context Passport handoff clip');
+    expect(update.markdown).toContain('Does the copy make the handoff feel real?');
+  });
+
+  it('suppresses noisy duplicate changelog entries while keeping meaningful progress', () => {
+    const update = generateBuildUpdate({
+      ...project,
+      changelog: [
+        {
+          timestamp: '2026-05-28T09:00:00.000Z',
+          field: 'export',
+          action: 'updated',
+          summary: 'Copied project context for ChatGPT.',
+        },
+        {
+          timestamp: '2026-05-28T10:00:00.000Z',
+          field: 'launch',
+          action: 'updated',
+          summary: 'Added Launch Passport polish.',
+        },
+        {
+          timestamp: '2026-05-28T11:00:00.000Z',
+          field: 'launch',
+          action: 'updated',
+          summary: 'Added Launch Passport polish.',
+        },
+        {
+          timestamp: '2026-05-28T12:00:00.000Z',
+          field: 'workflow',
+          action: 'updated',
+          summary: 'Refined workflow mode guidance.',
+        },
+      ],
+    }, '2026-05-28T12:00:00.000Z');
+
+    const releaseNotes = update.sections.find((section) => section.id === 'releaseNotes');
+
+    expect(update.markdown).not.toContain('Copied project context');
+    expect(releaseNotes?.content.match(/Added Launch Passport polish\./g)).toHaveLength(1);
+    expect(update.markdown).toContain('Refined workflow mode guidance.');
+  });
 });

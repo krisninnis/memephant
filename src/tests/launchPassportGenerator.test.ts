@@ -53,4 +53,35 @@ describe('generateLaunchPassport', () => {
     expect(passport.markdown).toContain('[redacted]');
     expect(passport.markdown).not.toContain('secret-123');
   });
+
+  it('filters placeholder scaffolding from launch-facing drafts', () => {
+    const passport = generateLaunchPassport({
+      ...project,
+      summary: 'Write 1-2 sentences describing what is true right now after this session.',
+      goals: [
+        'What is the top priority for this project?',
+        'Show serious AI users how Context Passport works',
+      ],
+      nextSteps: [
+        'List the immediate next actions that should happen after this session',
+        'Record a handoff demo clip',
+      ],
+      decisions: [
+        {
+          decision: 'Only include genuinely new decisions made this session',
+        },
+        {
+          decision: 'Keep Context Passport as the main demo moment.',
+        },
+      ],
+    }, '2026-05-28T12:00:00.000Z');
+
+    expect(passport.markdown).not.toContain('Write 1-2 sentences');
+    expect(passport.markdown).not.toContain('What is the top priority');
+    expect(passport.markdown).not.toContain('List the immediate next actions');
+    expect(passport.markdown).not.toContain('Only include genuinely new decisions');
+    expect(passport.markdown).toContain('Show serious AI users how Context Passport works');
+    expect(passport.markdown).toContain('Record a handoff demo clip');
+    expect(passport.markdown).toContain('Keep Context Passport as the main demo moment.');
+  });
 });
