@@ -5,6 +5,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { devError, devWarn } from '../utils/devLogging';
+import { getRuntimeEnv } from '../utils/runtimeEnv';
 
 // In-process Promise queue — equivalent to processLock from @supabase/auth-js.
 // Avoids importing a transitive package directly (no type declarations in the
@@ -50,8 +51,9 @@ async function processLock<R>(
   }
 }
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const supabaseEnv = getRuntimeEnv();
+const url = supabaseEnv.VITE_SUPABASE_URL;
+const key = supabaseEnv.VITE_SUPABASE_ANON_KEY;
 export const supabaseClientInstanceId = `supabase-client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 
 export const cloudAvailable: boolean = Boolean(

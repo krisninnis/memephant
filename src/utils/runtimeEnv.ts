@@ -20,11 +20,11 @@ export function getRuntimeEnv(): RuntimeEnv {
       : {};
 
   return {
-    VITE_APP_URL: viteEnv.VITE_APP_URL ?? windowEnv.VITE_APP_URL,
-    VITE_API_URL: viteEnv.VITE_API_URL ?? windowEnv.VITE_API_URL,
-    VITE_SUPABASE_URL: viteEnv.VITE_SUPABASE_URL ?? windowEnv.VITE_SUPABASE_URL,
+    VITE_APP_URL: windowEnv.VITE_APP_URL ?? viteEnv.VITE_APP_URL,
+    VITE_API_URL: windowEnv.VITE_API_URL ?? viteEnv.VITE_API_URL,
+    VITE_SUPABASE_URL: windowEnv.VITE_SUPABASE_URL ?? viteEnv.VITE_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY:
-      viteEnv.VITE_SUPABASE_ANON_KEY ?? windowEnv.VITE_SUPABASE_ANON_KEY,
-    VITE_SENTRY_DSN: viteEnv.VITE_SENTRY_DSN ?? windowEnv.VITE_SENTRY_DSN,
+      windowEnv.VITE_SUPABASE_ANON_KEY ?? viteEnv.VITE_SUPABASE_ANON_KEY,
+    VITE_SENTRY_DSN: windowEnv.VITE_SENTRY_DSN ?? viteEnv.VITE_SENTRY_DSN,
   };
 }

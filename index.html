@@ -45,6 +45,21 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var host = window.location.hostname;
+        var isLocal =
+          !host ||
+          host === 'localhost' ||
+          host === '127.0.0.1' ||
+          host === '0.0.0.0' ||
+          host.endsWith('.localhost');
+
+        if (!isLocal) {
+          document.write('<script src="/api/runtime-env"><\/script>');
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       // Register service worker for PWA / offline support.

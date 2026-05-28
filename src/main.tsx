@@ -10,6 +10,9 @@ import { initialiseSentry } from "./services/sentryService";
   __MEMPHANT_ENV__?: Record<string, string | undefined>;
 }).__MEMPHANT_ENV__ = {
   ...(import.meta.env as Record<string, string | undefined>),
+  ...((globalThis as typeof globalThis & {
+    __MEMPHANT_ENV__?: Record<string, string | undefined>;
+  }).__MEMPHANT_ENV__ ?? {}),
 };
 
 try {
