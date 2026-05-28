@@ -5,6 +5,7 @@ import {
   isNoisyChangelogSummary,
   uniqueStable,
 } from './contextQuality';
+import { assessPublicSignal, isMaintenanceOnlySignal } from './publicSignal';
 
 export type ShippingHighlight = {
   text: string;
@@ -27,6 +28,12 @@ const LOW_SIGNAL_PATTERNS = [
   /\bproject created\b/i,
   /\bupdated project memory\b/i,
   /\bmemphant_update\b/i,
+  /\blast session summary updated\b/i,
+  /\bproject updated\b/i,
+  /\bmetadata changed\b/i,
+  /\bnotes synced\b/i,
+  /\bsession state saved\b/i,
+  /\bdecisions? updated\b/i,
 ];
 
 const PRIORITY_TERMS = [
@@ -98,6 +105,7 @@ export function isLowSignalShippingEntry(summary: string): boolean {
   const text = cleanPublicText(summary);
   if (!text) return true;
   if (isNoisyChangelogSummary(text)) return true;
+  if (isMaintenanceOnlySignal(text)) return true;
   return LOW_SIGNAL_PATTERNS.some((pattern) => pattern.test(text));
 }
 
@@ -126,6 +134,7 @@ export function summarizeShippingChange(summary: string): string {
 
 function scoreHighlight(text: string, source: ShippingHighlight['source']): number {
   const normalized = normalizeForComparison(text);
+  const publicSignal = assessPublicSignal(text);
   const priorityScore = PRIORITY_TERMS.reduce(
     (score, term) => score + (normalized.includes(term) ? 3 : 0),
     0,
@@ -137,14 +146,16 @@ function scoreHighlight(text: string, source: ShippingHighlight['source']): numb
   const sourceScore = source === 'changelog' ? 4 : source === 'inProgress' ? 2 : 1;
   const specificityScore = text.split(/\s+/).length >= 4 ? 2 : 0;
 
-  return priorityScore + actionScore + sourceScore + specificityScore;
+  return publicSignal.score + priorityScore + actionScore + sourceScore + specificityScore;
 }
 
 function makeHighlight(text: string, source: ShippingHighlight['source']): ShippingHighlight | null {
   if (isLowSignalShippingEntry(text)) return null;
   const summary = summarizeShippingChange(text);
   if (!summary || isLowSignalShippingEntry(summary)) return null;
-  if (!hasTerm(summary, [...PRIORITY_TERMS, ...ACTION_TERMS])) return null;
+  const publicSignal = assessPublicSignal(summary);
+  if (!hasTerm(summary, [...PRIORITY_TERMS, ...ACTION_TERMS]) && publicSignal.level !== 'high') return null;
+  if (publicSignal.level === 'low') return null;
 
   return {
     text: summary,

@@ -60,6 +60,17 @@ const PROBLEM_PATTERNS = [
   /\bwaste\b/i,
   /\bre-explain\b/i,
   /\bwithout having to\b/i,
+  /\blosing momentum\b/i,
+  /\brebuilding context\b/i,
+  /\brebuild context\b/i,
+  /\bfrom scratch\b/i,
+  /\brepeating yourself\b/i,
+  /\brepeat yourself\b/i,
+  /\bevery AI\b/i,
+  /\bswitching tools without continuity\b/i,
+  /\blosing project state\b/i,
+  /\brestarting conversations\b/i,
+  /\brestart conversations\b/i,
 ];
 
 const OUTCOME_PATTERNS = [
@@ -73,6 +84,24 @@ const OUTCOME_PATTERNS = [
   /\bget\b/i,
   /\bship\b/i,
   /\bunderstand\b/i,
+  /\bmove your project between AI tools\b/i,
+  /\bbetween AI tools without\b/i,
+  /\bwithout ever rebuilding context\b/i,
+  /\bwithout rebuilding context\b/i,
+  /\bmaintain continuity\b/i,
+  /\bkeep continuity\b/i,
+  /\bkeep project state\b/i,
+];
+
+const EMOTIONAL_PAIN_PATTERNS = [
+  /\blosing momentum\b/i,
+  /\brebuilding context from scratch\b/i,
+  /\brebuilding context\b/i,
+  /\brepeating yourself to every AI\b/i,
+  /\brepeating yourself\b/i,
+  /\bswitching tools without continuity\b/i,
+  /\blosing project state\b/i,
+  /\brestarting conversations\b/i,
 ];
 
 const DIFFERENTIATOR_PATTERNS = [
@@ -217,27 +246,32 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
   const concreteGoals = goals.filter(hasMeasurableOrConcreteGoal);
   const hasSummary = hasSpecificText(summary, 8);
   const hasProgress = changelog.length > 0 || inProgress.length > 0 || hasSpecificText(currentState, 7);
+  const hasAudienceSignal = textHas(AUDIENCE_PATTERNS, combined);
+  const hasAudienceTerm = /\b(user|customer|people|team|founder|developer|builder|ai tools?)\b/i.test(combined);
+  const hasProblemSignal = textHas(PROBLEM_PATTERNS, combined);
+  const hasEmotionalPain = textHas(EMOTIONAL_PAIN_PATTERNS, combined);
+  const hasOutcomeSignal = textHas(OUTCOME_PATTERNS, combined);
 
   const signals: ContentReadinessSignal[] = [
     makeSignal(
       'targetAudience',
       'Clear target audience',
-      textHas(AUDIENCE_PATTERNS, combined) ? 10 : /\b(user|customer|people|team|founder|developer)\b/i.test(combined) ? 5 : 0,
-      textHas(AUDIENCE_PATTERNS, combined) ? 'Audience language is present.' : 'No clear audience phrase found.',
+      hasAudienceSignal ? 10 : hasAudienceTerm ? 5 : 0,
+      hasAudienceSignal ? 'Audience language is present.' : 'No clear audience phrase found.',
       'Describe who this is for.',
     ),
     makeSignal(
       'problemStatement',
       'Problem statement',
-      textHas(PROBLEM_PATTERNS, combined) ? 10 : openQuestions.length > 0 ? 5 : 0,
-      textHas(PROBLEM_PATTERNS, combined) ? 'Pain or problem language is present.' : 'The user pain is not explicit.',
+      hasEmotionalPain ? 10 : hasProblemSignal ? 9 : openQuestions.length > 0 ? 5 : 0,
+      hasEmotionalPain ? 'Emotional pain language is present.' : hasProblemSignal ? 'Pain or problem language is present.' : 'The user pain is not explicit.',
       'Add a clearer pain statement.',
     ),
     makeSignal(
       'outcomeStatement',
       'Outcome statement',
-      textHas(OUTCOME_PATTERNS, combined) && hasSummary ? 10 : textHas(OUTCOME_PATTERNS, combined) ? 5 : 0,
-      textHas(OUTCOME_PATTERNS, combined) ? 'Outcome-oriented wording is present.' : 'The user outcome is not clear yet.',
+      hasOutcomeSignal && hasSummary ? 10 : hasOutcomeSignal ? 7 : 0,
+      hasOutcomeSignal ? 'Outcome-oriented wording is present.' : 'The user outcome is not clear yet.',
       'Explain the outcome users get.',
     ),
     makeSignal(
@@ -291,7 +325,13 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
     ),
   ];
 
-  const score = Math.round(signals.reduce((sum, signal) => sum + signal.score, 0));
+  const readinessBoost = Math.min(
+    5,
+    (hasEmotionalPain ? 2 : 0) +
+      (hasOutcomeSignal ? 1 : 0) +
+      (hasAudienceTerm && hasProblemSignal && hasOutcomeSignal ? 2 : 0),
+  );
+  const score = Math.min(100, Math.round(signals.reduce((sum, signal) => sum + signal.score, 0) + readinessBoost));
   const strengths = signals
     .filter((signal) => signal.status === 'strong')
     .map((signal) => `${signal.label}: ${signal.evidence}`);

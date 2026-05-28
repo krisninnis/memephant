@@ -101,4 +101,27 @@ describe('content readiness', () => {
 
     expect(warning).toBe('Content quality may be limited because the target audience is unclear.');
   });
+
+  it('recognises emotional pain and continuity outcomes in positioning', () => {
+    const report = evaluateContentReadiness({
+      ...strongProject,
+      summary: 'Memephant helps AI builders move your project between AI tools without ever rebuilding context or losing momentum.',
+      currentState: 'Launch Studio content generation is ready for demo feedback.',
+      goals: ['Help 20 builders keep continuity across AI tools'],
+      decisions: [
+        {
+          decision: 'Prioritise cross-AI continuity so users stop repeating yourself to every AI.',
+        },
+      ],
+      workflowMode: 'launch',
+    });
+
+    const problem = report.signals.find((signal) => signal.id === 'problemStatement');
+    const outcome = report.signals.find((signal) => signal.id === 'outcomeStatement');
+
+    expect(problem?.status).toBe('strong');
+    expect(problem?.evidence).toBe('Emotional pain language is present.');
+    expect(outcome?.status).toBe('strong');
+    expect(report.score).toBeGreaterThanOrEqual(85);
+  });
 });

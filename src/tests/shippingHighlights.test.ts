@@ -26,6 +26,8 @@ describe('shipping highlights', () => {
   it('filters low-signal internal changelog entries', () => {
     expect(isLowSignalShippingEntry('4 decisions added by AI')).toBe(true);
     expect(isLowSignalShippingEntry('7 items added by AI')).toBe(true);
+    expect(isLowSignalShippingEntry('Last session summary updated')).toBe(true);
+    expect(isLowSignalShippingEntry('Metadata changed')).toBe(true);
     expect(isLowSignalShippingEntry('Copied project context for ChatGPT')).toBe(true);
     expect(isLowSignalShippingEntry('Export checkpoint created')).toBe(true);
     expect(isLowSignalShippingEntry('Added Daily Content Pack generation')).toBe(false);
@@ -78,8 +80,8 @@ describe('shipping highlights', () => {
     });
 
     expect(highlights).toEqual([
-      'Improved OAuth session persistence',
       'Added Daily Content Pack generation',
+      'Improved OAuth session persistence',
       'Improved onboarding clarity',
     ]);
   });
@@ -99,5 +101,33 @@ describe('shipping highlights', () => {
     });
 
     expect(highlights).toEqual(['Improving demo clip captions for Launch Studio']);
+  });
+
+  it('suppresses maintenance-only updates when generating highlights', () => {
+    const highlights = getShippingHighlights({
+      ...project,
+      changelog: [
+        {
+          timestamp: '2026-05-28T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+        {
+          timestamp: '2026-05-28T10:00:00.000Z',
+          field: 'metadata',
+          action: 'updated',
+          summary: 'Metadata changed',
+        },
+        {
+          timestamp: '2026-05-28T11:00:00.000Z',
+          field: 'launch',
+          action: 'added',
+          summary: 'Added Export History compare.',
+        },
+      ],
+    });
+
+    expect(highlights).toEqual(['Added Export History compare']);
   });
 });
