@@ -181,6 +181,7 @@
         try {
           const hash = new URLSearchParams(window.location.hash.replace('#', ''));
           const hashAccessToken = hash.get('access_token');
+          const hashRefreshToken = hash.get('refresh_token');
           clearSensitiveHash();
 
           const SUPABASE_URL = document.querySelector('meta[name="supa-url"]')?.content || '';
@@ -225,10 +226,27 @@
             return;
           }
 
-          if (hashAccessToken) {
+          if (hashAccessToken && hashRefreshToken) {
+            const { data: hashSession, error: hashErr } = await supabase.auth.setSession({
+              access_token: hashAccessToken,
+              refresh_token: hashRefreshToken,
+            });
+            if (hashErr) throw hashErr;
+
+            if (!hashSession?.session) {
+              showError('Could not establish a session. Please try signing in again.');
+              return;
+            }
+
             showSuccess('You are signed in.', `
-              <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.
+              <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.<br><br>
+              <strong>Web users:</strong> your session is saved. Return to Memephant to continue.
             `);
+            return;
+          }
+
+          if (hashAccessToken) {
+            showError('A sign-in token was received, but no refresh token was provided. Please try signing in again.');
             return;
           }
 

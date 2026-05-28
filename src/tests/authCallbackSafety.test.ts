@@ -29,6 +29,15 @@ describe('auth callback safety', () => {
     );
   });
 
+  it('persists hash-based OAuth sessions before showing success', () => {
+    expect(callbackHtml).toContain("hash.get('access_token')");
+    expect(callbackHtml).toContain("hash.get('refresh_token')");
+    expect(callbackHtml).toContain('supabase.auth.setSession({');
+    expect(callbackHtml.indexOf('supabase.auth.setSession({')).toBeLessThan(
+      callbackHtml.lastIndexOf("showSuccess('You are signed in.'"),
+    );
+  });
+
   it('does not log full callback URLs or token fragments', () => {
     expect(callbackHtml).not.toContain(`console.log(window.${'location'}`);
     expect(callbackHtml).not.toContain('window.location.href');
