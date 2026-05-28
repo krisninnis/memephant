@@ -2453,6 +2453,46 @@ select {
   overflow-wrap: anywhere;
 }
 
+.launch-passport-btn {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(168, 85, 247, 0.26);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(168, 85, 247, 0.14), rgba(14, 165, 233, 0.08)),
+    rgba(15, 23, 42, 0.38);
+  color: rgba(248, 250, 252, 0.94);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.launch-passport-btn:hover:not(:disabled) {
+  border-color: rgba(192, 132, 252, 0.45);
+  transform: translateY(-1px);
+}
+
+.launch-passport-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.launch-passport-btn span {
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.launch-passport-btn small {
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 .frontal-lobe-export-toggle {
   display: flex;
   align-items: center;
@@ -2723,6 +2763,46 @@ select {
 .export-preview-health ul {
   margin: 0;
   padding-left: 18px;
+}
+
+.launch-passport-modal {
+  width: min(980px, 100%);
+}
+
+.launch-passport-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.launch-passport-section {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.launch-passport-section h3 {
+  margin: 0 0 6px;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.launch-passport-section p {
+  margin: 0;
+  color: rgba(203, 213, 225, 0.78);
+  font-size: 0.76rem;
+  line-height: 1.42;
+  white-space: pre-wrap;
+}
+
+.launch-passport-textarea {
+  min-height: 220px;
 }
 
 .passport-attachment-panel {

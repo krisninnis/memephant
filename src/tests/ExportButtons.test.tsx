@@ -172,6 +172,36 @@ describe('ExportButtons export preview', () => {
     )).toBeInTheDocument();
   });
 
+  it('opens and copies a Launch Passport generated from project context', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+
+    render(<ExportButtons />);
+
+    fireEvent.click(screen.getByRole('button', { name: /generate launch passport/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Launch Passport' });
+    expect(within(dialog).getByText(
+      'Reusable launch assets generated from this project context. Review before posting.',
+    )).toBeInTheDocument();
+    expect(within(dialog).getByText('X/Twitter launch post')).toBeInTheDocument();
+    const launchText = within(dialog).getByLabelText('Launch Passport export text') as HTMLTextAreaElement;
+    expect(launchText.value).toContain('Export Preview Project');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Launch Passport' }));
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining('# Launch Passport'));
+    });
+    await waitFor(() => {
+      expect(within(dialog).getByRole('button', { name: 'Copied Launch Passport' }))
+        .toBeInTheDocument();
+    });
+  });
+
   it('preview contains the exact export text', async () => {
     await openPreview();
 

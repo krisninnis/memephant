@@ -55,6 +55,7 @@ import {
 } from '../../utils/platformRegistry';
 import type { ExportMode, HandoffMode } from '../../types/memphant-types';
 import { ContextPassportModal } from './ContextPassportModal';
+import { LaunchPassportModal } from './LaunchPassportModal';
 import { ExportDiffPanel } from './ExportDiffPanel';
 import { getExportDiffSummary } from '../../utils/getExportDiffSummary';
 import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
@@ -158,6 +159,7 @@ export function ExportButtons() {
   const [manifestLoading, setManifestLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [passportOpen, setPassportOpen] = useState(false);
+  const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
   const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [passportUnlocked, setPassportUnlocked] = useState(false);
@@ -741,6 +743,17 @@ export function ExportButtons() {
         </div>
       )}
 
+      <button
+        type="button"
+        className="launch-passport-btn"
+        onClick={() => setLaunchPassportOpen(true)}
+        disabled={!activeProject}
+        title="Generate launch copy and checklist assets from this project context"
+      >
+        <span>Generate Launch Passport</span>
+        <small>Launch posts, demo outline, and checklist from this project</small>
+      </button>
+
       <div className="frontal-lobe-export-status" aria-live="polite">
         {frontalLobeStatus}
       </div>
@@ -1171,6 +1184,13 @@ export function ExportButtons() {
         <ContextPassportModal
           project={activeProject}
           onClose={() => setPassportOpen(false)}
+        />
+      )}
+
+      {launchPassportOpen && activeProject && (
+        <LaunchPassportModal
+          project={activeProject}
+          onClose={() => setLaunchPassportOpen(false)}
         />
       )}
 
