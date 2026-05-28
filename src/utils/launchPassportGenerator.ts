@@ -6,6 +6,7 @@ import {
   publicAssetName,
 } from './contextQuality';
 import { getContentQualityWarning } from './contentReadiness';
+import { getShippingHighlights } from './shippingHighlights';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type LaunchPassportSectionId =
@@ -82,9 +83,11 @@ export function generateLaunchPassport(
   const instructions = cleanText(project.aiInstructions);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
+  const shippingHighlights = getShippingHighlights(project, 3);
   const keyGoal = goals[0] ?? 'help users get value faster';
   const keyNextStep = nextSteps[0] ?? 'collect feedback';
   const contextSignals = firstItems([
+    ...shippingHighlights.map((item) => `Shipped: ${item}`),
     ...goals.map((goal) => `Goal: ${goal}`),
     ...inProgress.map((item) => `In progress: ${item}`),
     ...nextSteps.map((step) => `Next: ${step}`),
@@ -145,6 +148,7 @@ export function generateLaunchPassport(
         `I built this because ${decisionSummary(project.decisions)}.`,
         '',
         `Current state: ${currentState}`,
+        shippingHighlights.length > 0 ? `What shipped: ${sentenceList(firstItems(shippingHighlights, 2))}.` : '',
         '',
         'Useful context:',
         bulletList(contextSignals.length > 0 ? contextSignals : [`Next: ${keyNextStep}`]),
@@ -156,7 +160,9 @@ export function generateLaunchPassport(
       content: [
         `I built ${name} because the project context kept pointing to the same need: ${keyGoal}.`,
         '',
-        `The product is currently here: ${currentState}`,
+        shippingHighlights.length > 0
+          ? `The latest visible progress: ${sentenceList(firstItems(shippingHighlights, 2))}.`
+          : `The product is currently here: ${currentState}`,
         '',
         `The most important decision so far: ${decisionSummary(project.decisions)}.`,
         instructions ? `\nWorking style note: ${instructions}` : '',

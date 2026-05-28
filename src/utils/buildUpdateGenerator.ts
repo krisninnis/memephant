@@ -1,12 +1,12 @@
-import type { ChangelogEntry, Decision, ProjectMemory } from '../types/memphant-types';
+import type { Decision, ProjectMemory } from '../types/memphant-types';
 import {
   cleanPublicList,
   cleanPublicText,
-  filterPublicChangelog,
   filterPublicDecisions,
   publicAssetName,
 } from './contextQuality';
 import { getContentQualityWarning } from './contentReadiness';
+import { getShippingHighlights } from './shippingHighlights';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type BuildUpdateSectionId =
@@ -58,10 +58,6 @@ function sentenceList(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
-function recentChangeSummary(changelog: ChangelogEntry[] | undefined): string[] {
-  return filterPublicChangelog(changelog, 4);
-}
-
 function decisionSummary(decisions: Decision[]): string {
   const useful = filterPublicDecisions(decisions, 2);
 
@@ -80,12 +76,12 @@ export function generateBuildUpdate(
   const inProgress = cleanList(project.inProgress);
   const openQuestions = cleanList(project.openQuestions);
   const assets = cleanList(project.importantAssets).map(publicAssetName);
-  const changes = recentChangeSummary(project.changelog);
+  const changes = getShippingHighlights(project, 5);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
   const shippedItems = firstItems([
     ...changes,
-    ...inProgress.map((item) => `Worked on ${item}`),
+    ...(changes.length > 0 ? [] : inProgress.map((item) => `Worked on ${item}`)),
     ...nextSteps.map((step) => `Prepared next step: ${step}`),
   ], 5);
   const primaryProgress = shippedItems[0] ?? currentState;

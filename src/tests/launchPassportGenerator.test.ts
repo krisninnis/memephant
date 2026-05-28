@@ -94,4 +94,28 @@ describe('generateLaunchPassport', () => {
     expect(passport.qualityWarning).toBe('Content quality may be limited because the project summary is incomplete.');
     expect(passport.markdown).toContain('> Content quality may be limited because the project summary is incomplete.');
   });
+
+  it('uses shipping highlights in launch context instead of AI bookkeeping', () => {
+    const passport = generateLaunchPassport({
+      ...project,
+      changelog: [
+        {
+          timestamp: '2026-05-28T09:00:00.000Z',
+          field: 'general',
+          action: 'updated',
+          summary: '7 items added by AI',
+        },
+        {
+          timestamp: '2026-05-28T10:00:00.000Z',
+          field: 'launch',
+          action: 'added',
+          summary: 'Created Daily Content Pack generation.',
+        },
+      ],
+    }, '2026-05-28T12:00:00.000Z');
+
+    expect(passport.markdown).not.toContain('7 items added by AI');
+    expect(passport.markdown).toContain('Added Daily Content Pack generation');
+    expect(passport.markdown).toContain('Shipped: Added Daily Content Pack generation');
+  });
 });

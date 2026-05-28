@@ -41,7 +41,7 @@ describe('generateBuildUpdate', () => {
     expect(update.sections).toHaveLength(10);
     expect(update.markdown).toContain('# Build Update: Memephant Landing Page Refresh');
     expect(update.markdown).toContain('## X/Twitter build update');
-    expect(update.markdown).toContain('Added post-copy guidance after export.');
+    expect(update.markdown).toContain('Added post-copy guidance after export');
     expect(update.markdown).toContain('Record the 90-second demo');
     expect(update.markdown).toContain('Launch Mode');
   });
@@ -120,8 +120,45 @@ describe('generateBuildUpdate', () => {
     const releaseNotes = update.sections.find((section) => section.id === 'releaseNotes');
 
     expect(update.markdown).not.toContain('Copied project context');
-    expect(releaseNotes?.content.match(/Added Launch Passport polish\./g)).toHaveLength(1);
-    expect(update.markdown).toContain('Refined workflow mode guidance.');
+    expect(releaseNotes?.content.match(/Added Launch Passport polish/g)).toHaveLength(1);
+    expect(update.markdown).toContain('Improved workflow mode guidance');
+  });
+
+  it('uses shipping highlights instead of low-signal AI bookkeeping', () => {
+    const update = generateBuildUpdate({
+      ...project,
+      changelog: [
+        {
+          timestamp: '2026-05-28T09:00:00.000Z',
+          field: 'general',
+          action: 'updated',
+          summary: '4 decisions added by AI',
+        },
+        {
+          timestamp: '2026-05-28T10:00:00.000Z',
+          field: 'general',
+          action: 'updated',
+          summary: '7 items added by AI',
+        },
+        {
+          timestamp: '2026-05-28T11:00:00.000Z',
+          field: 'launch',
+          action: 'added',
+          summary: 'Implemented Content Readiness scoring.',
+        },
+        {
+          timestamp: '2026-05-28T12:00:00.000Z',
+          field: 'onboarding',
+          action: 'updated',
+          summary: 'Refined onboarding clarity.',
+        },
+      ],
+    }, '2026-05-28T12:00:00.000Z');
+
+    expect(update.markdown).not.toContain('4 decisions added by AI');
+    expect(update.markdown).not.toContain('7 items added by AI');
+    expect(update.markdown).toContain('Added Content Readiness scoring');
+    expect(update.markdown).toContain('Improved onboarding clarity');
   });
 
   it('adds a content quality warning when positioning context is weak', () => {

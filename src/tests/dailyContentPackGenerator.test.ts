@@ -112,6 +112,31 @@ describe('generateDailyContentPack', () => {
     expect(pack.markdown).toContain('Shipped Daily Content Pack preview.');
   });
 
+  it('uses shipping highlights in daily shipped sections', () => {
+    const pack = generateDailyContentPack({
+      ...project,
+      changelog: [
+        {
+          timestamp: '2026-05-28T09:00:00.000Z',
+          field: 'general',
+          action: 'updated',
+          summary: '2 items added by AI',
+        },
+        {
+          timestamp: '2026-05-28T10:00:00.000Z',
+          field: 'launch',
+          action: 'added',
+          summary: 'Added Launch Studio separation.',
+        },
+      ],
+    }, '2026-05-28T12:00:00.000Z');
+
+    const shippedToday = pack.sections.find((section) => section.id === 'whatShippedToday');
+
+    expect(shippedToday?.content).toContain('Added Launch Studio separation');
+    expect(shippedToday?.content).not.toContain('2 items added by AI');
+  });
+
   it('adds a content quality warning when positioning context is weak', () => {
     const pack = generateDailyContentPack({
       ...project,
