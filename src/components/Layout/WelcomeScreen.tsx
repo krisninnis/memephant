@@ -17,6 +17,7 @@ import {
 import type { ProjectMemory } from '../../types/memphant-types';
 import { PROJECT_TEMPLATES } from '../../utils/projectTemplates';
 import type { ProjectTemplate } from '../../utils/projectTemplates';
+import { DEMO_PROJECT_ID, createDemoProject } from '../../utils/demoProject';
 import LaunchpadWizard from '../Launchpad/LaunchpadWizard';
 import './WelcomeScreen.css';
 
@@ -87,6 +88,7 @@ export function WelcomeScreen() {
   const [showLaunchpad, setShowLaunchpad] = useState(false);
 
   const addProject = useProjectStore((s) => s.addProject);
+  const projects = useProjectStore((s) => s.projects);
   const setActiveProject = useProjectStore((s) => s.setActiveProject);
   const showToast = useProjectStore((s) => s.showToast);
   const cloudUser = useProjectStore((s) => s.cloudUser);
@@ -135,6 +137,34 @@ export function WelcomeScreen() {
     } catch (err) {
       console.error('Create failed:', err);
       showToast('Could not create the project - please try again.', 'error');
+      setCreating(false);
+    }
+  };
+
+  const handleTryDemoProject = async () => {
+    if (creating) return;
+    setCreating(true);
+
+    try {
+      const existingDemo = projects.find((project) => project.id === DEMO_PROJECT_ID);
+
+      if (existingDemo) {
+        setActiveProject(existingDemo.id);
+        setCurrentView('projects');
+        showToast('Demo project opened. Generate a Context Passport to try the handoff.');
+        return;
+      }
+
+      const project = createDemoProject();
+      await saveToDisk(project);
+      addProject(project);
+      setActiveProject(project.id);
+      setCurrentView('projects');
+      showToast('Demo project ready. Generate a Context Passport to see the handoff.');
+    } catch (err) {
+      console.error('Demo project failed:', err);
+      showToast('Could not open the demo project - please try again.', 'error');
+    } finally {
       setCreating(false);
     }
   };
@@ -224,6 +254,19 @@ export function WelcomeScreen() {
           </div>
 
           <div className="welcome-actions">
+            <button
+              className="welcome-btn welcome-btn--demo"
+              onClick={() => void handleTryDemoProject()}
+              disabled={creating}
+            >
+              <span className="welcome-btn__text">
+                Try Demo Project
+                <small className="welcome-btn__subtitle">
+                  See a populated project and generate a Context Passport
+                </small>
+              </span>
+            </button>
+
             {desktopApp ? (
               <>
                 {/* PRIMARY: Open an existing codebase */}

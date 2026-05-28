@@ -132,6 +132,32 @@
   color: #fff;
 }
 
+.welcome-btn--demo {
+  background: #f5f0e8;
+  color: #1f2933;
+  border: 1px solid rgba(217, 119, 6, 0.38);
+  box-shadow: 0 10px 24px rgba(217, 119, 6, 0.16);
+}
+
+.welcome-btn--demo:hover:not(:disabled) {
+  background: #fff7ed;
+  transform: translateY(-1px);
+}
+
+.welcome-btn--demo:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+}
+
+.welcome-btn--demo .welcome-btn__text {
+  align-items: center;
+}
+
+.welcome-btn--demo .welcome-btn__subtitle {
+  color: rgba(31, 41, 51, 0.72);
+}
+
 /* Subtitle inside primary button */
 .welcome-btn__text {
   display: flex;
