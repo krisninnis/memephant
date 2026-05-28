@@ -2421,6 +2421,38 @@ select {
   text-transform: uppercase;
 }
 
+.export-post-copy-guidance {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 10px;
+  background: rgba(6, 95, 70, 0.2);
+  color: rgba(236, 253, 245, 0.94);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.export-post-copy-guidance strong {
+  color: #a7f3d0;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.export-post-copy-guidance code {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.74rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .frontal-lobe-export-toggle {
   display: flex;
   align-items: center;

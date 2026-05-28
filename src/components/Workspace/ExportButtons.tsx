@@ -153,6 +153,7 @@ function getPassportAttachmentExplanation(status: PassportAttachmentStatus): str
 
 export function ExportButtons() {
   const [copied, setCopied] = useState(false);
+  const [postCopyGuidanceVisible, setPostCopyGuidanceVisible] = useState(false);
   const [manifestCopied, setManifestCopied] = useState(false);
   const [manifestLoading, setManifestLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -169,6 +170,7 @@ export function ExportButtons() {
   const [switchReason, setSwitchReason] = useState('');
   const [styleSettings, setStyleSettings] = useState(defaultPassportStyleSettings);
   const [writingOptionsOpen, setWritingOptionsOpen] = useState(false);
+  const postCopyGuidanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Frontal Lobe / AI Working Style inclusion ─────────────────────────────
   const [vault] = useState(() => loadPersonalMemoryVault());
@@ -246,6 +248,12 @@ export function ExportButtons() {
       document.removeEventListener('keydown', handleEscape);
     };
   }, [menuOpen]);
+
+  useEffect(() => () => {
+    if (postCopyGuidanceTimerRef.current) {
+      clearTimeout(postCopyGuidanceTimerRef.current);
+    }
+  }, []);
 
   const selectedPlatformId = ensureValidPlatformId(
     targetPlatform,
@@ -586,6 +594,13 @@ export function ExportButtons() {
       await copyExportToClipboard(textToCopy, exportPreview.copyPlatformId);
 
       setCopied(true);
+      setPostCopyGuidanceVisible(true);
+      if (postCopyGuidanceTimerRef.current) {
+        clearTimeout(postCopyGuidanceTimerRef.current);
+      }
+      postCopyGuidanceTimerRef.current = setTimeout(() => {
+        setPostCopyGuidanceVisible(false);
+      }, 10000);
       if (exportPreview.mode === 'deep-state') {
         setManifestCopied(true);
       }
@@ -899,6 +914,17 @@ export function ExportButtons() {
           </button>
           )}
         </div>
+
+        {postCopyGuidanceVisible && (
+          <div className="export-post-copy-guidance" role="status" aria-live="polite">
+            <strong>Copied successfully.</strong>
+            <span>
+              Paste this into ChatGPT, Claude, Gemini, Cursor, Grok, or another AI and ask it
+              to continue from this Context Passport.
+            </span>
+            <code>Continue this project from the attached Context Passport.</code>
+          </div>
+        )}
 
         {memoryBridgeMode === 'manual' && menuOpen && activeProject && (
           <div

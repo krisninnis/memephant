@@ -249,6 +249,22 @@ describe('ExportButtons export preview', () => {
     });
   });
 
+  it('shows post-copy guidance after a successful export copy', async () => {
+    await openPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /copy export/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Copied successfully.')).toBeInTheDocument();
+    });
+    expect(screen.getByText(
+      /Paste this into ChatGPT, Claude, Gemini, Cursor, Grok, or another AI/i,
+    )).toBeInTheDocument();
+    expect(screen.getByText(
+      'Continue this project from the attached Context Passport.',
+    )).toBeInTheDocument();
+  });
+
   it('shows the private vault warning', async () => {
     await openPreview();
 
