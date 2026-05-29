@@ -6,7 +6,7 @@ import {
   publicAssetName,
 } from './contextQuality';
 import { getContentQualityWarning } from './contentReadiness';
-import { getShippingHighlights } from './shippingHighlights';
+import { getPublicPostContext } from './publicPostQuality';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type DailyContentPackSectionId =
@@ -72,22 +72,15 @@ export function generateDailyContentPack(
   const summary = cleanText(project.summary, `${name} helps users make progress.`);
   const currentState = cleanText(project.currentState, 'The project has visible progress today.');
   const goals = cleanList(project.goals, ['make the project easier to understand']);
-  const nextSteps = cleanList(project.nextSteps, ['collect feedback and decide the next improvement']);
-  const inProgress = cleanList(project.inProgress);
   const openQuestions = cleanList(project.openQuestions);
   const assets = cleanList(project.importantAssets).map(publicAssetName);
-  const changes = getShippingHighlights(project, 5);
+  const publicPost = getPublicPostContext(project, 5);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
-  const dailySignals = firstItems([
-    ...changes,
-    ...(changes.length > 0 ? [] : inProgress.map((item) => `Worked on ${item}`)),
-    ...nextSteps.map((step) => `Prepared next step: ${step}`),
-  ], 5);
-  const primaryProgress = dailySignals[0] ?? currentState;
+  const dailySignals = firstItems(publicPost.highlights, 5);
+  const primaryProgress = publicPost.primaryUpdate || currentState;
   const primaryGoal = goals[0] ?? 'make the project more useful';
-  const primaryNextStep = nextSteps[0] ?? 'collect feedback';
-  const feedbackAsk = openQuestions[0] ?? 'where the value is clearest and where it still feels confusing';
+  const feedbackAsk = openQuestions[0] ?? publicPost.feedbackAsk;
   const workflowLine = workflowMode
     ? `Working lens: ${workflowMode.label} (${workflowMode.focus}).`
     : '';
@@ -103,7 +96,7 @@ export function generateDailyContentPack(
         `Today on ${name}: ${primaryProgress}`,
         '',
         `The goal is still simple: ${primaryGoal}.`,
-        `Next: ${primaryNextStep}.`,
+        `Why it matters: ${summary}`,
         '',
         `Feedback welcome on ${feedbackAsk}.`,
       ].join('\n'),
@@ -123,7 +116,7 @@ export function generateDailyContentPack(
         'What matters right now:',
         bulletList(firstItems(goals, 3)),
         '',
-        `The next useful step is ${primaryNextStep}.`,
+        `I am looking for feedback on ${feedbackAsk}.`,
       ].filter(Boolean).join('\n'),
     },
     {
@@ -173,7 +166,7 @@ export function generateDailyContentPack(
         `The newest thing to react to is ${primaryProgress}.`,
         `The part I am most curious about is ${feedbackAsk}.`,
         `The trade-off behind it is ${decisionSummary(project.decisions)}.`,
-        `The next thing I am testing is ${primaryNextStep}.`,
+        `The reason it matters is ${summary}`,
       ]),
     },
     {
@@ -184,7 +177,7 @@ export function generateDailyContentPack(
         `${name} demo clip: ${primaryProgress}`,
         `Watch for: ${visualCue}`,
         `Why it matters: ${summary}`,
-        `Next: ${primaryNextStep}`,
+        `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
     },
     {
@@ -202,7 +195,7 @@ export function generateDailyContentPack(
         '',
         bulletList(shippedItems),
         '',
-        `Next up: ${primaryNextStep}`,
+        `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
     },
     {
@@ -215,7 +208,7 @@ export function generateDailyContentPack(
         `Solution: ${name} is moving toward ${primaryGoal}.`,
         '',
         `Proof from today: ${primaryProgress}`,
-        `Next: ${primaryNextStep}`,
+        `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
     },
   ];

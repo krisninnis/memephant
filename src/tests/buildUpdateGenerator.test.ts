@@ -170,4 +170,29 @@ describe('generateBuildUpdate', () => {
     expect(update.qualityWarning).toBe('Content quality may be limited because the project summary is incomplete.');
     expect(update.markdown).toContain('> Content quality may be limited because the project summary is incomplete.');
   });
+
+  it('prefers public quality updates over bookkeeping in social sections', () => {
+    const update = generateBuildUpdate({
+      ...project,
+      changelog: [
+        {
+          timestamp: '2026-05-29T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+        {
+          timestamp: '2026-05-29T10:00:00.000Z',
+          field: 'auth',
+          action: 'updated',
+          summary: 'Fixed OAuth session persistence.',
+        },
+      ],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const xUpdate = update.sections.find((section) => section.id === 'xUpdate');
+
+    expect(xUpdate?.content).toContain('Improved OAuth session persistence and sign-in reliability.');
+    expect(xUpdate?.content).not.toContain('Last session summary updated');
+  });
 });

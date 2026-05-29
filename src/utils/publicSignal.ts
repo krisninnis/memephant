@@ -21,6 +21,8 @@ const HIGH_SIGNAL_WEIGHTS: Array<[RegExp, number, string]> = [
 
 const LOW_SIGNAL_WEIGHTS: Array<[RegExp, number, string]> = [
   [/\blast session summary updated\b/i, -18, 'internal session bookkeeping'],
+  [/\bprepared next step\b/i, -18, 'planning task'],
+  [/\bnext up\b/i, -12, 'planning task'],
   [/\bproject updated\b/i, -16, 'generic project bookkeeping'],
   [/\bmetadata changed\b/i, -16, 'metadata-only update'],
   [/\bnotes synced\b/i, -14, 'sync bookkeeping'],

@@ -6,7 +6,7 @@ import {
   publicAssetName,
 } from './contextQuality';
 import { getContentQualityWarning } from './contentReadiness';
-import { getShippingHighlights } from './shippingHighlights';
+import { getPublicPostContext } from './publicPostQuality';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type LaunchPassportSectionId =
@@ -83,7 +83,8 @@ export function generateLaunchPassport(
   const instructions = cleanText(project.aiInstructions);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
-  const shippingHighlights = getShippingHighlights(project, 3);
+  const publicPost = getPublicPostContext(project, 3);
+  const shippingHighlights = publicPost.highlights;
   const keyGoal = goals[0] ?? 'help users get value faster';
   const keyNextStep = nextSteps[0] ?? 'collect feedback';
   const contextSignals = firstItems([

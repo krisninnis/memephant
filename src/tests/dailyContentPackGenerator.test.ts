@@ -53,9 +53,9 @@ describe('generateDailyContentPack', () => {
     ]);
     expect(pack.markdown).toContain('# Daily Content Pack: Memephant Launch Studio');
     expect(pack.markdown).toContain('## X post');
-    expect(pack.markdown).toContain('Added Daily Content Pack generator.');
+    expect(pack.markdown).toContain('Added Daily Content Pack generation for copy-ready social ideas.');
     expect(pack.markdown).toContain('Launch Mode');
-    expect(pack.markdown).toContain('Share the content pack with early users');
+    expect(pack.markdown).toContain('Which daily post format saves the most time?');
   });
 
   it('keeps content ideas public by removing local folder paths', () => {
@@ -85,7 +85,7 @@ describe('generateDailyContentPack', () => {
     expect(pack.markdown).not.toContain('List the immediate next actions');
     expect(pack.markdown).not.toContain('single most important unresolved question');
     expect(pack.markdown).toContain('[redacted]');
-    expect(pack.markdown).toContain('Record a daily demo clip');
+    expect(pack.markdown).not.toContain('List the immediate next actions');
     expect(pack.markdown).toContain('Does the daily content feel specific enough?');
   });
 
@@ -109,7 +109,7 @@ describe('generateDailyContentPack', () => {
     }, '2026-05-28T12:00:00.000Z');
 
     expect(pack.markdown).not.toContain('Copied project context');
-    expect(pack.markdown).toContain('Shipped Daily Content Pack preview.');
+    expect(pack.markdown).toContain('Added Daily Content Pack generation for copy-ready social ideas.');
   });
 
   it('uses shipping highlights in daily shipped sections', () => {
@@ -145,5 +145,32 @@ describe('generateDailyContentPack', () => {
 
     expect(pack.qualityWarning).toBe('Content quality may be limited because the project summary is incomplete.');
     expect(pack.markdown).toContain('> Content quality may be limited because the project summary is incomplete.');
+  });
+
+  it('does not use planning notes as the generated X post', () => {
+    const pack = generateDailyContentPack({
+      ...project,
+      nextSteps: ['Post on Indie Hackers'],
+      changelog: [
+        {
+          timestamp: '2026-05-29T09:00:00.000Z',
+          field: 'planning',
+          action: 'updated',
+          summary: 'Prepared next step: Post on Indie Hackers',
+        },
+        {
+          timestamp: '2026-05-29T10:00:00.000Z',
+          field: 'launch',
+          action: 'added',
+          summary: 'Added Social Bridge composer links.',
+        },
+      ],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const xPost = pack.sections.find((section) => section.id === 'xPost');
+
+    expect(xPost?.content).toContain('Added Social Bridge so generated content can be opened directly in X, LinkedIn, Reddit, and Facebook.');
+    expect(xPost?.content).not.toContain('Prepared next step');
+    expect(xPost?.content).not.toContain('Next up: Post on Indie Hackers');
   });
 });

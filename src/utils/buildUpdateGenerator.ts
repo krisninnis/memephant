@@ -6,7 +6,7 @@ import {
   publicAssetName,
 } from './contextQuality';
 import { getContentQualityWarning } from './contentReadiness';
-import { getShippingHighlights } from './shippingHighlights';
+import { getPublicPostContext } from './publicPostQuality';
 import { getWorkflowModeConfig } from './workflowModes';
 
 export type BuildUpdateSectionId =
@@ -73,21 +73,16 @@ export function generateBuildUpdate(
   const currentState = cleanText(project.currentState, 'The project has made visible progress.');
   const goals = cleanList(project.goals, ['make the product clearer and more useful']);
   const nextSteps = cleanList(project.nextSteps, ['collect feedback and decide what to improve next']);
-  const inProgress = cleanList(project.inProgress);
   const openQuestions = cleanList(project.openQuestions);
   const assets = cleanList(project.importantAssets).map(publicAssetName);
-  const changes = getShippingHighlights(project, 5);
+  const publicPost = getPublicPostContext(project, 5);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
-  const shippedItems = firstItems([
-    ...changes,
-    ...(changes.length > 0 ? [] : inProgress.map((item) => `Worked on ${item}`)),
-    ...nextSteps.map((step) => `Prepared next step: ${step}`),
-  ], 5);
-  const primaryProgress = shippedItems[0] ?? currentState;
+  const shippedItems = firstItems(publicPost.highlights, 5);
+  const primaryProgress = publicPost.primaryUpdate || currentState;
   const primaryGoal = goals[0] ?? 'make the project more useful';
   const primaryNextStep = nextSteps[0] ?? 'collect feedback';
-  const feedbackAsk = openQuestions[0] ?? 'where the value is clear and where it still feels confusing';
+  const feedbackAsk = openQuestions[0] ?? publicPost.feedbackAsk;
   const workflowNote = workflowMode
     ? `Current working lens: ${workflowMode.label} - ${workflowMode.guidance}`
     : '';
@@ -103,7 +98,6 @@ export function generateBuildUpdate(
         primaryProgress,
         '',
         `Why it matters: ${summary}`,
-        `Next: ${primaryNextStep}`,
         '',
         `Feedback welcome, especially on ${feedbackAsk}.`,
       ].join('\n'),
@@ -112,7 +106,7 @@ export function generateBuildUpdate(
       id: 'shortUpdate',
       title: 'Short what changed update',
       bestFor: 'Quick status',
-      content: `${name}: ${primaryProgress} Next up: ${primaryNextStep}.`,
+      content: `${name}: ${primaryProgress}`,
     },
     {
       id: 'linkedIn',
@@ -204,7 +198,7 @@ export function generateBuildUpdate(
         '',
         bulletList(shippedItems.length > 0 ? shippedItems : [primaryProgress]),
         '',
-        `Next week: ${primaryNextStep}`,
+        `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
     },
     {
@@ -229,7 +223,7 @@ export function generateBuildUpdate(
         `${name} demo: ${summary}`,
         `In this clip: ${primaryProgress}`,
         assets.length > 0 ? `Visual to show: ${sentenceList(firstItems(assets, 2))}` : '',
-        `Next: ${primaryNextStep}`,
+        `Feedback wanted: ${feedbackAsk}`,
       ].filter(Boolean).join('\n'),
     },
   ];

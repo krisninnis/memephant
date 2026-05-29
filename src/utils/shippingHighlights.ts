@@ -28,6 +28,8 @@ const LOW_SIGNAL_PATTERNS = [
   /\bproject created\b/i,
   /\bupdated project memory\b/i,
   /\bmemphant_update\b/i,
+  /\bprepared next step\b/i,
+  /\bnext up\b/i,
   /\blast session summary updated\b/i,
   /\bproject updated\b/i,
   /\bmetadata changed\b/i,
