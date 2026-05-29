@@ -48,29 +48,29 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
-      aria-label="Launch Passport"
+      aria-label="Launch Kit"
     >
       <section className="export-preview-modal launch-passport-modal" onClick={(e) => e.stopPropagation()}>
         <div className="export-preview-modal__header">
           <div>
-            <h2>Launch Passport</h2>
+            <h2>Launch Kit</h2>
             <p>
               Reusable launch assets generated from this project context. Context Passport is for
-              AI handoff; Launch Passport is for explaining and sharing the project.
+              AI handoff; Launch Kit is for explaining and sharing the project.
             </p>
           </div>
           <button
             type="button"
             className="export-preview-modal__close"
             onClick={onClose}
-            aria-label="Close Launch Passport"
+            aria-label="Close Launch Kit"
             title="Close"
           >
             x
           </button>
         </div>
 
-        <div className="launch-passport-sections" aria-label="Launch Passport sections">
+        <div className="launch-passport-sections" aria-label="Launch Kit sections">
           {passport.sections.map((section) => (
             <article className="launch-passport-section" key={section.id}>
               <h3>{section.title}</h3>
@@ -84,7 +84,7 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
           className="export-preview-textarea launch-passport-textarea"
           readOnly
           value={passport.markdown}
-          aria-label="Launch Passport export text"
+          aria-label="Launch Kit export text"
         />
 
         <div className="export-preview-actions">
@@ -100,7 +100,7 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
             className="export-preview-actions__primary"
             onClick={() => void handleCopy()}
           >
-            {copied ? 'Copied Launch Passport' : 'Copy Launch Passport'}
+            {copied ? 'Copied Launch Kit' : 'Copy Launch Kit'}
           </button>
         </div>
       </section>

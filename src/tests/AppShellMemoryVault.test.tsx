@@ -117,7 +117,7 @@ describe('AppShell Memory Vault navigation', () => {
     render(<AppShell />);
 
     expect(
-      screen.getByRole('button', { name: /Launch Studio Launch posts and build updates/i }),
+      screen.getByRole('button', { name: /Launch Studio Launch kits and build updates/i }),
     ).toBeInTheDocument();
   });
 
@@ -125,7 +125,7 @@ describe('AppShell Memory Vault navigation', () => {
     render(<AppShell />);
 
     fireEvent.click(
-      screen.getByRole('button', { name: /Launch Studio Launch posts and build updates/i }),
+      screen.getByRole('button', { name: /Launch Studio Launch kits and build updates/i }),
     );
 
     expect(screen.getByRole('heading', { name: 'Launch Studio' })).toBeInTheDocument();

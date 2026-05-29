@@ -212,7 +212,7 @@ describe('ExportButtons export preview', () => {
   it('keeps launch tools out of the core workspace export controls', () => {
     render(<ExportButtons />);
 
-    expect(screen.queryByRole('button', { name: /generate launch passport/i }))
+    expect(screen.queryByRole('button', { name: /generate launch kit/i }))
       .not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /generate build update/i }))
       .not.toBeInTheDocument();

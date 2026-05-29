@@ -93,12 +93,12 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
-      aria-label="Content Readiness"
+      aria-label="Project Clarity"
     >
       <section className="export-preview-modal content-readiness-modal" onClick={(e) => e.stopPropagation()}>
         <div className="export-preview-modal__header">
           <div>
-            <h2>Content Readiness</h2>
+            <h2>Project Clarity</h2>
             <p>
               A local check for whether this project has enough plain context to produce useful launch content.
             </p>
@@ -107,7 +107,7 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
             type="button"
             className="export-preview-modal__close"
             onClick={onClose}
-            aria-label="Close Content Readiness"
+            aria-label="Close Project Clarity"
             title="Close"
           >
             x
@@ -182,7 +182,7 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
           </section>
         </div>
 
-        <div className="content-readiness-signals" aria-label="Content readiness signal details">
+        <div className="content-readiness-signals" aria-label="Project clarity signal details">
           {report.signals.map((signal) => (
             <article className={`content-readiness-signal content-readiness-signal--${signal.status}`} key={signal.id}>
               <div>

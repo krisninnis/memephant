@@ -51,7 +51,7 @@ export function LaunchStudio() {
               </div>
               <article className="launch-studio-card">
                 <div>
-                  <h3>Content Readiness</h3>
+                  <h3>Project Clarity</h3>
                   <p>
                     Check whether the project has enough plain context to generate useful
                     launch and social content.
@@ -61,9 +61,9 @@ export function LaunchStudio() {
                   type="button"
                   className="content-readiness-btn"
                   onClick={() => setContentReadinessOpen(true)}
-                  title="Evaluate content readiness from local project context"
+                  title="Evaluate project clarity from local project context"
                 >
-                  <span>Check Content Readiness</span>
+                  <span>Check Project Clarity</span>
                   <small>Score, weak areas, missing basics, suggestions</small>
                 </button>
               </article>
@@ -80,7 +80,7 @@ export function LaunchStudio() {
               <div className="launch-studio__grid" aria-label="Launch Studio content generators">
                 <article className="launch-studio-card">
                   <div>
-                    <h3>Launch Passport</h3>
+                    <h3>Launch Kit</h3>
                     <p>
                       Create launch posts, a founder story, demo outline, screenshot
                       checklist, and feedback request from this project.
@@ -92,7 +92,7 @@ export function LaunchStudio() {
                     onClick={() => setLaunchPassportOpen(true)}
                     title="Generate launch copy and checklist assets from this project context"
                   >
-                    <span>Generate Launch Passport</span>
+                    <span>Generate Launch Kit</span>
                     <small>How do I launch this project?</small>
                   </button>
                 </article>
@@ -149,7 +149,7 @@ export function LaunchStudio() {
                 <div>
                   <h3>Social Bridge</h3>
                   <p>
-                    Share buttons appear beside each generated section in Launch Passport,
+                    Share buttons appear beside each generated section in Launch Kit,
                     Build Update, and Daily Content Pack.
                   </p>
                 </div>

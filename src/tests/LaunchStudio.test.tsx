@@ -55,8 +55,8 @@ describe('LaunchStudio', () => {
     expect(screen.getByRole('heading', { name: 'Improve clarity' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Generate content' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Share safely' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Check Content Readiness/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Generate Launch Passport/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Check Project Clarity/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Generate Launch Kit/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Build Update/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Daily Content Pack/i })).toBeInTheDocument();
     expect(screen.getByText('Social Bridge')).toBeInTheDocument();
@@ -66,12 +66,12 @@ describe('LaunchStudio', () => {
     expect(screen.queryByText('Phase 1')).not.toBeInTheDocument();
   });
 
-  it('opens Content Readiness with score, weak areas, and suggestions', () => {
+  it('opens Project Clarity with score, weak areas, and suggestions', () => {
     render(<LaunchStudio />);
 
-    fireEvent.click(screen.getByRole('button', { name: /check content readiness/i }));
+    fireEvent.click(screen.getByRole('button', { name: /check project clarity/i }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Content Readiness' });
+    const dialog = screen.getByRole('dialog', { name: 'Project Clarity' });
     expect(within(dialog).getByLabelText('Overall readiness score')).toHaveTextContent('/100');
     expect(within(dialog).getByText('Strengths')).toBeInTheDocument();
     expect(within(dialog).getByText('Weak areas')).toBeInTheDocument();
@@ -83,9 +83,9 @@ describe('LaunchStudio', () => {
   it('offers a plain-English positioning helper with example template answers', () => {
     render(<LaunchStudio />);
 
-    fireEvent.click(screen.getByRole('button', { name: /check content readiness/i }));
+    fireEvent.click(screen.getByRole('button', { name: /check project clarity/i }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Content Readiness' });
+    const dialog = screen.getByRole('dialog', { name: 'Project Clarity' });
     expect(within(dialog).getByText('Who is this for?')).toBeInTheDocument();
     expect(within(dialog).getByText('Example: Freelancers managing client work.')).toBeInTheDocument();
     expect(within(dialog).getByText('What frustrating problem does it solve?')).toBeInTheDocument();
@@ -105,17 +105,17 @@ describe('LaunchStudio', () => {
     ]);
   });
 
-  it('opens and copies a Launch Passport generated from project context', async () => {
+  it('opens and copies a Launch Kit generated from project context', async () => {
     render(<LaunchStudio />);
 
-    fireEvent.click(screen.getByRole('button', { name: /generate launch passport/i }));
+    fireEvent.click(screen.getByRole('button', { name: /generate launch kit/i }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Launch Passport' });
+    const dialog = screen.getByRole('dialog', { name: 'Launch Kit' });
     expect(within(dialog).getByText('X/Twitter launch post')).toBeInTheDocument();
-    const launchText = within(dialog).getByLabelText('Launch Passport export text') as HTMLTextAreaElement;
+    const launchText = within(dialog).getByLabelText('Launch Kit export text') as HTMLTextAreaElement;
     expect(launchText.value).toContain('Launch Studio Project');
 
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Launch Passport' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Launch Kit' }));
 
     await waitFor(() => {
       expect(copyExportToClipboard).toHaveBeenCalledWith(
@@ -181,9 +181,9 @@ describe('LaunchStudio', () => {
     render(<LaunchStudio />);
 
     expect(screen.getByRole('heading', { name: 'Open a project first' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Check Content Readiness/i }))
+    expect(screen.queryByRole('button', { name: /Check Project Clarity/i }))
       .not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Generate Launch Passport/i }))
+    expect(screen.queryByRole('button', { name: /Generate Launch Kit/i }))
       .not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Generate Daily Content Pack/i }))
       .not.toBeInTheDocument();

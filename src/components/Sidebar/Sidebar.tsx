@@ -466,7 +466,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               textAlign: "left",
             }}
           >
-            Launch posts and build updates
+            Launch kits and build updates
           </span>
         </button>
       </div>

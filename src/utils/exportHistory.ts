@@ -36,7 +36,7 @@ function workflowLabel(mode: ProjectMemory['workflowMode']): string {
 }
 
 function exportTypeForPlatform(platform: string): string {
-  if (platform === 'launch-passport') return 'Launch Passport copy';
+  if (platform === 'launch-passport') return 'Launch Kit copy';
   if (platform === 'build-update') return 'Build Update copy';
   if (platform === 'daily-content-pack') return 'Daily Content Pack copy';
   if (platform === 'context-passport') return 'Context Passport copy';

@@ -23,7 +23,7 @@ function formatHistoryTime(isoString: string): string {
 }
 
 function platformName(platform: string): string {
-  if (platform === 'launch-passport') return 'Launch Passport';
+  if (platform === 'launch-passport') return 'Launch Kit';
   if (platform === 'build-update') return 'Build Update';
   if (platform === 'daily-content-pack') return 'Daily Content Pack';
   if (platform === 'context-passport') return 'Context Passport';
