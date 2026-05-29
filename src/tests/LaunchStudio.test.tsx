@@ -61,7 +61,33 @@ describe('LaunchStudio', () => {
     expect(within(dialog).getByText('Strengths')).toBeInTheDocument();
     expect(within(dialog).getByText('Weak areas')).toBeInTheDocument();
     expect(within(dialog).getByText('Suggested improvements')).toBeInTheDocument();
-    expect(within(dialog).getByText('Missing positioning signals')).toBeInTheDocument();
+    expect(within(dialog).getByText('Missing basics')).toBeInTheDocument();
+    expect(within(dialog).getByText('Improve Launch Content')).toBeInTheDocument();
+  });
+
+  it('offers a plain-English positioning helper with example template answers', () => {
+    render(<LaunchStudio />);
+
+    fireEvent.click(screen.getByRole('button', { name: /check content readiness/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Content Readiness' });
+    expect(within(dialog).getByText('Who is this for?')).toBeInTheDocument();
+    expect(within(dialog).getByText('Example: Freelancers managing client work.')).toBeInTheDocument();
+    expect(within(dialog).getByText('What frustrating problem does it solve?')).toBeInTheDocument();
+    expect(within(dialog).getByText('Example: Rebuilding project context every time I switch AI tools.')).toBeInTheDocument();
+    expect(within(dialog).getByText('What happens after using it?')).toBeInTheDocument();
+    expect(within(dialog).getByText('Why is it different?')).toBeInTheDocument();
+    expect(within(dialog).getByText(/This helps generated copy explain what gets better/i)).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Use Example Template' }));
+
+    const fields = within(dialog).getAllByRole('textbox') as HTMLTextAreaElement[];
+    expect(fields.map((field) => field.value)).toEqual([
+      'Freelancers managing client work.',
+      'Rebuilding project context every time I switch AI tools.',
+      'Continue work instantly without re-explaining everything.',
+      'Local-first and works across multiple AI tools.',
+    ]);
   });
 
   it('opens and copies a Launch Passport generated from project context', async () => {

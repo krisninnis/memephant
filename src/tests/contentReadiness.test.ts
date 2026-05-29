@@ -40,8 +40,8 @@ describe('content readiness', () => {
 
     expect(report.score).toBeGreaterThanOrEqual(80);
     expect(report.warning).toBeNull();
-    expect(report.strengths.join(' ')).toContain('Clear target audience');
-    expect(report.strengths.join(' ')).toContain('Current traction/progress');
+    expect(report.strengths.join(' ')).toContain('Who this is for');
+    expect(report.strengths.join(' ')).toContain('Recent visible progress');
     expect(report.suggestedImprovements).not.toContain('Replace placeholder setup text.');
   });
 
@@ -62,13 +62,13 @@ describe('content readiness', () => {
     expect(report.score).toBeLessThan(50);
     expect(report.warning).toBe('Content quality may be limited because the project summary is incomplete.');
     expect(report.missingSignals).toEqual(expect.arrayContaining([
-      'Clear target audience',
-      'Problem statement',
+      'Who this is for',
+      'Frustrating problem',
       'Clear project summary',
     ]));
     expect(report.suggestedImprovements).toEqual(expect.arrayContaining([
       'Describe who this is for.',
-      'Add a clearer pain statement.',
+      'Describe the frustrating problem this solves.',
       'Replace placeholder setup text.',
       'Your goals are broad; make one measurable.',
     ]));
@@ -99,7 +99,7 @@ describe('content readiness', () => {
       workflowMode: 'launch',
     });
 
-    expect(warning).toBe('Content quality may be limited because the target audience is unclear.');
+    expect(warning).toBe("Content quality may be limited because we don't yet know who this project is for.");
   });
 
   it('recognises emotional pain and continuity outcomes in positioning', () => {
@@ -120,7 +120,7 @@ describe('content readiness', () => {
     const outcome = report.signals.find((signal) => signal.id === 'outcomeStatement');
 
     expect(problem?.status).toBe('strong');
-    expect(problem?.evidence).toBe('Emotional pain language is present.');
+    expect(problem?.evidence).toBe('The frustrating problem feels concrete.');
     expect(outcome?.status).toBe('strong');
     expect(report.score).toBeGreaterThanOrEqual(85);
   });

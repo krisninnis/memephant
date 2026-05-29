@@ -255,42 +255,42 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
   const signals: ContentReadinessSignal[] = [
     makeSignal(
       'targetAudience',
-      'Clear target audience',
+      'Who this is for',
       hasAudienceSignal ? 10 : hasAudienceTerm ? 5 : 0,
-      hasAudienceSignal ? 'Audience language is present.' : 'No clear audience phrase found.',
+      hasAudienceSignal ? 'We know who should care about this.' : "We don't yet know who this project is for.",
       'Describe who this is for.',
     ),
     makeSignal(
       'problemStatement',
-      'Problem statement',
+      'Frustrating problem',
       hasEmotionalPain ? 10 : hasProblemSignal ? 9 : openQuestions.length > 0 ? 5 : 0,
-      hasEmotionalPain ? 'Emotional pain language is present.' : hasProblemSignal ? 'Pain or problem language is present.' : 'The user pain is not explicit.',
-      'Add a clearer pain statement.',
+      hasEmotionalPain ? 'The frustrating problem feels concrete.' : hasProblemSignal ? 'The project names a problem people can recognise.' : "We don't yet know what frustrating problem this project solves.",
+      'Describe the frustrating problem this solves.',
     ),
     makeSignal(
       'outcomeStatement',
-      'Outcome statement',
+      'What happens after using it',
       hasOutcomeSignal && hasSummary ? 10 : hasOutcomeSignal ? 7 : 0,
-      hasOutcomeSignal ? 'Outcome-oriented wording is present.' : 'The user outcome is not clear yet.',
-      'Explain the outcome users get.',
+      hasOutcomeSignal ? 'We know what gets better after using this.' : "We don't yet know what changes for someone after they use it.",
+      'Explain what gets easier after using it.',
     ),
     makeSignal(
       'differentiator',
-      'Differentiator',
+      'Why it is different',
       textHas(DIFFERENTIATOR_PATTERNS, combined) ? 10 : decisions.length > 0 ? 5 : 0,
-      textHas(DIFFERENTIATOR_PATTERNS, combined) ? 'Differentiating language is present.' : 'The project does not say why this approach is different.',
+      textHas(DIFFERENTIATOR_PATTERNS, combined) ? 'We know what makes this different.' : 'The project does not yet say why this approach is different.',
       'Explain what makes this different from alternatives.',
     ),
     makeSignal(
       'tractionProgress',
-      'Current traction/progress',
+      'Recent visible progress',
       hasProgress ? 10 : nextSteps.length > 0 ? 5 : 0,
-      hasProgress ? 'Current state, changelog, or in-progress work gives fresh progress.' : 'Recent progress is light or missing.',
+      hasProgress ? 'There is fresh progress to talk about.' : 'Recent progress is light or missing.',
       'Add one concrete thing that changed recently.',
     ),
     makeSignal(
       'specificGoals',
-      'Specific goals',
+      'Specific next goal',
       concreteGoals.length >= 2 ? 10 : concreteGoals.length === 1 ? 6 : goals.length > 0 ? 3 : 0,
       concreteGoals.length > 0 ? 'At least one goal is specific.' : 'Goals are missing or broad.',
       'Your goals are broad; make one measurable.',
@@ -299,26 +299,26 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
       'projectSummary',
       'Clear project summary',
       hasSummary ? 10 : summary ? 4 : 0,
-      hasSummary ? 'Summary has usable detail.' : summary ? 'Summary exists but reads thin or generic.' : 'Summary is missing or placeholder text.',
+      hasSummary ? 'The summary has enough detail to turn into useful posts.' : summary ? 'The summary exists but reads thin or generic.' : 'The summary is missing or still looks like setup text.',
       isPlaceholderText(project.summary || '') ? 'Replace placeholder setup text.' : 'Your current summary is too generic.',
     ),
     makeSignal(
       'workflowClarity',
-      'Workflow clarity',
+      'What you are working on',
       workflowMode ? 10 : nextSteps.length > 0 || inProgress.length > 0 ? 5 : 0,
       workflowMode ? `${workflowMode.label} is selected.` : 'No workflow mode is selected.',
       'Choose a workflow mode or add clearer next steps.',
     ),
     makeSignal(
       'founderSignal',
-      'Founder/build-in-public signal',
+      'Builder update',
       textHas(FOUNDER_PATTERNS, combined) || project.lastSessionSummary ? 10 : hasProgress ? 5 : 0,
-      textHas(FOUNDER_PATTERNS, combined) ? 'Build-in-public language is present.' : 'The builder perspective is not very visible.',
+      textHas(FOUNDER_PATTERNS, combined) ? 'There is a clear builder update.' : 'The builder perspective is not very visible.',
       'Add a short founder note about what changed or what you learned.',
     ),
     makeSignal(
       'lowSignalRepetition',
-      'Low-signal repetition',
+      'Repeated vague phrases',
       repeated.length === 0 ? 10 : repeated.length === 1 ? 5 : 0,
       repeated.length === 0 ? 'No repeated low-signal phrases found.' : `Repeated phrase: ${repeated[0]}`,
       'Remove repeated generic phrases and make each field do a different job.',
@@ -369,12 +369,12 @@ function getContentQualityWarningFromSignals(
 
   const audienceSignal = signals.find((signal) => signal.id === 'targetAudience');
   if (audienceSignal?.status === 'missing') {
-    return 'Content quality may be limited because the target audience is unclear.';
+    return "Content quality may be limited because we don't yet know who this project is for.";
   }
 
   const problemSignal = signals.find((signal) => signal.id === 'problemStatement');
   if (problemSignal?.status === 'missing') {
-    return 'Content quality may be limited because the pain statement is unclear.';
+    return "Content quality may be limited because we don't yet know what frustrating problem this project solves.";
   }
 
   const score = Math.round(signals.reduce((sum, signal) => sum + signal.score, 0));

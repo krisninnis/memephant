@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import type { ProjectMemory } from '../../types/memphant-types';
 import { evaluateContentReadiness } from '../../utils/contentReadiness';
 
@@ -21,9 +21,47 @@ function listItems(items: string[], emptyText: string) {
   );
 }
 
+const HELPER_QUESTIONS = [
+  {
+    id: 'who',
+    label: 'Who is this for?',
+    example: 'Freelancers managing client work.',
+    why: 'This helps launch posts speak to a real person instead of sounding generic.',
+  },
+  {
+    id: 'problem',
+    label: 'What frustrating problem does it solve?',
+    example: 'Rebuilding project context every time I switch AI tools.',
+    why: 'This gives posts a clear reason for someone to care.',
+  },
+  {
+    id: 'outcome',
+    label: 'What happens after using it?',
+    example: 'Continue work instantly without re-explaining everything.',
+    why: 'This helps generated copy explain what gets better.',
+  },
+  {
+    id: 'different',
+    label: 'Why is it different?',
+    example: 'Local-first and works across multiple AI tools.',
+    why: 'This helps launch content say why this project is worth noticing.',
+  },
+] as const;
+
+type HelperQuestionId = typeof HELPER_QUESTIONS[number]['id'];
+type HelperAnswers = Record<HelperQuestionId, string>;
+
+const EMPTY_HELPER_ANSWERS: HelperAnswers = {
+  who: '',
+  problem: '',
+  outcome: '',
+  different: '',
+};
+
 export function ContentReadinessModal({ project, onClose }: ContentReadinessModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const report = useMemo(() => evaluateContentReadiness(project), [project]);
+  const [helperAnswers, setHelperAnswers] = useState<HelperAnswers>(EMPTY_HELPER_ANSWERS);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
@@ -42,6 +80,12 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
     }
   };
 
+  const handleUseExampleTemplate = () => {
+    setHelperAnswers(Object.fromEntries(
+      HELPER_QUESTIONS.map((question) => [question.id, question.example]),
+    ) as HelperAnswers);
+  };
+
   return (
     <div
       className="export-preview-overlay"
@@ -56,7 +100,7 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
           <div>
             <h2>Content Readiness</h2>
             <p>
-              Deterministic checks for whether this project context can produce useful launch content.
+              A local check for whether this project has enough plain context to produce useful launch content.
             </p>
           </div>
           <button
@@ -79,6 +123,43 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
           <p className="content-readiness-warning">{report.warning}</p>
         )}
 
+        <section className="content-readiness-helper" aria-label="Improve Launch Content">
+          <div className="content-readiness-helper__header">
+            <div>
+              <h3>Improve Launch Content</h3>
+              <p>
+                Better summaries create better launch posts. Clearer answers here make generated posts,
+                demo captions, and feedback questions sound more specific.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="content-readiness-helper__template"
+              onClick={handleUseExampleTemplate}
+            >
+              Use Example Template
+            </button>
+          </div>
+
+          <div className="content-readiness-helper__fields">
+            {HELPER_QUESTIONS.map((question) => (
+              <label className="content-readiness-helper__field" key={question.id}>
+                <span>{question.label}</span>
+                <textarea
+                  value={helperAnswers[question.id]}
+                  onChange={(event) => setHelperAnswers({
+                    ...helperAnswers,
+                    [question.id]: event.target.value,
+                  })}
+                  rows={2}
+                />
+                <small>Example: {question.example}</small>
+                <em>{question.why}</em>
+              </label>
+            ))}
+          </div>
+        </section>
+
         <div className="content-readiness-grid">
           <section>
             <h3>Strengths</h3>
@@ -96,7 +177,7 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
           </section>
 
           <section>
-            <h3>Missing positioning signals</h3>
+            <h3>Missing basics</h3>
             {listItems(report.missingSignals, 'No missing signals detected.')}
           </section>
         </div>
