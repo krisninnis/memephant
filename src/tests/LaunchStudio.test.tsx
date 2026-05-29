@@ -175,6 +175,37 @@ describe('LaunchStudio', () => {
     });
   });
 
+  it('softens Social Bridge actions when generated daily content has no recent shipped update', () => {
+    activeProject = {
+      ...mockProject,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      currentState: 'Project updated.',
+      inProgress: [],
+      changelog: [
+        {
+          timestamp: '2026-05-29T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+      ],
+    };
+
+    render(<LaunchStudio />);
+
+    fireEvent.click(screen.getByRole('button', { name: /generate daily content pack/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Daily Content Pack' });
+    expect(within(dialog).getAllByText('Add what changed recently to generate better posts.')[0])
+      .toBeInTheDocument();
+
+    const xButtons = within(dialog).getAllByRole('button', { name: 'Open in X' });
+    expect(xButtons[0]).toBeDisabled();
+
+    fireEvent.click(xButtons[0]);
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
   it('shows an empty state when no project is active', () => {
     activeProject = undefined;
 

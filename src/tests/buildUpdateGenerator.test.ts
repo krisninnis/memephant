@@ -216,8 +216,12 @@ describe('generateBuildUpdate', () => {
     const reddit = update.sections.find((section) => section.id === 'reddit');
 
     expect(update.progressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
-    expect(shippedThisWeek?.content).toContain('Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(shippedThisWeek?.content).toContain('No recent shipped updates found yet.');
+    expect(shippedThisWeek?.content).toContain('Add what changed recently to generate better posts.');
+    expect(shippedThisWeek?.content).toContain('Tell Memephant what changed recently');
+    expect(shippedThisWeek?.content).not.toContain('Recent progress may be limited because no meaningful shipped updates were found.');
     expect(shippedThisWeek?.content).not.toContain('Move your project between AI tools without ever rebuilding context.');
+    expect(shippedThisWeek?.shareable).toBe(false);
     expect(reddit?.content).toContain('Move your project between AI tools without ever rebuilding context.');
   });
 });

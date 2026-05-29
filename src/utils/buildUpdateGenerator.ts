@@ -26,6 +26,8 @@ export type BuildUpdateSection = {
   title: string;
   bestFor: string;
   content: string;
+  shareable: boolean;
+  shareDisabledReason?: string;
 };
 
 export type BuildUpdate = {
@@ -58,6 +60,11 @@ function sentenceList(items: string[]): string {
   if (items.length === 1) return items[0];
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
+
+const NO_RECENT_TITLE = 'No recent shipped updates found yet.';
+const NO_RECENT_HELP = 'Add what changed recently to generate better posts.';
+const RECENT_CHANGE_EXAMPLE =
+  'Tell Memephant what changed recently, such as: Added Social Bridge, improved onboarding, fixed sign-in, shipped demo video.';
 
 function decisionSummary(decisions: Decision[]): string {
   const useful = filterPublicDecisions(decisions, 2);
@@ -92,7 +99,9 @@ export function generateBuildUpdate(
     : '';
   const changedList = shippedItems.length > 0
     ? bulletList(shippedItems)
-    : progressWarning ?? 'No meaningful shipped updates found yet.';
+    : bulletList([NO_RECENT_TITLE, NO_RECENT_HELP, RECENT_CHANGE_EXAMPLE]);
+  const hasRecentProgress = shippedItems.length > 0;
+  const shareDisabledReason = hasRecentProgress ? undefined : NO_RECENT_HELP;
 
   const sections: BuildUpdateSection[] = [
     {
@@ -102,18 +111,25 @@ export function generateBuildUpdate(
       content: [
         `Build update for ${name}:`,
         '',
-        primaryPublicTopic,
+        hasRecentProgress ? primaryPublicTopic : NO_RECENT_TITLE,
         '',
         `Why it matters: ${positioningSummary}`,
+        ...(hasRecentProgress ? [] : ['', RECENT_CHANGE_EXAMPLE]),
         '',
         `Feedback welcome, especially on ${feedbackAsk}.`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'shortUpdate',
       title: 'Short what changed update',
       bestFor: 'Quick status',
-      content: `${name}: ${primaryPublicTopic}`,
+      content: hasRecentProgress
+        ? `${name}: ${primaryPublicTopic}`
+        : `${name}: ${NO_RECENT_TITLE} ${NO_RECENT_HELP}`,
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'linkedIn',
@@ -132,6 +148,8 @@ export function generateBuildUpdate(
         '',
         `The next focus is ${primaryNextStep}.`,
       ].filter(Boolean).join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'reddit',
@@ -150,6 +168,8 @@ export function generateBuildUpdate(
         '',
         `Question for you: ${feedbackAsk}?`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'indieHackers',
@@ -165,6 +185,8 @@ export function generateBuildUpdate(
         '',
         `I am looking for feedback on ${feedbackAsk}.`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'releaseNotes',
@@ -181,6 +203,8 @@ export function generateBuildUpdate(
         'Next:',
         bulletList(firstItems(nextSteps, 4)),
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'feedbackRequest',
@@ -195,6 +219,8 @@ export function generateBuildUpdate(
         '',
         `If you take a look, I would value one specific note: ${feedbackAsk}.`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'shippedThisWeek',
@@ -207,6 +233,8 @@ export function generateBuildUpdate(
         '',
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'founderReflection',
@@ -221,6 +249,8 @@ export function generateBuildUpdate(
         '',
         `Next I need to learn: ${feedbackAsk}.`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'demoCaption',
@@ -228,10 +258,13 @@ export function generateBuildUpdate(
       bestFor: 'Short video',
       content: [
         `${name} demo: ${positioningSummary}`,
-        `In this clip: ${primaryPublicTopic}`,
+        `In this clip: ${hasRecentProgress ? primaryPublicTopic : NO_RECENT_TITLE}`,
+        ...(hasRecentProgress ? [] : [RECENT_CHANGE_EXAMPLE]),
         assets.length > 0 ? `Visual to show: ${sentenceList(firstItems(assets, 2))}` : '',
         `Feedback wanted: ${feedbackAsk}`,
       ].filter(Boolean).join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
   ];
 

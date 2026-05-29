@@ -68,6 +68,11 @@ function numberedList(items: string[]): string {
   return items.map((item, index) => `${index + 1}. ${item}`).join('\n');
 }
 
+const NO_RECENT_TITLE = 'No recent shipped updates found yet.';
+const NO_RECENT_HELP = 'Add what changed recently to generate better posts.';
+const RECENT_CHANGE_EXAMPLE =
+  'Tell Memephant what changed recently, such as: Added Social Bridge, improved onboarding, fixed sign-in, shipped demo video.';
+
 export function generateLaunchPassport(
   project: ProjectMemory,
   generatedAt = new Date().toISOString(),
@@ -153,7 +158,8 @@ export function generateLaunchPassport(
         '',
         `Current state: ${currentState}`,
         recentHighlights.length > 0 ? `What shipped: ${sentenceList(firstItems(recentHighlights, 2))}.` : '',
-        recentHighlights.length === 0 && progressWarning ? `Recent progress note: ${progressWarning}` : '',
+        recentHighlights.length === 0 ? `${NO_RECENT_TITLE} ${NO_RECENT_HELP}` : '',
+        recentHighlights.length === 0 ? RECENT_CHANGE_EXAMPLE : '',
         '',
         'Useful context:',
         bulletList(contextSignals.length > 0 ? contextSignals : [`Next: ${keyNextStep}`]),

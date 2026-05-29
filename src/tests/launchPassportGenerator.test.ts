@@ -137,7 +137,10 @@ describe('generateLaunchPassport', () => {
     const showHn = passport.sections.find((section) => section.id === 'showHn');
 
     expect(passport.progressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
-    expect(showHn?.content).toContain('Recent progress note: Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(showHn?.content).toContain('No recent shipped updates found yet.');
+    expect(showHn?.content).toContain('Add what changed recently to generate better posts.');
+    expect(showHn?.content).toContain('Tell Memephant what changed recently');
+    expect(showHn?.content).not.toContain('Recent progress may be limited because no meaningful shipped updates were found.');
     expect(showHn?.content).not.toContain('What shipped: Move your project between AI tools without ever rebuilding context.');
     expect(showHn?.content).toContain('Show HN: Memephant Landing Page Refresh - Move your project between AI tools without ever rebuilding context.');
   });

@@ -194,8 +194,12 @@ describe('generateDailyContentPack', () => {
     const xPost = pack.sections.find((section) => section.id === 'xPost');
 
     expect(pack.progressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
-    expect(shippedToday?.content).toContain('Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(shippedToday?.content).toContain('No recent shipped updates found yet.');
+    expect(shippedToday?.content).toContain('Add what changed recently to generate better posts.');
+    expect(shippedToday?.content).toContain('Tell Memephant what changed recently');
+    expect(shippedToday?.content).not.toContain('Recent progress may be limited because no meaningful shipped updates were found.');
     expect(shippedToday?.content).not.toContain('Move your project between AI tools without ever rebuilding context.');
+    expect(shippedToday?.shareable).toBe(false);
     expect(xPost?.content).toContain('Move your project between AI tools without ever rebuilding context.');
   });
 });

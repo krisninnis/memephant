@@ -26,6 +26,8 @@ export type DailyContentPackSection = {
   title: string;
   bestFor: string;
   content: string;
+  shareable: boolean;
+  shareDisabledReason?: string;
 };
 
 export type DailyContentPack = {
@@ -65,6 +67,11 @@ function decisionSummary(decisions: Decision[]): string {
   return useful.length > 0 ? sentenceList(useful) : 'the product should stay clear, useful, and honest';
 }
 
+const NO_RECENT_TITLE = 'No recent shipped updates found yet.';
+const NO_RECENT_HELP = 'Add what changed recently to generate better posts.';
+const RECENT_CHANGE_EXAMPLE =
+  'Tell Memephant what changed recently, such as: Added Social Bridge, improved onboarding, fixed sign-in, shipped demo video.';
+
 export function generateDailyContentPack(
   project: ProjectMemory,
   generatedAt = new Date().toISOString(),
@@ -91,7 +98,9 @@ export function generateDailyContentPack(
   const shippedItems = dailySignals;
   const shippedList = shippedItems.length > 0
     ? bulletList(shippedItems)
-    : progressWarning ?? 'No meaningful shipped updates found yet.';
+    : bulletList([NO_RECENT_TITLE, NO_RECENT_HELP, RECENT_CHANGE_EXAMPLE]);
+  const hasRecentProgress = shippedItems.length > 0;
+  const shareDisabledReason = hasRecentProgress ? undefined : NO_RECENT_HELP;
   const visualCue = assets[0] ?? `${name} in its current state`;
 
   const sections: DailyContentPackSection[] = [
@@ -100,13 +109,16 @@ export function generateDailyContentPack(
       title: 'X post',
       bestFor: 'X',
       content: [
-        `Today on ${name}: ${primaryPublicTopic}`,
+        `Today on ${name}: ${hasRecentProgress ? primaryPublicTopic : NO_RECENT_TITLE}`,
         '',
         `The goal is still simple: ${primaryGoal}.`,
         `Why it matters: ${positioningSummary}`,
+        ...(hasRecentProgress ? [] : ['', RECENT_CHANGE_EXAMPLE]),
         '',
         `Feedback welcome on ${feedbackAsk}.`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'linkedInPost',
@@ -119,7 +131,7 @@ export function generateDailyContentPack(
         '',
         primaryRecentHighlight
           ? `Today the work moved forward with: ${primaryRecentHighlight}`
-          : `No recent shipped update was found yet. The project is still positioned around: ${positioningSummary}`,
+          : `${NO_RECENT_TITLE} ${NO_RECENT_HELP}`,
         workflowLine,
         '',
         'What matters right now:',
@@ -127,6 +139,8 @@ export function generateDailyContentPack(
         '',
         `I am looking for feedback on ${feedbackAsk}.`,
       ].filter(Boolean).join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'redditPost',
@@ -142,6 +156,8 @@ export function generateDailyContentPack(
         '',
         `Question: ${feedbackAsk}?`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'memeIdea',
@@ -153,6 +169,8 @@ export function generateDailyContentPack(
         `Panel 2: ${name} calmly turning the current context into the next useful post.`,
         `Caption: "When the project finally remembers what shipped today."`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'founderReflection',
@@ -163,11 +181,13 @@ export function generateDailyContentPack(
         '',
         primaryRecentHighlight
           ? `Today that progress was: ${primaryRecentHighlight}`
-          : `No recent shipped update was found yet, so I am tightening how the project is explained: ${positioningSummary}`,
+          : `${NO_RECENT_TITLE} ${NO_RECENT_HELP}`,
         '',
         `The decision guiding the work: ${decisionSummary(project.decisions)}.`,
         `Next I need to learn: ${feedbackAsk}.`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'replyIdeas',
@@ -176,28 +196,35 @@ export function generateDailyContentPack(
       content: bulletList([
         primaryRecentHighlight
           ? `The newest thing to react to is ${primaryRecentHighlight}.`
-          : `The clearest current topic is ${positioningSummary}.`,
+          : `${NO_RECENT_TITLE} ${NO_RECENT_HELP}`,
         `The part I am most curious about is ${feedbackAsk}.`,
         `The trade-off behind it is ${decisionSummary(project.decisions)}.`,
         `The reason it matters is ${positioningSummary}`,
       ]),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'demoClipCaption',
       title: 'Demo clip caption',
       bestFor: 'Short video',
       content: [
-        `${name} demo clip: ${primaryPublicTopic}`,
+        `${name} demo clip: ${hasRecentProgress ? primaryPublicTopic : NO_RECENT_TITLE}`,
         `Watch for: ${visualCue}`,
         `Why it matters: ${positioningSummary}`,
+        ...(hasRecentProgress ? [] : [RECENT_CHANGE_EXAMPLE]),
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'feedbackQuestion',
       title: 'Feedback question',
       bestFor: 'User research',
       content: `If you saw ${name} today, what would make ${feedbackAsk} easier to answer?`,
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'whatShippedToday',
@@ -210,6 +237,8 @@ export function generateDailyContentPack(
         '',
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
     {
       id: 'problemSolutionPost',
@@ -222,9 +251,11 @@ export function generateDailyContentPack(
         '',
         primaryRecentHighlight
           ? `Proof from today: ${primaryRecentHighlight}`
-          : `Recent proof: ${progressWarning ?? 'No meaningful shipped updates found yet.'}`,
+          : `Recent proof: ${NO_RECENT_TITLE} ${NO_RECENT_HELP}`,
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
+      shareable: hasRecentProgress,
+      shareDisabledReason,
     },
   ];
 
