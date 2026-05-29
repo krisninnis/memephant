@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import type { ProjectMemory } from '../../types/memphant-types';
 import { copyExportToClipboard } from '../../services/tauriActions';
 import { generateLaunchPassport } from '../../utils/launchPassportGenerator';
+import { SocialBridgeActions } from '../LaunchStudio/SocialBridgeActions';
 
 interface LaunchPassportModalProps {
   project: ProjectMemory;
@@ -74,6 +75,7 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
             <article className="launch-passport-section" key={section.id}>
               <h3>{section.title}</h3>
               <p>{section.content}</p>
+              <SocialBridgeActions content={section.content} />
             </article>
           ))}
         </div>

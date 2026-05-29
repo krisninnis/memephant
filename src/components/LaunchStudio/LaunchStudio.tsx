@@ -116,6 +116,20 @@ export function LaunchStudio() {
                 <small>X, LinkedIn, Reddit, meme idea, replies, demo caption</small>
               </button>
             </article>
+
+            <article className="launch-studio-card">
+              <div>
+                <h2>Social Bridge</h2>
+                <p>
+                  Open generated sections in social composer pages for manual review.
+                  No connected accounts, scheduling, analytics, or auto-posting.
+                </p>
+              </div>
+              <div className="social-bridge-card-note">
+                <strong>Phase 1</strong>
+                <span>Preview before posting. Memephant never posts automatically.</span>
+              </div>
+            </article>
           </section>
         )}
       </main>

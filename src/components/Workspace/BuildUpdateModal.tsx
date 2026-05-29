@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import type { ProjectMemory } from '../../types/memphant-types';
 import { copyExportToClipboard } from '../../services/tauriActions';
 import { generateBuildUpdate } from '../../utils/buildUpdateGenerator';
+import { SocialBridgeActions } from '../LaunchStudio/SocialBridgeActions';
 
 interface BuildUpdateModalProps {
   project: ProjectMemory;
@@ -76,6 +77,7 @@ export function BuildUpdateModal({ project, onClose }: BuildUpdateModalProps) {
                 <span>{section.bestFor}</span>
               </div>
               <p>{section.content}</p>
+              <SocialBridgeActions content={section.content} />
             </article>
           ))}
         </div>

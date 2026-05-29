@@ -32,9 +32,16 @@ jest.mock('../services/tauriActions', () => ({
 }));
 
 describe('LaunchStudio', () => {
+  let openSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
     activeProject = mockProject;
+  });
+
+  afterEach(() => {
+    openSpy.mockRestore();
   });
 
   it('renders a dedicated launch and distribution surface', () => {
@@ -49,6 +56,8 @@ describe('LaunchStudio', () => {
     expect(screen.getByRole('button', { name: /Generate Launch Passport/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Build Update/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Daily Content Pack/i })).toBeInTheDocument();
+    expect(screen.getByText('Social Bridge')).toBeInTheDocument();
+    expect(screen.getByText('Preview before posting. Memephant never posts automatically.')).toBeInTheDocument();
   });
 
   it('opens Content Readiness with score, weak areas, and suggestions', () => {
@@ -138,8 +147,17 @@ describe('LaunchStudio', () => {
     const dialog = screen.getByRole('dialog', { name: 'Daily Content Pack' });
     expect(within(dialog).getByText('X post')).toBeInTheDocument();
     expect(within(dialog).getByText('Problem/solution post')).toBeInTheDocument();
+    expect(within(dialog).getAllByText('Preview before posting. Memephant never posts automatically.')[0]).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('button', { name: 'Open in X' })[0]).toBeInTheDocument();
     const packText = within(dialog).getByLabelText('Daily Content Pack export text') as HTMLTextAreaElement;
     expect(packText.value).toContain('Launch Studio Project');
+
+    fireEvent.click(within(dialog).getAllByRole('button', { name: 'Open in X' })[0]);
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringContaining('https://twitter.com/intent/tweet?text='),
+      '_blank',
+      'noopener,noreferrer',
+    );
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Daily Content Pack' }));
 

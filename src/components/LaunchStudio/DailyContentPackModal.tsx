@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import type { ProjectMemory } from '../../types/memphant-types';
 import { copyExportToClipboard } from '../../services/tauriActions';
 import { generateDailyContentPack } from '../../utils/dailyContentPackGenerator';
+import { SocialBridgeActions } from './SocialBridgeActions';
 
 interface DailyContentPackModalProps {
   project: ProjectMemory;
@@ -76,6 +77,7 @@ export function DailyContentPackModal({ project, onClose }: DailyContentPackModa
                 <span>{section.bestFor}</span>
               </div>
               <p>{section.content}</p>
+              <SocialBridgeActions content={section.content} />
             </article>
           ))}
         </div>
