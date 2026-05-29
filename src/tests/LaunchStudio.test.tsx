@@ -57,7 +57,9 @@ describe('LaunchStudio', () => {
     expect(screen.getByRole('button', { name: /Generate Build Update/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Daily Content Pack/i })).toBeInTheDocument();
     expect(screen.getByText('Social Bridge')).toBeInTheDocument();
-    expect(screen.getByText('Preview before posting. Memephant never posts automatically.')).toBeInTheDocument();
+    expect(screen.getByText('Share buttons appear inside each generated section.')).toBeInTheDocument();
+    expect(screen.getByText('Generate a Launch Passport, Build Update, or Daily Content Pack first.')).toBeInTheDocument();
+    expect(screen.queryByText('Phase 1')).not.toBeInTheDocument();
   });
 
   it('opens Content Readiness with score, weak areas, and suggestions', () => {

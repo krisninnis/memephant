@@ -2615,30 +2615,21 @@ select {
 
 .social-bridge-card-note {
   display: grid;
-  gap: 5px;
+  gap: 6px;
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid rgba(45, 212, 191, 0.24);
-  border-radius: 10px;
-  background:
-    linear-gradient(135deg, rgba(45, 212, 191, 0.1), rgba(251, 191, 36, 0.07)),
-    rgba(15, 23, 42, 0.34);
+  padding: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  padding-top: 10px;
 }
 
-.social-bridge-card-note strong {
-  color: rgba(204, 251, 241, 0.96);
-  font-size: 0.84rem;
-  line-height: 1.25;
-}
-
-.social-bridge-card-note span {
-  color: rgba(226, 232, 240, 0.72);
+.social-bridge-card-note p {
+  color: rgba(204, 251, 241, 0.78);
   font-size: 0.74rem;
   line-height: 1.35;
 }
 
 .launch-studio {
-  width: min(1040px, 100%);
+  width: min(1320px, 100%);
   margin: 0 auto;
   padding: 24px 20px calc(96px + env(safe-area-inset-bottom));
   display: flex;
@@ -2702,8 +2693,8 @@ select {
 
 .launch-studio__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .launch-studio-card,
@@ -2725,7 +2716,7 @@ select {
 .launch-studio-card h2,
 .launch-studio__empty h2 {
   color: #f8fafc;
-  font-size: 1rem;
+  font-size: 0.96rem;
   line-height: 1.3;
   margin-bottom: 6px;
 }
@@ -2735,6 +2726,12 @@ select {
 .launch-studio-card .daily-content-pack-btn,
 .launch-studio-card .content-readiness-btn {
   width: 100%;
+}
+
+@media (max-width: 1180px) {
+  .launch-studio__grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
 }
 
 .export-history-btn {

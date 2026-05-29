@@ -126,8 +126,8 @@ export function LaunchStudio() {
                 </p>
               </div>
               <div className="social-bridge-card-note">
-                <strong>Phase 1</strong>
-                <span>Preview before posting. Memephant never posts automatically.</span>
+                <p>Share buttons appear inside each generated section.</p>
+                <p>Generate a Launch Passport, Build Update, or Daily Content Pack first.</p>
               </div>
             </article>
           </section>
