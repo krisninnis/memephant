@@ -57,9 +57,9 @@ describe('public post quality', () => {
       ],
     });
 
-    expect(context.primaryUpdate)
+    expect(context.primaryRecentHighlight)
       .toBe('Added Social Bridge so generated content can be opened directly in X, LinkedIn, Reddit, and Facebook.');
-    expect(context.highlights).not.toContain('Prepared next step: Post on Indie Hackers');
+    expect(context.recentHighlights).not.toContain('Prepared next step: Post on Indie Hackers');
   });
 
   it('turns auth maintenance into a public trust/reliability update', () => {
@@ -81,7 +81,49 @@ describe('public post quality', () => {
       ],
     });
 
-    expect(context.primaryUpdate).toBe('Improved OAuth session persistence and sign-in reliability.');
-    expect(context.highlights).not.toContain('Last session summary updated');
+    expect(context.primaryRecentHighlight).toBe('Improved OAuth session persistence and sign-in reliability.');
+    expect(context.recentHighlights).not.toContain('Last session summary updated');
+  });
+
+  it('keeps positioning summary separate when no meaningful recent progress exists', () => {
+    const context = getPublicPostContext({
+      ...project,
+      currentState: 'Project updated.',
+      changelog: [
+        {
+          timestamp: '2026-05-29T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+      ],
+    });
+
+    expect(context.positioningSummary).toBe('Move your project between AI tools without ever rebuilding context.');
+    expect(context.recentHighlights).toEqual([]);
+    expect(context.primaryRecentHighlight).toBeNull();
+    expect(context.primaryPublicTopic).toBe(context.positioningSummary);
+    expect(context.recentProgressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
+  });
+
+  it('scores shipped updates above strong project positioning without treating the summary as recent progress', () => {
+    const context = getPublicPostContext({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      changelog: [
+        {
+          timestamp: '2026-05-29T10:00:00.000Z',
+          field: 'launch',
+          action: 'added',
+          summary: 'Added Social Bridge composer links.',
+        },
+      ],
+    });
+
+    expect(context.positioningSummary).toBe('Move your project between AI tools without ever rebuilding context.');
+    expect(context.primaryRecentHighlight)
+      .toBe('Added Social Bridge so generated content can be opened directly in X, LinkedIn, Reddit, and Facebook.');
+    expect(context.recentHighlights).not.toContain(context.positioningSummary);
+    expect(context.recentProgressWarning).toBeNull();
   });
 });

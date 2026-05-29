@@ -31,6 +31,7 @@ export type LaunchPassport = {
   projectName: string;
   generatedAt: string;
   qualityWarning: string | null;
+  progressWarning: string | null;
   sections: LaunchPassportSection[];
   markdown: string;
 };
@@ -84,11 +85,13 @@ export function generateLaunchPassport(
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
   const publicPost = getPublicPostContext(project, 3);
-  const shippingHighlights = publicPost.highlights;
+  const progressWarning = publicPost.recentProgressWarning;
+  const positioningSummary = publicPost.positioningSummary || summary;
+  const recentHighlights = publicPost.recentHighlights;
   const keyGoal = goals[0] ?? 'help users get value faster';
   const keyNextStep = nextSteps[0] ?? 'collect feedback';
   const contextSignals = firstItems([
-    ...shippingHighlights.map((item) => `Shipped: ${item}`),
+    ...recentHighlights.map((item) => `Shipped: ${item}`),
     ...goals.map((goal) => `Goal: ${goal}`),
     ...inProgress.map((item) => `In progress: ${item}`),
     ...nextSteps.map((step) => `Next: ${step}`),
@@ -98,7 +101,7 @@ export function generateLaunchPassport(
     {
       id: 'positioning',
       title: 'One-line positioning',
-      content: `${name}: ${summary}`,
+      content: `${name}: ${positioningSummary}`,
     },
     {
       id: 'xLaunch',
@@ -106,7 +109,7 @@ export function generateLaunchPassport(
       content: [
         `Launching ${name}.`,
         '',
-        summary,
+        positioningSummary,
         '',
         `Current focus: ${currentState}`,
         ...(workflowMode ? [`Workflow mode: ${workflowMode.label} (${workflowMode.focus}).`] : []),
@@ -118,13 +121,13 @@ export function generateLaunchPassport(
     {
       id: 'shortX',
       title: 'Short X version',
-      content: `${name} is live: ${summary} Current focus: ${keyNextStep}. Feedback welcome.`,
+      content: `${name} is live: ${positioningSummary} Current focus: ${keyNextStep}. Feedback welcome.`,
     },
     {
       id: 'reddit',
       title: 'Reddit launch version',
       content: [
-        `I built ${name} to solve this problem: ${summary}`,
+        `I built ${name} to solve this problem: ${positioningSummary}`,
         '',
         `Current state: ${currentState}`,
         ...(workflowMode ? [`Current working lens: ${workflowMode.label} - ${workflowMode.guidance}`] : []),
@@ -144,12 +147,13 @@ export function generateLaunchPassport(
       id: 'showHn',
       title: 'Show HN draft',
       content: [
-        `Show HN: ${name} - ${summary}`,
+        `Show HN: ${name} - ${positioningSummary}`,
         '',
         `I built this because ${decisionSummary(project.decisions)}.`,
         '',
         `Current state: ${currentState}`,
-        shippingHighlights.length > 0 ? `What shipped: ${sentenceList(firstItems(shippingHighlights, 2))}.` : '',
+        recentHighlights.length > 0 ? `What shipped: ${sentenceList(firstItems(recentHighlights, 2))}.` : '',
+        recentHighlights.length === 0 && progressWarning ? `Recent progress note: ${progressWarning}` : '',
         '',
         'Useful context:',
         bulletList(contextSignals.length > 0 ? contextSignals : [`Next: ${keyNextStep}`]),
@@ -161,8 +165,8 @@ export function generateLaunchPassport(
       content: [
         `I built ${name} because the project context kept pointing to the same need: ${keyGoal}.`,
         '',
-        shippingHighlights.length > 0
-          ? `The latest visible progress: ${sentenceList(firstItems(shippingHighlights, 2))}.`
+        recentHighlights.length > 0
+          ? `The latest visible progress: ${sentenceList(firstItems(recentHighlights, 2))}.`
           : `The product is currently here: ${currentState}`,
         '',
         `The most important decision so far: ${decisionSummary(project.decisions)}.`,
@@ -208,7 +212,7 @@ export function generateLaunchPassport(
       content: [
         `I am testing ${name} with a few early users.`,
         '',
-        summary,
+        positioningSummary,
         '',
         `If you try it, I would love one specific note: where did the value become clear, and where did it feel confusing?`,
       ].join('\n'),
@@ -221,6 +225,7 @@ export function generateLaunchPassport(
     `Generated: ${generatedAt}`,
     '',
     ...(qualityWarning ? [`> ${qualityWarning}`, ''] : []),
+    ...(progressWarning ? [`> ${progressWarning}`, ''] : []),
     ...sections.flatMap((section) => [
       `## ${section.title}`,
       '',
@@ -233,6 +238,7 @@ export function generateLaunchPassport(
     projectName: name,
     generatedAt,
     qualityWarning,
+    progressWarning,
     sections,
     markdown,
   };

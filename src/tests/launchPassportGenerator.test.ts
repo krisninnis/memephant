@@ -118,4 +118,27 @@ describe('generateLaunchPassport', () => {
     expect(passport.markdown).toContain('Added Daily Content Pack generation');
     expect(passport.markdown).toContain('Shipped: Added Daily Content Pack generation');
   });
+
+  it('does not label project positioning as shipped progress', () => {
+    const passport = generateLaunchPassport({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      currentState: 'Project updated.',
+      changelog: [
+        {
+          timestamp: '2026-05-29T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+      ],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const showHn = passport.sections.find((section) => section.id === 'showHn');
+
+    expect(passport.progressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(showHn?.content).toContain('Recent progress note: Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(showHn?.content).not.toContain('What shipped: Move your project between AI tools without ever rebuilding context.');
+    expect(showHn?.content).toContain('Show HN: Memephant Landing Page Refresh - Move your project between AI tools without ever rebuilding context.');
+  });
 });

@@ -173,4 +173,29 @@ describe('generateDailyContentPack', () => {
     expect(xPost?.content).not.toContain('Prepared next step');
     expect(xPost?.content).not.toContain('Next up: Post on Indie Hackers');
   });
+
+  it('keeps project positioning out of what shipped when no recent highlights exist', () => {
+    const pack = generateDailyContentPack({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      currentState: 'Project updated.',
+      inProgress: [],
+      changelog: [
+        {
+          timestamp: '2026-05-29T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+      ],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const shippedToday = pack.sections.find((section) => section.id === 'whatShippedToday');
+    const xPost = pack.sections.find((section) => section.id === 'xPost');
+
+    expect(pack.progressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(shippedToday?.content).toContain('Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(shippedToday?.content).not.toContain('Move your project between AI tools without ever rebuilding context.');
+    expect(xPost?.content).toContain('Move your project between AI tools without ever rebuilding context.');
+  });
 });

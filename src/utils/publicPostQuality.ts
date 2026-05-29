@@ -10,10 +10,12 @@ export type PublicPostSignal = {
 };
 
 export type PublicPostContext = {
-  highlights: string[];
-  primaryUpdate: string;
+  positioningSummary: string;
+  recentHighlights: string[];
+  primaryRecentHighlight: string | null;
+  primaryPublicTopic: string;
   feedbackAsk: string;
-  fallbackUsed: boolean;
+  recentProgressWarning: string | null;
 };
 
 const LOW_VALUE_PATTERNS = [
@@ -42,6 +44,14 @@ const HIGH_VALUE_PATTERNS: Array<[RegExp, number, string]> = [
   [/\b(outcome|helps?|so users can|without|directly|opened|continue)\b/i, 6, 'user outcome'],
   [/\b(beta|demo|launch|milestone|feedback)\b/i, 6, 'launch momentum'],
 ];
+
+function normalizePostKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 export function isLowValuePublicPostSignal(value: string): boolean {
   const text = cleanPublicText(value);
@@ -106,19 +116,20 @@ export function scorePublicPostSignal(value: string): PublicPostSignal {
 }
 
 export function getPublicPostContext(project: ProjectMemory, limit = 5): PublicPostContext {
+  const positioningSummary = cleanPublicText(project.summary, `${project.name} is making public progress.`);
+  const positioningKey = normalizePostKey(positioningSummary);
   const shippingHighlights = getShippingHighlights(project, limit * 2);
   const candidates = [
     ...shippingHighlights.map((text) => ({ text, sourceBonus: 30 })),
     ...cleanPublicList(project.inProgress).map((text) => ({ text, sourceBonus: 10 })),
     { text: cleanPublicText(project.currentState), sourceBonus: 0 },
-    { text: cleanPublicText(project.summary), sourceBonus: -5 },
   ].filter((candidate) => Boolean(candidate.text));
 
   const seen = new Set<string>();
   const scored = candidates
     .filter((candidate) => {
-      const key = candidate.text.toLowerCase().replace(/\s+/g, ' ').trim();
-      if (!key || seen.has(key)) return false;
+      const key = normalizePostKey(candidate.text);
+      if (!key || key === positioningKey || seen.has(key)) return false;
       seen.add(key);
       return true;
     })
@@ -132,15 +143,19 @@ export function getPublicPostContext(project: ProjectMemory, limit = 5): PublicP
     .filter((signal) => signal.score > 0)
     .sort((a, b) => b.score - a.score || a.text.localeCompare(b.text));
 
-  const highlights = uniqueStable(scored.map((signal) => signal.text)).slice(0, limit);
-  const fallback = cleanPublicText(project.summary, `${project.name} is making public progress.`);
+  const recentHighlights = uniqueStable(scored.map((signal) => signal.text)).slice(0, limit);
   const feedbackAsk = cleanPublicList(project.openQuestions)[0] ??
     'where the value is clearest and what still feels confusing';
+  const primaryRecentHighlight = recentHighlights[0] ?? null;
 
   return {
-    highlights: highlights.length > 0 ? highlights : [fallback],
-    primaryUpdate: highlights[0] ?? fallback,
+    positioningSummary,
+    recentHighlights,
+    primaryRecentHighlight,
+    primaryPublicTopic: primaryRecentHighlight ?? positioningSummary,
     feedbackAsk,
-    fallbackUsed: highlights.length === 0,
+    recentProgressWarning: recentHighlights.length === 0
+      ? 'Recent progress may be limited because no meaningful shipped updates were found.'
+      : null,
   };
 }

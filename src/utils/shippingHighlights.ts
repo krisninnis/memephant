@@ -44,6 +44,8 @@ const PRIORITY_TERMS = [
   'passport',
   'content',
   'readiness',
+  'clarity',
+  'kit',
   'daily',
   'demo',
   'onboarding',
@@ -127,7 +129,7 @@ export function summarizeShippingChange(summary: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 
-  if (/^(launch|studio|passport|content|readiness|daily|demo|onboarding|workflow|export|auth|oauth|privacy|trust|ux)\b/i.test(text)) {
+  if (/^(launch|studio|passport|kit|content|readiness|clarity|daily|demo|onboarding|workflow|export|auth|oauth|privacy|trust|ux)\b/i.test(text)) {
     text = `Improved ${text}`;
   }
 

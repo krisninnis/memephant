@@ -32,6 +32,7 @@ export type DailyContentPack = {
   projectName: string;
   generatedAt: string;
   qualityWarning: string | null;
+  progressWarning: string | null;
   sections: DailyContentPackSection[];
   markdown: string;
 };
@@ -77,14 +78,20 @@ export function generateDailyContentPack(
   const publicPost = getPublicPostContext(project, 5);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
-  const dailySignals = firstItems(publicPost.highlights, 5);
-  const primaryProgress = publicPost.primaryUpdate || currentState;
+  const progressWarning = publicPost.recentProgressWarning;
+  const positioningSummary = publicPost.positioningSummary || summary;
+  const dailySignals = firstItems(publicPost.recentHighlights, 5);
+  const primaryRecentHighlight = publicPost.primaryRecentHighlight;
+  const primaryPublicTopic = primaryRecentHighlight ?? positioningSummary;
   const primaryGoal = goals[0] ?? 'make the project more useful';
   const feedbackAsk = openQuestions[0] ?? publicPost.feedbackAsk;
   const workflowLine = workflowMode
     ? `Working lens: ${workflowMode.label} (${workflowMode.focus}).`
     : '';
-  const shippedItems = dailySignals.length > 0 ? dailySignals : [primaryProgress];
+  const shippedItems = dailySignals;
+  const shippedList = shippedItems.length > 0
+    ? bulletList(shippedItems)
+    : progressWarning ?? 'No meaningful shipped updates found yet.';
   const visualCue = assets[0] ?? `${name} in its current state`;
 
   const sections: DailyContentPackSection[] = [
@@ -93,10 +100,10 @@ export function generateDailyContentPack(
       title: 'X post',
       bestFor: 'X',
       content: [
-        `Today on ${name}: ${primaryProgress}`,
+        `Today on ${name}: ${primaryPublicTopic}`,
         '',
         `The goal is still simple: ${primaryGoal}.`,
-        `Why it matters: ${summary}`,
+        `Why it matters: ${positioningSummary}`,
         '',
         `Feedback welcome on ${feedbackAsk}.`,
       ].join('\n'),
@@ -108,9 +115,11 @@ export function generateDailyContentPack(
       content: [
         `I am building ${name}.`,
         '',
-        summary,
+        positioningSummary,
         '',
-        `Today the work moved forward with: ${primaryProgress}`,
+        primaryRecentHighlight
+          ? `Today the work moved forward with: ${primaryRecentHighlight}`
+          : `No recent shipped update was found yet. The project is still positioned around: ${positioningSummary}`,
         workflowLine,
         '',
         'What matters right now:',
@@ -124,12 +133,12 @@ export function generateDailyContentPack(
       title: 'Reddit post',
       bestFor: 'Reddit',
       content: [
-        `I am working on ${name}: ${summary}`,
+        `I am working on ${name}: ${positioningSummary}`,
         '',
         `Current state: ${currentState}`,
         '',
         'What changed today:',
-        bulletList(shippedItems),
+        shippedList,
         '',
         `Question: ${feedbackAsk}?`,
       ].join('\n'),
@@ -140,7 +149,7 @@ export function generateDailyContentPack(
       bestFor: 'Visual prompt',
       content: [
         `Format: two-panel meme.`,
-        `Panel 1: Someone trying to explain ${summary.toLowerCase()} from scratch every day.`,
+        `Panel 1: Someone trying to explain ${positioningSummary.toLowerCase()} from scratch every day.`,
         `Panel 2: ${name} calmly turning the current context into the next useful post.`,
         `Caption: "When the project finally remembers what shipped today."`,
       ].join('\n'),
@@ -152,7 +161,9 @@ export function generateDailyContentPack(
       content: [
         `A small lesson from building ${name}: ${primaryGoal} only matters if the latest progress is easy to explain.`,
         '',
-        `Today that progress was: ${primaryProgress}`,
+        primaryRecentHighlight
+          ? `Today that progress was: ${primaryRecentHighlight}`
+          : `No recent shipped update was found yet, so I am tightening how the project is explained: ${positioningSummary}`,
         '',
         `The decision guiding the work: ${decisionSummary(project.decisions)}.`,
         `Next I need to learn: ${feedbackAsk}.`,
@@ -163,10 +174,12 @@ export function generateDailyContentPack(
       title: 'Reply/comment ideas',
       bestFor: 'Comments',
       content: bulletList([
-        `The newest thing to react to is ${primaryProgress}.`,
+        primaryRecentHighlight
+          ? `The newest thing to react to is ${primaryRecentHighlight}.`
+          : `The clearest current topic is ${positioningSummary}.`,
         `The part I am most curious about is ${feedbackAsk}.`,
         `The trade-off behind it is ${decisionSummary(project.decisions)}.`,
-        `The reason it matters is ${summary}`,
+        `The reason it matters is ${positioningSummary}`,
       ]),
     },
     {
@@ -174,9 +187,9 @@ export function generateDailyContentPack(
       title: 'Demo clip caption',
       bestFor: 'Short video',
       content: [
-        `${name} demo clip: ${primaryProgress}`,
+        `${name} demo clip: ${primaryPublicTopic}`,
         `Watch for: ${visualCue}`,
-        `Why it matters: ${summary}`,
+        `Why it matters: ${positioningSummary}`,
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
     },
@@ -193,7 +206,7 @@ export function generateDailyContentPack(
       content: [
         `What shipped today on ${name}:`,
         '',
-        bulletList(shippedItems),
+        shippedList,
         '',
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
@@ -203,11 +216,13 @@ export function generateDailyContentPack(
       title: 'Problem/solution post',
       bestFor: 'Positioning',
       content: [
-        `Problem: ${summary}`,
+        `Problem: ${positioningSummary}`,
         '',
         `Solution: ${name} is moving toward ${primaryGoal}.`,
         '',
-        `Proof from today: ${primaryProgress}`,
+        primaryRecentHighlight
+          ? `Proof from today: ${primaryRecentHighlight}`
+          : `Recent proof: ${progressWarning ?? 'No meaningful shipped updates found yet.'}`,
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
     },
@@ -219,6 +234,7 @@ export function generateDailyContentPack(
     `Generated: ${generatedAt}`,
     '',
     ...(qualityWarning ? [`> ${qualityWarning}`, ''] : []),
+    ...(progressWarning ? [`> ${progressWarning}`, ''] : []),
     ...sections.flatMap((section) => [
       `## ${section.title}`,
       '',
@@ -233,6 +249,7 @@ export function generateDailyContentPack(
     projectName: name,
     generatedAt,
     qualityWarning,
+    progressWarning,
     sections,
     markdown,
   };

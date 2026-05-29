@@ -32,6 +32,7 @@ export type BuildUpdate = {
   projectName: string;
   generatedAt: string;
   qualityWarning: string | null;
+  progressWarning: string | null;
   sections: BuildUpdateSection[];
   markdown: string;
 };
@@ -78,14 +79,20 @@ export function generateBuildUpdate(
   const publicPost = getPublicPostContext(project, 5);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
-  const shippedItems = firstItems(publicPost.highlights, 5);
-  const primaryProgress = publicPost.primaryUpdate || currentState;
+  const progressWarning = publicPost.recentProgressWarning;
+  const positioningSummary = publicPost.positioningSummary || summary;
+  const shippedItems = firstItems(publicPost.recentHighlights, 5);
+  const primaryRecentHighlight = publicPost.primaryRecentHighlight;
+  const primaryPublicTopic = primaryRecentHighlight ?? positioningSummary;
   const primaryGoal = goals[0] ?? 'make the project more useful';
   const primaryNextStep = nextSteps[0] ?? 'collect feedback';
   const feedbackAsk = openQuestions[0] ?? publicPost.feedbackAsk;
   const workflowNote = workflowMode
     ? `Current working lens: ${workflowMode.label} - ${workflowMode.guidance}`
     : '';
+  const changedList = shippedItems.length > 0
+    ? bulletList(shippedItems)
+    : progressWarning ?? 'No meaningful shipped updates found yet.';
 
   const sections: BuildUpdateSection[] = [
     {
@@ -95,9 +102,9 @@ export function generateBuildUpdate(
       content: [
         `Build update for ${name}:`,
         '',
-        primaryProgress,
+        primaryPublicTopic,
         '',
-        `Why it matters: ${summary}`,
+        `Why it matters: ${positioningSummary}`,
         '',
         `Feedback welcome, especially on ${feedbackAsk}.`,
       ].join('\n'),
@@ -106,7 +113,7 @@ export function generateBuildUpdate(
       id: 'shortUpdate',
       title: 'Short what changed update',
       bestFor: 'Quick status',
-      content: `${name}: ${primaryProgress}`,
+      content: `${name}: ${primaryPublicTopic}`,
     },
     {
       id: 'linkedIn',
@@ -115,13 +122,13 @@ export function generateBuildUpdate(
       content: [
         `I have been working on ${name}.`,
         '',
-        summary,
+        positioningSummary,
         '',
         `Latest progress: ${currentState}`,
         workflowNote,
         '',
         'What changed:',
-        bulletList(shippedItems.length > 0 ? shippedItems : [primaryProgress]),
+        changedList,
         '',
         `The next focus is ${primaryNextStep}.`,
       ].filter(Boolean).join('\n'),
@@ -131,12 +138,12 @@ export function generateBuildUpdate(
       title: 'Reddit-style progress update',
       bestFor: 'Reddit',
       content: [
-        `Progress update on ${name}: ${summary}`,
+        `Progress update on ${name}: ${positioningSummary}`,
         '',
         `Current state: ${currentState}`,
         '',
         'What changed recently:',
-        bulletList(shippedItems.length > 0 ? shippedItems : [primaryProgress]),
+        changedList,
         '',
         'What I am trying to improve:',
         bulletList(firstItems(goals, 3)),
@@ -151,8 +158,8 @@ export function generateBuildUpdate(
       content: [
         `Tiny build update: ${name}`,
         '',
-        `Problem: ${summary}`,
-        `Progress: ${primaryProgress}`,
+        `Problem: ${positioningSummary}`,
+        `Progress: ${primaryPublicTopic}`,
         `Decision: ${decisionSummary(project.decisions)}`,
         `Next experiment: ${primaryNextStep}`,
         '',
@@ -169,7 +176,7 @@ export function generateBuildUpdate(
         `Status: ${currentState}`,
         '',
         'Changed:',
-        bulletList(shippedItems.length > 0 ? shippedItems : [primaryProgress]),
+        changedList,
         '',
         'Next:',
         bulletList(firstItems(nextSteps, 4)),
@@ -182,9 +189,9 @@ export function generateBuildUpdate(
       content: [
         `I am looking for a few people to sanity-check ${name}.`,
         '',
-        summary,
+        positioningSummary,
         '',
-        `The latest progress is: ${primaryProgress}`,
+        `The latest progress is: ${primaryPublicTopic}`,
         '',
         `If you take a look, I would value one specific note: ${feedbackAsk}.`,
       ].join('\n'),
@@ -196,7 +203,7 @@ export function generateBuildUpdate(
       content: [
         `What shipped this week on ${name}:`,
         '',
-        bulletList(shippedItems.length > 0 ? shippedItems : [primaryProgress]),
+        changedList,
         '',
         `Feedback wanted: ${feedbackAsk}`,
       ].join('\n'),
@@ -220,8 +227,8 @@ export function generateBuildUpdate(
       title: 'Demo clip caption',
       bestFor: 'Short video',
       content: [
-        `${name} demo: ${summary}`,
-        `In this clip: ${primaryProgress}`,
+        `${name} demo: ${positioningSummary}`,
+        `In this clip: ${primaryPublicTopic}`,
         assets.length > 0 ? `Visual to show: ${sentenceList(firstItems(assets, 2))}` : '',
         `Feedback wanted: ${feedbackAsk}`,
       ].filter(Boolean).join('\n'),
@@ -234,6 +241,7 @@ export function generateBuildUpdate(
     `Generated: ${generatedAt}`,
     '',
     ...(qualityWarning ? [`> ${qualityWarning}`, ''] : []),
+    ...(progressWarning ? [`> ${progressWarning}`, ''] : []),
     ...sections.flatMap((section) => [
       `## ${section.title}`,
       '',
@@ -248,6 +256,7 @@ export function generateBuildUpdate(
     projectName: name,
     generatedAt,
     qualityWarning,
+    progressWarning,
     sections,
     markdown,
   };

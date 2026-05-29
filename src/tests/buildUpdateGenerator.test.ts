@@ -195,4 +195,29 @@ describe('generateBuildUpdate', () => {
     expect(xUpdate?.content).toContain('Improved OAuth session persistence and sign-in reliability.');
     expect(xUpdate?.content).not.toContain('Last session summary updated');
   });
+
+  it('does not use positioning summary as a shipped update when recent progress is missing', () => {
+    const update = generateBuildUpdate({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      currentState: 'Project updated.',
+      inProgress: [],
+      changelog: [
+        {
+          timestamp: '2026-05-29T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+      ],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const shippedThisWeek = update.sections.find((section) => section.id === 'shippedThisWeek');
+    const reddit = update.sections.find((section) => section.id === 'reddit');
+
+    expect(update.progressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(shippedThisWeek?.content).toContain('Recent progress may be limited because no meaningful shipped updates were found.');
+    expect(shippedThisWeek?.content).not.toContain('Move your project between AI tools without ever rebuilding context.');
+    expect(reddit?.content).toContain('Move your project between AI tools without ever rebuilding context.');
+  });
 });
