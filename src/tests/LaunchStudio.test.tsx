@@ -52,13 +52,17 @@ describe('LaunchStudio', () => {
       'Turn this project context into launch posts, build updates, demo scripts, and feedback requests.',
     )).toBeInTheDocument();
     expect(screen.getByText('Project: Launch Studio Project')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Improve clarity' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Generate content' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Share safely' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Check Content Readiness/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Launch Passport/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Build Update/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Generate Daily Content Pack/i })).toBeInTheDocument();
     expect(screen.getByText('Social Bridge')).toBeInTheDocument();
-    expect(screen.getByText('Share buttons appear inside each generated section.')).toBeInTheDocument();
-    expect(screen.getByText('Generate a Launch Passport, Build Update, or Daily Content Pack first.')).toBeInTheDocument();
+    expect(screen.getByText(/Share buttons appear beside each generated section/i)).toBeInTheDocument();
+    expect(screen.getByText('Generate content first, then choose the section you want to share.')).toBeInTheDocument();
+    expect(screen.getByText('Preview before posting. Memephant never posts automatically.')).toBeInTheDocument();
     expect(screen.queryByText('Phase 1')).not.toBeInTheDocument();
   });
 
