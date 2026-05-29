@@ -11,6 +11,7 @@ interface BuildUpdateModalProps {
 
 export function BuildUpdateModal({ project, onClose }: BuildUpdateModalProps) {
   const [copied, setCopied] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const overlayRef = useRef<HTMLDivElement>(null);
   const update = generateBuildUpdate(project);
 
@@ -69,25 +70,50 @@ export function BuildUpdateModal({ project, onClose }: BuildUpdateModalProps) {
           </button>
         </div>
 
-        <div className="build-update-sections" aria-label="Build Update sections">
-          {update.sections.map((section) => (
-            <article className="build-update-section" key={section.id}>
-              <div>
-                <h3>{section.title}</h3>
-                <span>{section.bestFor}</span>
-              </div>
-              <p>{section.content}</p>
-              <SocialBridgeActions content={section.content} />
-            </article>
-          ))}
-        </div>
+        <div className="export-preview-modal__body">
+          <div className="build-update-sections" aria-label="Build Update sections">
+            {update.sections.map((section) => {
+              const canToggle = section.content.length > 220;
+              const expanded = expandedSections[section.id] ?? false;
 
-        <textarea
-          className="export-preview-textarea build-update-textarea"
-          readOnly
-          value={update.markdown}
-          aria-label="Build Update export text"
-        />
+              return (
+                <article className="build-update-section" key={section.id}>
+                  <div>
+                    <h3>{section.title}</h3>
+                    <span>{section.bestFor}</span>
+                  </div>
+                  <p className={!expanded && canToggle ? 'launch-studio-preview-text--collapsed' : undefined}>
+                    {section.content}
+                  </p>
+                  {canToggle && (
+                    <button
+                      type="button"
+                      className="launch-studio-section-toggle"
+                      onClick={() => setExpandedSections((current) => ({
+                        ...current,
+                        [section.id]: !expanded,
+                      }))}
+                    >
+                      {expanded ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                  <SocialBridgeActions
+                    content={section.content}
+                    disabled={!section.shareable}
+                    disabledReason={section.shareDisabledReason}
+                  />
+                </article>
+              );
+            })}
+          </div>
+
+          <textarea
+            className="export-preview-textarea build-update-textarea"
+            readOnly
+            value={update.markdown}
+            aria-label="Build Update export text"
+          />
+        </div>
 
         <div className="export-preview-actions">
           <button

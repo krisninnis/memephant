@@ -3001,7 +3001,8 @@ select {
 
 .export-preview-modal {
   width: min(920px, 100%);
-  max-height: min(860px, calc(100vh - 40px));
+  max-height: min(860px, calc(100dvh - 40px));
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -3017,6 +3018,17 @@ select {
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.export-preview-modal__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 20px 16px;
 }
 
 .export-preview-modal__header h2 {
@@ -3208,14 +3220,23 @@ select {
 
 .launch-passport-modal {
   width: min(980px, 100%);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.launch-passport-modal .export-preview-modal__header,
+.build-update-modal .export-preview-modal__header,
+.daily-content-pack-modal .export-preview-modal__header,
+.content-readiness-modal .export-preview-modal__header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .launch-passport-sections {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
-  max-height: 260px;
-  overflow: auto;
   padding-right: 2px;
 }
 
@@ -3248,14 +3269,15 @@ select {
 
 .build-update-modal {
   width: min(980px, 100%);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .build-update-sections {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
-  max-height: 260px;
-  overflow: auto;
   padding-right: 2px;
 }
 
@@ -3306,14 +3328,15 @@ select {
 
 .daily-content-pack-modal {
   width: min(1040px, 100%);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .daily-content-pack-sections {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
-  max-height: 280px;
-  overflow: auto;
   padding-right: 2px;
 }
 
@@ -3396,12 +3419,48 @@ select {
   border-color: rgba(45, 212, 191, 0.34);
 }
 
+.social-bridge-actions--disabled {
+  opacity: 0.78;
+}
+
+.social-bridge-actions--disabled p {
+  color: rgba(254, 240, 138, 0.86);
+}
+
+.social-bridge-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.launch-studio-preview-text--collapsed {
+  max-height: 7.2em;
+  overflow: hidden;
+}
+
+.launch-studio-section-toggle {
+  margin-top: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(125, 211, 252, 0.92);
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.launch-studio-section-toggle:hover {
+  color: rgba(224, 242, 254, 0.98);
+}
+
 .daily-content-pack-textarea {
   min-height: 220px;
 }
 
 .content-readiness-modal {
   width: min(980px, 100%);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
 }
 
 .content-readiness-score {
@@ -4027,9 +4086,16 @@ select {
 }
 
 .export-preview-actions {
+  position: sticky;
+  bottom: 0;
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(10px);
 }
 
 .export-preview-actions__secondary,
@@ -4872,6 +4938,58 @@ select {
 }
 
 @media (max-width: 768px) {
+  .export-preview-overlay {
+    align-items: stretch;
+    padding: 10px;
+  }
+
+  .launch-passport-modal,
+  .build-update-modal,
+  .daily-content-pack-modal,
+  .content-readiness-modal {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+  }
+
+  .export-preview-modal__body {
+    padding: 12px;
+  }
+
+  .launch-passport-modal .export-preview-modal__header,
+  .build-update-modal .export-preview-modal__header,
+  .daily-content-pack-modal .export-preview-modal__header,
+  .content-readiness-modal .export-preview-modal__header,
+  .export-preview-actions {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .launch-passport-sections,
+  .build-update-sections,
+  .daily-content-pack-sections,
+  .content-readiness-helper__fields,
+  .content-readiness-grid,
+  .content-readiness-signals {
+    grid-template-columns: 1fr;
+  }
+
+  .content-readiness-helper__header {
+    flex-direction: column;
+  }
+
+  .content-readiness-helper__template {
+    width: 100%;
+  }
+
+  .export-preview-actions {
+    flex-wrap: wrap;
+  }
+
+  .export-preview-actions__secondary,
+  .export-preview-actions__primary {
+    flex: 1 1 140px;
+  }
+
   .diff-preview__summary {
     padding: 10px;
   }

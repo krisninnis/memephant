@@ -11,6 +11,7 @@ interface LaunchPassportModalProps {
 
 export function LaunchPassportModal({ project, onClose }: LaunchPassportModalProps) {
   const [copied, setCopied] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const overlayRef = useRef<HTMLDivElement>(null);
   const passport = generateLaunchPassport(project);
 
@@ -70,22 +71,43 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
           </button>
         </div>
 
-        <div className="launch-passport-sections" aria-label="Launch Kit sections">
-          {passport.sections.map((section) => (
-            <article className="launch-passport-section" key={section.id}>
-              <h3>{section.title}</h3>
-              <p>{section.content}</p>
-              <SocialBridgeActions content={section.content} />
-            </article>
-          ))}
-        </div>
+        <div className="export-preview-modal__body">
+          <div className="launch-passport-sections" aria-label="Launch Kit sections">
+            {passport.sections.map((section) => {
+              const canToggle = section.content.length > 220;
+              const expanded = expandedSections[section.id] ?? false;
 
-        <textarea
-          className="export-preview-textarea launch-passport-textarea"
-          readOnly
-          value={passport.markdown}
-          aria-label="Launch Kit export text"
-        />
+              return (
+                <article className="launch-passport-section" key={section.id}>
+                  <h3>{section.title}</h3>
+                  <p className={!expanded && canToggle ? 'launch-studio-preview-text--collapsed' : undefined}>
+                    {section.content}
+                  </p>
+                  {canToggle && (
+                    <button
+                      type="button"
+                      className="launch-studio-section-toggle"
+                      onClick={() => setExpandedSections((current) => ({
+                        ...current,
+                        [section.id]: !expanded,
+                      }))}
+                    >
+                      {expanded ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                  <SocialBridgeActions content={section.content} />
+                </article>
+              );
+            })}
+          </div>
+
+          <textarea
+            className="export-preview-textarea launch-passport-textarea"
+            readOnly
+            value={passport.markdown}
+            aria-label="Launch Kit export text"
+          />
+        </div>
 
         <div className="export-preview-actions">
           <button

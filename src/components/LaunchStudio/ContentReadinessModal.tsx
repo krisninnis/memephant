@@ -114,16 +114,17 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
           </button>
         </div>
 
-        <div className="content-readiness-score" aria-label="Overall readiness score">
-          <strong>{report.score}</strong>
-          <span>/100</span>
-        </div>
+        <div className="export-preview-modal__body">
+          <div className="content-readiness-score" aria-label="Overall readiness score">
+            <strong>{report.score}</strong>
+            <span>/100</span>
+          </div>
 
-        {report.warning && (
-          <p className="content-readiness-warning">{report.warning}</p>
-        )}
+          {report.warning && (
+            <p className="content-readiness-warning">{report.warning}</p>
+          )}
 
-        <section className="content-readiness-helper" aria-label="Improve Launch Content">
+          <section className="content-readiness-helper" aria-label="Improve Launch Content">
           <div className="content-readiness-helper__header">
             <div>
               <h3>Improve Launch Content</h3>
@@ -158,9 +159,9 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
               </label>
             ))}
           </div>
-        </section>
+          </section>
 
-        <div className="content-readiness-grid">
+          <div className="content-readiness-grid">
           <section>
             <h3>Strengths</h3>
             {listItems(report.strengths, 'No strong positioning signals yet.')}
@@ -180,9 +181,9 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
             <h3>Missing basics</h3>
             {listItems(report.missingSignals, 'No missing signals detected.')}
           </section>
-        </div>
+          </div>
 
-        <div className="content-readiness-signals" aria-label="Project clarity signal details">
+          <div className="content-readiness-signals" aria-label="Project clarity signal details">
           {report.signals.map((signal) => (
             <article className={`content-readiness-signal content-readiness-signal--${signal.status}`} key={signal.id}>
               <div>
@@ -192,6 +193,7 @@ export function ContentReadinessModal({ project, onClose }: ContentReadinessModa
               <p>{signal.evidence}</p>
             </article>
           ))}
+          </div>
         </div>
 
         <div className="export-preview-actions">
