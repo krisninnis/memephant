@@ -2938,6 +2938,120 @@ select {
   min-width: 0;
 }
 
+.launch-studio-recent-progress {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.07), rgba(15, 23, 42, 0.34)),
+    rgba(15, 23, 42, 0.5);
+}
+
+.launch-studio-recent-progress__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.launch-studio-recent-progress__copy label {
+  color: #f8fafc;
+  font-size: 0.94rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.launch-studio-recent-progress__copy p {
+  color: rgba(203, 213, 225, 0.78);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.launch-studio-recent-progress__input {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: rgba(2, 6, 23, 0.34);
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  padding: 11px 12px;
+}
+
+.launch-studio-recent-progress__input:focus {
+  outline: none;
+  border-color: rgba(125, 211, 252, 0.46);
+  background: rgba(2, 6, 23, 0.46);
+}
+
+.launch-studio-recent-progress__input::placeholder {
+  color: rgba(148, 163, 184, 0.64);
+}
+
+.launch-studio-recent-progress__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.launch-studio-recent-progress__actions button {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid rgba(56, 189, 248, 0.36);
+  border-radius: 9px;
+  background: rgba(14, 165, 233, 0.14);
+  color: #e0f2fe;
+  font-size: 0.84rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.launch-studio-recent-progress__actions button:hover:not(:disabled) {
+  border-color: rgba(125, 211, 252, 0.58);
+  background: rgba(14, 165, 233, 0.22);
+}
+
+.launch-studio-recent-progress__actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.launch-studio-recent-progress__actions small {
+  color: rgba(186, 230, 253, 0.72);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.launch-studio-recent-progress__uses {
+  display: grid;
+  gap: 7px;
+  color: rgba(203, 213, 225, 0.78);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.launch-studio-recent-progress__uses ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.launch-studio-recent-progress__uses li {
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.08);
+  color: rgba(224, 242, 254, 0.86);
+  font-size: 0.76rem;
+  font-weight: 760;
+  padding: 4px 8px;
+}
+
 .launch-studio-page__header {
   padding: 16px;
   border: 1px solid rgba(148, 163, 184, 0.14);

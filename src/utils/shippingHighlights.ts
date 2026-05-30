@@ -9,7 +9,7 @@ import { assessPublicSignal, isMaintenanceOnlySignal } from './publicSignal';
 
 export type ShippingHighlight = {
   text: string;
-  source: 'changelog' | 'inProgress' | 'currentState';
+  source: 'recentProgressNote' | 'changelog' | 'inProgress' | 'currentState';
   score: number;
 };
 
@@ -34,6 +34,7 @@ const LOW_SIGNAL_PATTERNS = [
   /\bproject updated\b/i,
   /\bmetadata changed\b/i,
   /\bnotes synced\b/i,
+  /\bnotes updated\b/i,
   /\bsession state saved\b/i,
   /\bdecisions? updated\b/i,
 ];
@@ -53,14 +54,27 @@ const PRIORITY_TERMS = [
   'export',
   'auth',
   'oauth',
+  'sign-in',
+  'signin',
+  'login',
   'session',
   'privacy',
   'trust',
+  'reliability',
   'local-first',
   'copy',
   'ux',
   'timeline',
   'feedback',
+  'bridge',
+  'share',
+  'sharing',
+  'modal',
+  'scrolling',
+  'spacing',
+  'layout',
+  'button',
+  'buttons',
 ];
 
 const ACTION_TERMS = [
@@ -126,6 +140,8 @@ export function summarizeShippingChange(summary: string): string {
     .replace(/\bPolished\b/i, 'Improved')
     .replace(/\bFixed\b/i, 'Improved')
     .replace(/\bSeparated\b/i, 'Improved')
+    .replace(/([,;]\s+)Improved\b/g, '$1improved')
+    .replace(/([,;]\s+)Added\b/g, '$1added')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -147,7 +163,14 @@ function scoreHighlight(text: string, source: ShippingHighlight['source']): numb
     (score, term) => score + (normalized.includes(term) ? 2 : 0),
     0,
   );
-  const sourceScore = source === 'changelog' ? 4 : source === 'inProgress' ? 2 : 1;
+  const sourceScore =
+    source === 'recentProgressNote'
+      ? 8
+      : source === 'changelog'
+        ? 4
+        : source === 'inProgress'
+          ? 2
+          : 1;
   const specificityScore = text.split(/\s+/).length >= 4 ? 2 : 0;
 
   return publicSignal.score + priorityScore + actionScore + sourceScore + specificityScore;
@@ -158,8 +181,9 @@ function makeHighlight(text: string, source: ShippingHighlight['source']): Shipp
   const summary = summarizeShippingChange(text);
   if (!summary || isLowSignalShippingEntry(summary)) return null;
   const publicSignal = assessPublicSignal(summary);
+  const isUserProgress = source === 'recentProgressNote';
   if (!hasTerm(summary, [...PRIORITY_TERMS, ...ACTION_TERMS]) && publicSignal.level !== 'high') return null;
-  if (publicSignal.level === 'low') return null;
+  if (publicSignal.level === 'low' && (!isUserProgress || !hasTerm(summary, ACTION_TERMS))) return null;
 
   return {
     text: summary,
@@ -182,10 +206,31 @@ function dedupeHighlights<T extends ShippingHighlight>(items: T[]): T[] {
   return result;
 }
 
+export function getRecentProgressNoteItems(note: string | undefined): string[] {
+  if (!note?.trim()) return [];
+
+  const lineItems = note
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*(?:[-*]|\d+[.)])\s+/, ''))
+    .map((line) => cleanPublicText(line))
+    .filter(Boolean);
+
+  if (lineItems.length > 1) return uniqueStable(lineItems);
+
+  return cleanPublicList([note]);
+}
+
 export function getShippingHighlights(
   project: ProjectMemory,
   limit = 5,
 ): string[] {
+  const recentProgressNoteHighlights = getRecentProgressNoteItems(project.recentProgressNote)
+    .map((item, index) => {
+      const highlight = makeHighlight(item, 'recentProgressNote');
+      return highlight ? { ...highlight, index } : null;
+    })
+    .filter((item): item is ShippingHighlight & { index: number } => Boolean(item));
+
   const changelogHighlights = (project.changelog ?? [])
     .map((entry: ChangelogEntry, index) => {
       const highlight = makeHighlight(entry.summary, 'changelog');
@@ -205,14 +250,22 @@ export function getShippingHighlights(
     ? [{ ...currentStateHighlight, index: -2000 }]
     : [];
 
-  const sourceHighlights = changelogHighlights.length > 0
-    ? changelogHighlights
-    : inProgressHighlights.length > 0
-      ? inProgressHighlights
-      : currentStateHighlights;
+  const sourceHighlights = recentProgressNoteHighlights.length > 0
+    ? recentProgressNoteHighlights
+    : changelogHighlights.length > 0
+      ? changelogHighlights
+      : inProgressHighlights.length > 0
+        ? inProgressHighlights
+        : currentStateHighlights;
 
   const sorted = dedupeHighlights(sourceHighlights)
-    .sort((a, b) => b.score - a.score || b.index - a.index);
+    .sort((a, b) => {
+      if (a.source === 'recentProgressNote' && b.source === 'recentProgressNote') {
+        return a.index - b.index;
+      }
+
+      return b.score - a.score || b.index - a.index;
+    });
 
   return uniqueStable(sorted.map((item) => item.text)).slice(0, limit);
 }

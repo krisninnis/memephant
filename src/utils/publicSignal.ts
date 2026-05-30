@@ -12,10 +12,10 @@ export type PublicSignalAssessment = {
 const HIGH_SIGNAL_WEIGHTS: Array<[RegExp, number, string]> = [
   [/\b(add|added|ship|shipped|launch|launched)\b/i, 8, 'shipping momentum'],
   [/\b(improve|improved|fix|fixed|refine|refined|polish|polished)\b/i, 6, 'visible improvement'],
-  [/\b(onboarding|demo|ux|mobile|timeline|compare|history)\b/i, 10, 'user-facing experience'],
-  [/\b(auth|oauth|session|privacy|trust|security)\b/i, 10, 'trust or access improvement'],
-  [/\b(workflow|continuity|cross-ai|export|passport|handoff)\b/i, 9, 'workflow continuity'],
-  [/\b(launch studio|launch kit|daily content pack|content readiness|project clarity|shipping highlights)\b/i, 12, 'Launch Studio capability'],
+  [/\b(onboarding|demo|ux|ui|mobile|modal|scrolling|spacing|layout|buttons?|timeline|compare|history)\b/i, 10, 'user-facing experience'],
+  [/\b(auth|oauth|sign-in|signin|login|session|privacy|trust|security|reliability)\b/i, 10, 'trust or access improvement'],
+  [/\b(workflow|continuity|cross-ai|export|passport|handoff|share|sharing|bridge)\b/i, 9, 'workflow continuity'],
+  [/\b(launch studio|launch kit|daily content pack|content readiness|project clarity|shipping highlights|social bridge)\b/i, 12, 'Launch Studio capability'],
   [/\b(users?|customers?|founders?|teams?|builders?)\b/i, 4, 'clear user relevance'],
 ];
 

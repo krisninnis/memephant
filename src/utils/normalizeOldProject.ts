@@ -212,6 +212,10 @@ export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
       typeof raw.lastSessionSummary === 'string' ? raw.lastSessionSummary : undefined,
     openQuestion:
       typeof raw.openQuestion === 'string' ? raw.openQuestion : undefined,
+    recentProgressNote:
+      typeof raw.recentProgressNote === 'string' && raw.recentProgressNote.trim()
+        ? raw.recentProgressNote
+        : undefined,
     workflowMode: isAIWorkflowMode(raw.workflowMode) ? raw.workflowMode : undefined,
     nextIds: normalizeNextIds(raw.nextIds),
     checkpoints: normalizeCheckpoints(raw.checkpoints),

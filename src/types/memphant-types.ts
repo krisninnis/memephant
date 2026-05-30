@@ -171,6 +171,8 @@ export interface ProjectCheckpointSnapshot {
   lastSessionSummary?: string;
   /** The current decision or question the user wants the AI to focus on. REPLACE on AI update. */
   openQuestion?: string;
+  /** User-entered plain-English progress for Launch Studio public content. */
+  recentProgressNote?: string;
   /** Most recent AI session on this project. Written on every export copy. */
   lastAiSession?: LastAiSession;
   /** Lightweight context preset for how the next AI should think about the project. */
@@ -379,7 +381,9 @@ export function cloneCheckpointSnapshot(project: ProjectCheckpointSnapshot): Pro
     inProgress: project.inProgress ? [...project.inProgress] : undefined,
     lastSessionSummary: project.lastSessionSummary,
     openQuestion: project.openQuestion,
+    recentProgressNote: project.recentProgressNote,
     lastAiSession: project.lastAiSession ? { ...project.lastAiSession } : undefined,
+    workflowMode: project.workflowMode,
   };
 }
 
@@ -395,6 +399,7 @@ export function hashProjectState(project: ProjectCheckpointSnapshot): string {
     (project.inProgress ?? []).join('|'),
     project.lastSessionSummary ?? '',
     project.openQuestion ?? '',
+    project.recentProgressNote ?? '',
   ].join('::');
 
   let hash = 5381;

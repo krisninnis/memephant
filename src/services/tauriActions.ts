@@ -282,6 +282,7 @@ type LegacyProject = Record<string, unknown> & {
   checkpoints?: unknown;
   restorePoints?: unknown;
   platformState?: Record<string, unknown>;
+  recentProgressNote?: string;
 };
 
 export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory {
@@ -486,6 +487,10 @@ export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory
       typeof raw.openQuestion === 'string' && raw.openQuestion.trim()
         ? raw.openQuestion
         : undefined,
+    recentProgressNote:
+      typeof raw.recentProgressNote === 'string' && raw.recentProgressNote.trim()
+        ? raw.recentProgressNote
+        : undefined,
   };
 }
 
@@ -504,6 +509,7 @@ export function toOldFormat(project: ProjectMemory): Record<string, unknown> {
     rules: project.rules,
     decisions: project.decisions.map((d) => (typeof d === 'string' ? d : d.decision)),
     currentState: project.currentState,
+    recentProgressNote: project.recentProgressNote ?? '',
     nextSteps: project.nextSteps,
     openQuestions: project.openQuestions,
     importantAssets: project.importantAssets,

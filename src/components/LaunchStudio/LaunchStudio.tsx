@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useActiveProject } from '../../hooks/useActiveProject';
+import { useProjectStore } from '../../store/projectStore';
 import { LaunchPassportModal } from '../Workspace/LaunchPassportModal';
 import { BuildUpdateModal } from '../Workspace/BuildUpdateModal';
 import { ContentReadinessModal } from './ContentReadinessModal';
@@ -34,15 +35,78 @@ const LAUNCH_STUDIO_PAGES: Array<{
   },
 ];
 
+const SHIPPED_TODAY_PLACEHOLDER = [
+  'Added Launch Studio tabs.',
+  'Improved modal scrolling.',
+  'Added Social Bridge sharing actions.',
+  'Polished app-wide spacing.',
+].join('\n');
+
+const SHIPPED_TODAY_USED_BY = [
+  'Launch Kit',
+  'Build Update',
+  'Daily Content Pack',
+  'Future launch content',
+];
+
+function getProgressLines(value: string): string[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 export function LaunchStudio() {
   const activeProject = useActiveProject();
+  const updateProject = useProjectStore((s) => s.updateProject);
+  const showToast = useProjectStore((s) => s.showToast);
   const [activePage, setActivePage] = useState<LaunchStudioPage>('clarity');
   const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
   const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
   const [dailyContentPackOpen, setDailyContentPackOpen] = useState(false);
   const [contentReadinessOpen, setContentReadinessOpen] = useState(false);
+  const [recentProgressDraft, setRecentProgressDraft] = useState('');
+  const [recentProgressSaved, setRecentProgressSaved] = useState(false);
 
   const activePageConfig = LAUNCH_STUDIO_PAGES.find((page) => page.id === activePage) ?? LAUNCH_STUDIO_PAGES[0]!;
+  const savedRecentProgress = activeProject?.recentProgressNote ?? '';
+  const hasRecentProgressText = recentProgressDraft.trim().length > 0;
+  const recentProgressChanged = recentProgressDraft !== savedRecentProgress;
+
+  useEffect(() => {
+    setRecentProgressDraft(activeProject?.recentProgressNote ?? '');
+    setRecentProgressSaved(false);
+  }, [activeProject?.id, activeProject?.recentProgressNote]);
+
+  const handleSaveRecentProgress = () => {
+    if (!activeProject) return;
+
+    const timestamp = new Date().toISOString();
+    const progressLines = getProgressLines(recentProgressDraft);
+    const nextChangelog = hasRecentProgressText && recentProgressChanged
+      ? [
+          ...(activeProject.changelog ?? []),
+          ...progressLines.map((summary) => ({
+            timestamp,
+            field: 'recentProgressNote',
+            action: savedRecentProgress.trim() ? 'updated' as const : 'added' as const,
+            summary,
+            source: 'user',
+          })),
+        ]
+      : activeProject.changelog;
+
+    updateProject(activeProject.id, {
+      recentProgressNote: hasRecentProgressText ? recentProgressDraft : undefined,
+      changelog: nextChangelog,
+      updatedAt: timestamp,
+    });
+    setRecentProgressSaved(true);
+    showToast(
+      hasRecentProgressText ? 'Progress saved for Launch Studio.' : 'Progress cleared.',
+      'success',
+    );
+  };
 
   return (
     <div className="workspace-scroll">
@@ -97,6 +161,58 @@ export function LaunchStudio() {
                 <h2 id={`launch-studio-page-${activePage}`}>{activePageConfig.label}</h2>
                 <p>{activePageConfig.question}</p>
               </div>
+
+              {activePage !== 'share' && (
+                <section
+                  className="launch-studio-recent-progress"
+                  aria-label="What did you ship today"
+                >
+                  <div className="launch-studio-recent-progress__copy">
+                    <label
+                      id="launch-studio-recent-progress-title"
+                      htmlFor="launch-studio-recent-progress"
+                    >
+                      What Did You Ship Today?
+                    </label>
+                    <p>
+                      Tell Memephant what changed today so it can generate better launch content.
+                    </p>
+                  </div>
+                  <textarea
+                    id="launch-studio-recent-progress"
+                    className="launch-studio-recent-progress__input"
+                    value={recentProgressDraft}
+                    onChange={(event) => {
+                      setRecentProgressDraft(event.target.value);
+                      setRecentProgressSaved(false);
+                    }}
+                    placeholder={SHIPPED_TODAY_PLACEHOLDER}
+                    rows={5}
+                  />
+                  <div className="launch-studio-recent-progress__actions">
+                    <button
+                      type="button"
+                      onClick={handleSaveRecentProgress}
+                      disabled={!recentProgressChanged}
+                    >
+                      Save Progress
+                    </button>
+                    <small aria-live="polite">
+                      {recentProgressSaved
+                        ? 'Saved locally for launch content.'
+                        : 'Preserved exactly as typed and used as recent shipped progress.'}
+                    </small>
+                  </div>
+                  <div className="launch-studio-recent-progress__uses">
+                    <p>These updates will be used by:</p>
+                    <ul>
+                      {SHIPPED_TODAY_USED_BY.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </section>
+              )}
 
               {activePage === 'clarity' && (
               <article className="launch-studio-card">

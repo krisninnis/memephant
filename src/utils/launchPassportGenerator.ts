@@ -89,7 +89,7 @@ export function generateLaunchPassport(
   const instructions = cleanText(project.aiInstructions);
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
-  const publicPost = getPublicPostContext(project, 3);
+  const publicPost = getPublicPostContext(project, 5);
   const progressWarning = publicPost.recentProgressWarning;
   const positioningSummary = publicPost.positioningSummary || summary;
   const recentHighlights = publicPost.recentHighlights;
