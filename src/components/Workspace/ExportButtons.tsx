@@ -734,10 +734,9 @@ export function ExportButtons() {
       {activeProject && (
         <button
           type="button"
-          className="action-bar__btn"
+          className="context-passport-primary-btn"
           onClick={() => setPassportOpen(true)}
           title="Generate a portable Context Passport you can copy into any AI tool"
-          style={{ width: '100%', marginBottom: '8px', fontWeight: 600 }}
         >
           🗺️ Generate Context Passport
         </button>

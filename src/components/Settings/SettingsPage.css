@@ -5,17 +5,19 @@
 
 .settings-page {
   display: grid;
-  grid-template-columns: 210px 1fr;
+  grid-template-columns: 220px 1fr;
   height: 100%;
   overflow: hidden;
+  background: #0f172a;
 }
 
 .settings-nav {
-  border-right: 1px solid #1e1e30;
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   padding-bottom: 16px;
+  background: rgba(15, 23, 42, 0.46);
 }
 
 .settings-nav-header {
@@ -80,8 +82,12 @@
 }
 
 .settings-content {
-  padding: 28px 32px;
+  padding: 32px 36px 48px;
   overflow-y: auto;
+}
+
+.settings-content > * {
+  max-width: 980px;
 }
 
 .settings-mobile-picker {
@@ -120,7 +126,7 @@
 }
 
 .settings-section-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   margin: 0 0 6px;
   color: #fff;
@@ -133,7 +139,7 @@
 }
 
 .settings-group {
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .settings-group-title {
