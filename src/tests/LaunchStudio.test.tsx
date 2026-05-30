@@ -49,20 +49,19 @@ describe('LaunchStudio', () => {
 
     expect(screen.getByRole('heading', { name: 'Launch Studio' })).toBeInTheDocument();
     expect(screen.getByText(
-      'Turn this project context into launch posts, build updates, demo scripts, and feedback requests.',
+      /Turn project context into clear public communication/i,
     )).toBeInTheDocument();
     expect(screen.getByText('Project: Launch Studio Project')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Improve clarity' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Generate content' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Share safely' })).toBeInTheDocument();
+    const navigation = screen.getByRole('navigation', { name: 'Launch Studio sections' });
+    expect(within(navigation).getByRole('button', { name: /Project Clarity/i })).toBeInTheDocument();
+    expect(within(navigation).getByRole('button', { name: /Launch Kit/i })).toBeInTheDocument();
+    expect(within(navigation).getByRole('button', { name: /Post Today/i })).toBeInTheDocument();
+    expect(within(navigation).getByRole('button', { name: /Share/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Project Clarity' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Is this project clear enough to explain publicly?').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /Check Project Clarity/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Generate Launch Kit/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Generate Build Update/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Generate Daily Content Pack/i })).toBeInTheDocument();
-    expect(screen.getByText('Social Bridge')).toBeInTheDocument();
-    expect(screen.getByText(/Share buttons appear beside each generated section/i)).toBeInTheDocument();
-    expect(screen.getByText('Generate content first, then choose the section you want to share.')).toBeInTheDocument();
-    expect(screen.getByText('Preview before posting. Memephant never posts automatically.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Generate Launch Kit/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Generate Build Update/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Phase 1')).not.toBeInTheDocument();
   });
 
@@ -78,6 +77,19 @@ describe('LaunchStudio', () => {
     expect(within(dialog).getByText('Suggested improvements')).toBeInTheDocument();
     expect(within(dialog).getByText('Missing basics')).toBeInTheDocument();
     expect(within(dialog).getByText('Improve Launch Content')).toBeInTheDocument();
+  });
+
+  it('keeps sharing as guidance rather than a standalone social tool', () => {
+    render(<LaunchStudio />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Share/i }));
+
+    expect(screen.getByRole('heading', { name: 'Share' })).toBeInTheDocument();
+    expect(screen.getByText(/Open generated content in X, LinkedIn, Reddit, or Facebook/i))
+      .toBeInTheDocument();
+    expect(screen.getByText('Share buttons stay beside generated sections, not on this page.'))
+      .toBeInTheDocument();
+    expect(screen.queryByText('Social Bridge')).not.toBeInTheDocument();
   });
 
   it('offers a plain-English positioning helper with example template answers', () => {
@@ -108,6 +120,7 @@ describe('LaunchStudio', () => {
   it('opens and copies a Launch Kit generated from project context', async () => {
     render(<LaunchStudio />);
 
+    fireEvent.click(screen.getByRole('button', { name: /Launch Kit/i }));
     fireEvent.click(screen.getByRole('button', { name: /generate launch kit/i }));
 
     const dialog = screen.getByRole('dialog', { name: 'Launch Kit' });
@@ -128,6 +141,7 @@ describe('LaunchStudio', () => {
   it('opens and copies a Build Update generated from project context', async () => {
     render(<LaunchStudio />);
 
+    fireEvent.click(screen.getByRole('button', { name: /Post Today/i }));
     fireEvent.click(screen.getByRole('button', { name: /generate build update/i }));
 
     const dialog = screen.getByRole('dialog', { name: 'Build Update' });
@@ -148,7 +162,8 @@ describe('LaunchStudio', () => {
   it('opens and copies a Daily Content Pack generated from project context', async () => {
     render(<LaunchStudio />);
 
-    fireEvent.click(screen.getByRole('button', { name: /generate daily content pack/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Post Today/i }));
+    fireEvent.click(screen.getByRole('button', { name: /generate post today/i }));
 
     const dialog = screen.getByRole('dialog', { name: 'Daily Content Pack' });
     expect(within(dialog).getByText('X post')).toBeInTheDocument();
@@ -193,7 +208,8 @@ describe('LaunchStudio', () => {
 
     render(<LaunchStudio />);
 
-    fireEvent.click(screen.getByRole('button', { name: /generate daily content pack/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Post Today/i }));
+    fireEvent.click(screen.getByRole('button', { name: /generate post today/i }));
 
     const dialog = screen.getByRole('dialog', { name: 'Daily Content Pack' });
     expect(within(dialog).getAllByText('Add what changed recently to generate better posts.')[0])
@@ -216,7 +232,7 @@ describe('LaunchStudio', () => {
       .not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Generate Launch Kit/i }))
       .not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Generate Daily Content Pack/i }))
+    expect(screen.queryByRole('button', { name: /Generate Post Today/i }))
       .not.toBeInTheDocument();
   });
 });

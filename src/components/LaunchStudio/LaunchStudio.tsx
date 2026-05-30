@@ -5,12 +5,44 @@ import { BuildUpdateModal } from '../Workspace/BuildUpdateModal';
 import { ContentReadinessModal } from './ContentReadinessModal';
 import { DailyContentPackModal } from './DailyContentPackModal';
 
+type LaunchStudioPage = 'clarity' | 'launch' | 'postToday' | 'share';
+
+const LAUNCH_STUDIO_PAGES: Array<{
+  id: LaunchStudioPage;
+  label: string;
+  question: string;
+}> = [
+  {
+    id: 'clarity',
+    label: 'Project Clarity',
+    question: 'Is this project clear enough to explain publicly?',
+  },
+  {
+    id: 'launch',
+    label: 'Launch Kit',
+    question: 'How do I launch this project?',
+  },
+  {
+    id: 'postToday',
+    label: 'Post Today',
+    question: 'What can I post today?',
+  },
+  {
+    id: 'share',
+    label: 'Share',
+    question: 'Where do I post this?',
+  },
+];
+
 export function LaunchStudio() {
   const activeProject = useActiveProject();
+  const [activePage, setActivePage] = useState<LaunchStudioPage>('clarity');
   const [launchPassportOpen, setLaunchPassportOpen] = useState(false);
   const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
   const [dailyContentPackOpen, setDailyContentPackOpen] = useState(false);
   const [contentReadinessOpen, setContentReadinessOpen] = useState(false);
+
+  const activePageConfig = LAUNCH_STUDIO_PAGES.find((page) => page.id === activePage) ?? LAUNCH_STUDIO_PAGES[0]!;
 
   return (
     <div className="workspace-scroll">
@@ -20,8 +52,8 @@ export function LaunchStudio() {
             <p className="launch-studio__eyebrow">Launch and distribution</p>
             <h1 id="launch-studio-title">Launch Studio</h1>
             <p>
-              Turn this project context into launch posts, build updates, demo scripts,
-              and feedback requests.
+              Turn project context into clear public communication without making
+              Memephant a social scheduler.
             </p>
           </div>
           {activeProject && (
@@ -40,21 +72,39 @@ export function LaunchStudio() {
             </p>
           </section>
         ) : (
-          <div className="launch-studio-workflow" aria-label="Launch Studio workflow">
-            <section className="launch-studio-step launch-studio-step--prepare" aria-labelledby="launch-studio-prepare">
-              <div className="launch-studio-step__header">
-                <span>Step 1</span>
-                <div>
-                  <h2 id="launch-studio-prepare">Improve clarity</h2>
-                  <p>Make sure the project is easy to explain before generating public copy.</p>
-                </div>
+          <div className="launch-studio-workspace" aria-label="Launch Studio workflow">
+            <nav className="launch-studio-tabs" aria-label="Launch Studio sections">
+              {LAUNCH_STUDIO_PAGES.map((page) => (
+                <button
+                  type="button"
+                  key={page.id}
+                  className={`launch-studio-tab${activePage === page.id ? ' launch-studio-tab--active' : ''}`}
+                  aria-current={activePage === page.id ? 'page' : undefined}
+                  onClick={() => setActivePage(page.id)}
+                >
+                  <span>{page.label}</span>
+                  <small>{page.question}</small>
+                </button>
+              ))}
+            </nav>
+
+            <section
+              className="launch-studio-page"
+              aria-labelledby={`launch-studio-page-${activePage}`}
+            >
+              <div className="launch-studio-page__header">
+                <p className="launch-studio-page__eyebrow">Launch Studio</p>
+                <h2 id={`launch-studio-page-${activePage}`}>{activePageConfig.label}</h2>
+                <p>{activePageConfig.question}</p>
               </div>
+
+              {activePage === 'clarity' && (
               <article className="launch-studio-card">
                 <div>
                   <h3>Project Clarity</h3>
                   <p>
                     Check whether the project has enough plain context to generate useful
-                    launch and social content.
+                    launch and social content before you create anything public.
                   </p>
                 </div>
                 <button
@@ -67,17 +117,9 @@ export function LaunchStudio() {
                   <small>Score, weak areas, missing basics, suggestions</small>
                 </button>
               </article>
-            </section>
+              )}
 
-            <section className="launch-studio-step" aria-labelledby="launch-studio-generate">
-              <div className="launch-studio-step__header">
-                <span>Step 2</span>
-                <div>
-                  <h2 id="launch-studio-generate">Generate content</h2>
-                  <p>Choose the kind of public communication you need right now.</p>
-                </div>
-              </div>
-              <div className="launch-studio__grid" aria-label="Launch Studio content generators">
+              {activePage === 'launch' && (
                 <article className="launch-studio-card">
                   <div>
                     <h3>Launch Kit</h3>
@@ -96,13 +138,35 @@ export function LaunchStudio() {
                     <small>How do I launch this project?</small>
                   </button>
                 </article>
+              )}
+
+              {activePage === 'postToday' && (
+              <div className="launch-studio__grid launch-studio__grid--post-today" aria-label="Post Today generators">
+                <article className="launch-studio-card launch-studio-card--primary">
+                  <div>
+                    <h3>Post Today</h3>
+                    <p>
+                      Generate X, LinkedIn, Reddit, founder reflection, demo caption,
+                      feedback question, and what-shipped-today drafts.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="daily-content-pack-btn"
+                    onClick={() => setDailyContentPackOpen(true)}
+                    title="Generate today's copy-ready social ideas from this project context"
+                  >
+                    <span>Generate Post Today</span>
+                    <small>What can I post today?</small>
+                  </button>
+                </article>
 
                 <article className="launch-studio-card">
                   <div>
                     <h3>Build Update</h3>
                     <p>
                       Draft progress posts, release notes, feedback asks, and short
-                      update captions grounded in the current project state.
+                      update captions. This will merge into Post Today later.
                     </p>
                   </div>
                   <button
@@ -115,49 +179,24 @@ export function LaunchStudio() {
                     <small>What did I ship or improve recently?</small>
                   </button>
                 </article>
-
-                <article className="launch-studio-card">
-                  <div>
-                    <h3>Daily Content Pack</h3>
-                    <p>
-                      Generate today&apos;s copy-ready social ideas from current context,
-                      recent progress, goals, workflow mode, and next steps.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="daily-content-pack-btn"
-                    onClick={() => setDailyContentPackOpen(true)}
-                    title="Generate a local daily content pack from this project context"
-                  >
-                    <span>Generate Daily Content Pack</span>
-                    <small>What can I post today?</small>
-                  </button>
-                </article>
               </div>
-            </section>
+              )}
 
-            <section className="launch-studio-step launch-studio-step--share" aria-labelledby="launch-studio-share">
-              <div className="launch-studio-step__header">
-                <span>Step 3</span>
-                <div>
-                  <h2 id="launch-studio-share">Share safely</h2>
-                  <p>Open selected generated sections in social composers for manual review.</p>
-                </div>
-              </div>
+              {activePage === 'share' && (
               <article className="launch-studio-card launch-studio-card--info">
                 <div>
-                  <h3>Social Bridge</h3>
+                  <h3>Share safely</h3>
                   <p>
-                    Share buttons appear beside each generated section in Launch Kit,
-                    Build Update, and Daily Content Pack.
+                    Open generated content in X, LinkedIn, Reddit, or Facebook for
+                    manual review. Memephant never posts automatically.
                   </p>
                 </div>
                 <div className="social-bridge-card-note">
-                  <p>Generate content first, then choose the section you want to share.</p>
-                  <p>Preview before posting. Memephant never posts automatically.</p>
+                  <p>Generate a Launch Kit or Post Today draft first.</p>
+                  <p>Share buttons stay beside generated sections, not on this page.</p>
                 </div>
               </article>
+              )}
             </section>
           </div>
         )}
