@@ -20,6 +20,7 @@ export interface PWAState {
   isInstallable: boolean;
   isInstalled: boolean;
   updateAvailable: boolean;
+  updateReady: boolean;
   isChecking: boolean;
   isApplyingUpdate: boolean;
   lastChecked: Date | null;
@@ -51,18 +52,35 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   const [isApplyingUpdate, setIsApplyingUpdate] = useState(false);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
+  const [updateReady, setUpdateReady] = useState(false);
 
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
   const updateIntervalRef = useRef<number | null>(null);
-  const updateAvailableRef = useRef(false);
+  const updateDismissedForSessionRef = useRef(false);
 
   const {
     needRefresh: [updateAvailable, setUpdateAvailable],
     updateServiceWorker,
   } = useRegisterSW({
     onNeedRefresh() {
-      setUpdateMessage(null);
+      if (updateDismissedForSessionRef.current) {
+        setUpdateReady(false);
+        setUpdateAvailable(false);
+        setUpdateMessage(null);
+        return;
+      }
+
+      const ready = Boolean(registrationRef.current?.waiting);
+      setUpdateReady(ready);
+
+      if (ready) {
+        setUpdateMessage(null);
+        return;
+      }
+
+      setUpdateAvailable(false);
+      setUpdateMessage('A web update was found, but it is not ready to reload yet. You can keep working.');
     },
     onOfflineReady() {},
     onRegisteredSW(_swUrl, registration) {
@@ -94,7 +112,24 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    updateAvailableRef.current = updateAvailable;
+    if (!updateAvailable) {
+      return;
+    }
+
+    if (updateDismissedForSessionRef.current) {
+      setUpdateReady(false);
+      setUpdateAvailable(false);
+      setUpdateMessage(null);
+      return;
+    }
+
+    const ready = Boolean(registrationRef.current?.waiting);
+    setUpdateReady(ready);
+
+    if (!ready) {
+      setUpdateAvailable(false);
+      setUpdateMessage('A web update was found, but it is not ready to reload yet. You can keep working.');
+    }
   }, [updateAvailable]);
 
   useEffect(() => {
@@ -166,17 +201,26 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkForUpdates = useCallback(async (): Promise<boolean> => {
-    if (isTauri() || !registrationRef.current) return false;
+    const registration = registrationRef.current;
+    if (isTauri() || !registration) return false;
 
     setIsChecking(true);
 
     try {
-      await registrationRef.current.update();
+      await registration.update();
       setLastChecked(new Date());
 
       await new Promise((resolve) => window.setTimeout(resolve, 1200));
 
-      return updateAvailableRef.current;
+      const ready = Boolean(registration.waiting);
+      setUpdateReady(ready);
+      setUpdateAvailable(ready);
+      if (ready) {
+        updateDismissedForSessionRef.current = false;
+        setUpdateMessage(null);
+      }
+
+      return ready;
     } catch (err) {
       console.error('[PWA] Update check failed:', err);
       return false;
@@ -189,7 +233,9 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     if (isTauri()) {
       console.warn('[PWA] applyUpdate ignored in Tauri environment');
       setIsApplyingUpdate(false);
-      setUpdateMessage('Update will apply the next time the web app reloads.');
+      setUpdateReady(false);
+      setUpdateAvailable(false);
+      setUpdateMessage('Web updates apply when the web app reloads.');
       return;
     }
 
@@ -198,39 +244,46 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     if (!registration) {
       console.warn('[PWA] applyUpdate aborted: no service worker registration');
       setIsApplyingUpdate(false);
-      setUpdateMessage('No update is ready yet. Please try again in a moment.');
+      setUpdateReady(false);
+      setUpdateAvailable(false);
+      setUpdateMessage('The web update is not ready to reload yet. You can keep working and try again later.');
+      return;
+    }
+
+    const waitingWorker = registration.waiting;
+
+    if (!waitingWorker) {
+      console.warn('[PWA] applyUpdate aborted: no waiting worker');
+      setIsApplyingUpdate(false);
+      setUpdateReady(false);
+      setUpdateAvailable(false);
+      setUpdateMessage('The web update is not ready to reload yet. You can keep working and try again later.');
       return;
     }
 
     setIsApplyingUpdate(true);
+    setUpdateReady(true);
     setUpdateMessage(null);
 
-    try {
-      if (!registration.waiting) {
-        await registration.update();
-        setLastChecked(new Date());
-        await new Promise((resolve) => window.setTimeout(resolve, 1200));
-      }
+    let controllerChangeTimeout: number | undefined;
 
-      const waitingWorker = registration.waiting;
-
-      if (!waitingWorker) {
-        console.warn('[PWA] applyUpdate aborted: still no waiting worker after update check');
-        setIsApplyingUpdate(false);
-        setUpdateMessage('No update is ready yet. Please try again in a moment.');
-        return;
-      }
-
-      const controllerChangeTimeout = window.setTimeout(() => {
-        console.warn('[PWA] controllerchange timeout while applying update');
-        setIsApplyingUpdate(false);
-        setUpdateMessage('Update is installing. If nothing changes, reopen the app.');
-      }, 5000);
-
-      const handleControllerChange = () => {
+    const handleControllerChange = () => {
+      if (controllerChangeTimeout !== undefined) {
         window.clearTimeout(controllerChangeTimeout);
-        window.location.reload();
-      };
+      }
+      window.location.reload();
+    };
+
+    try {
+      controllerChangeTimeout = window.setTimeout(() => {
+        console.warn('[PWA] controllerchange timeout while applying update');
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+        setIsApplyingUpdate(false);
+        setUpdateReady(false);
+        setUpdateAvailable(false);
+        updateDismissedForSessionRef.current = true;
+        setUpdateMessage('The update is still finishing. You can keep working and reload later.');
+      }, 5000);
 
       navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, {
         once: true,
@@ -243,14 +296,22 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('[PWA] applyUpdate failed:', error);
-      setUpdateMessage('Update could not be applied. Please try again in a moment.');
+      if (controllerChangeTimeout !== undefined) {
+        window.clearTimeout(controllerChangeTimeout);
+      }
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      setUpdateReady(false);
+      setUpdateAvailable(false);
+      setUpdateMessage('The web update could not be applied. You can dismiss this and keep working.');
       setIsApplyingUpdate(false);
     }
-  }, [updateServiceWorker]);
+  }, [setUpdateAvailable, updateServiceWorker]);
 
   const dismissUpdate = useCallback(() => {
+    updateDismissedForSessionRef.current = true;
     setUpdateMessage(null);
     setIsApplyingUpdate(false);
+    setUpdateReady(false);
     setUpdateAvailable(false);
   }, [setUpdateAvailable]);
 
@@ -259,6 +320,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       isInstallable,
       isInstalled,
       updateAvailable,
+      updateReady,
       isChecking,
       isApplyingUpdate,
       lastChecked,
@@ -272,6 +334,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       isInstallable,
       isInstalled,
       updateAvailable,
+      updateReady,
       isChecking,
       isApplyingUpdate,
       lastChecked,

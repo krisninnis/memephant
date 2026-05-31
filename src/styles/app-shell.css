@@ -2190,9 +2190,32 @@ select {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
+.pwa-update-prompt__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .pwa-update-prompt__title {
   color: #fff;
   font-weight: 700;
+}
+
+.pwa-update-prompt__close {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 1px solid #2a3f5f;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #c7d2e5;
+  cursor: pointer;
+}
+
+.pwa-update-prompt__close:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .pwa-update-prompt__body {
@@ -2456,8 +2479,10 @@ select {
   .pwa-update-prompt {
     left: 12px;
     right: 12px;
-    bottom: calc(84px + env(safe-area-inset-bottom));
+    bottom: calc(96px + env(safe-area-inset-bottom));
     max-width: none;
+    max-height: min(42dvh, 260px);
+    overflow: auto;
   }
 
   .pwa-update-prompt__actions > * {

@@ -42,6 +42,7 @@ function mockPwaState(overrides = {}) {
     isInstallable: false,
     isInstalled: false,
     updateAvailable: false,
+    updateReady: false,
     isChecking: false,
     isApplyingUpdate: false,
     lastChecked: null,
@@ -131,13 +132,43 @@ describe('Web/PWA update flow remains separate', () => {
     expect(screen.queryByText('Desktop Updates')).not.toBeInTheDocument();
   });
 
-  it('PWA update prompt says it updates the web/PWA build only', () => {
-    mockPwaState({ updateAvailable: true });
+  it('PWA update prompt shows reload only when the update is ready', () => {
+    mockPwaState({ updateAvailable: true, updateReady: true });
 
     render(<PWAUpdatePrompt />);
 
     expect(
       screen.getByText('A newer web/PWA build of Memephant is ready. This does not update the installed desktop app.'),
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload now' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Update now' })).not.toBeInTheDocument();
+  });
+
+  it('PWA update prompt hides reload action when no update is ready', () => {
+    mockPwaState({
+      updateAvailable: false,
+      updateReady: false,
+      updateMessage: 'The web update is not ready to reload yet. You can keep working and try again later.',
+    });
+
+    render(<PWAUpdatePrompt />);
+
+    expect(screen.getByText('Update notice')).toBeInTheDocument();
+    expect(screen.getByText('Memephant checked for a web/PWA update. You can keep working.')).toBeInTheDocument();
+    expect(screen.getByText('The web update is not ready to reload yet. You can keep working and try again later.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reload now' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Update now' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+  });
+
+  it('PWA update prompt lets users dismiss ready updates for later', () => {
+    const dismissUpdate = jest.fn();
+    mockPwaState({ updateAvailable: true, updateReady: true, dismissUpdate });
+
+    render(<PWAUpdatePrompt />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Later' }));
+
+    expect(dismissUpdate).toHaveBeenCalled();
   });
 });
