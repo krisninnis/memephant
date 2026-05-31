@@ -133,6 +133,32 @@ describe('public post quality', () => {
     expect(context.recentProgressWarning).toBeNull();
   });
 
+  it('keeps vetted short user progress even when it has no standalone public score', () => {
+    const context = getPublicPostContext({
+      ...project,
+      currentState: 'Project updated.',
+      recentProgressNote: 'Clearer first run.',
+      changelog: [],
+    });
+
+    expect(context.recentHighlights).toEqual(['Clearer first run.']);
+    expect(context.primaryRecentHighlight).toBe('Clearer first run.');
+    expect(context.recentProgressWarning).toBeNull();
+  });
+
+  it('does not let vetted source weighting rescue low-value planning notes', () => {
+    const context = getPublicPostContext({
+      ...project,
+      currentState: 'Project updated.',
+      recentProgressNote: 'Post on Indie Hackers.',
+      changelog: [],
+    });
+
+    expect(context.recentHighlights).toEqual([]);
+    expect(context.primaryRecentHighlight).toBeNull();
+    expect(context.recentProgressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
+  });
+
   it('scores shipped updates above strong project positioning without treating the summary as recent progress', () => {
     const context = getPublicPostContext({
       ...project,

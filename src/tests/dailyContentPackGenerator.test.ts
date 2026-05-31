@@ -232,4 +232,24 @@ describe('generateDailyContentPack', () => {
     expect(shippedTodaySection?.content).not.toContain('No recent shipped updates found yet.');
     expect(shippedTodaySection?.shareable).toBe(true);
   });
+
+  it('uses short user-entered recent progress without showing the empty-state warning', () => {
+    const pack = generateDailyContentPack({
+      ...project,
+      currentState: 'Project updated.',
+      inProgress: [],
+      recentProgressNote: 'Clearer first run.',
+      changelog: [],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const xPost = pack.sections.find((section) => section.id === 'xPost');
+    const shippedTodaySection = pack.sections.find((section) => section.id === 'whatShippedToday');
+
+    expect(pack.progressWarning).toBeNull();
+    expect(pack.markdown).toContain('Clearer first run');
+    expect(pack.markdown).not.toContain('No recent shipped updates found yet.');
+    expect(pack.markdown).not.toContain('Recent progress may be limited');
+    expect(xPost?.shareable).toBe(true);
+    expect(shippedTodaySection?.shareable).toBe(true);
+  });
 });

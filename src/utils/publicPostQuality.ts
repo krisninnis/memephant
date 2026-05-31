@@ -120,9 +120,9 @@ export function getPublicPostContext(project: ProjectMemory, limit = 5): PublicP
   const positioningKey = normalizePostKey(positioningSummary);
   const shippingHighlights = getShippingHighlights(project, limit * 2);
   const candidates = [
-    ...shippingHighlights.map((text) => ({ text, sourceBonus: 30 })),
-    ...cleanPublicList(project.inProgress).map((text) => ({ text, sourceBonus: 10 })),
-    { text: cleanPublicText(project.currentState), sourceBonus: 0 },
+    ...shippingHighlights.map((text) => ({ text, sourceBonus: 30, vetted: true })),
+    ...cleanPublicList(project.inProgress).map((text) => ({ text, sourceBonus: 10, vetted: false })),
+    { text: cleanPublicText(project.currentState), sourceBonus: 0, vetted: false },
   ].filter((candidate) => Boolean(candidate.text));
 
   const seen = new Set<string>();
@@ -135,9 +135,14 @@ export function getPublicPostContext(project: ProjectMemory, limit = 5): PublicP
     })
     .map((candidate) => {
       const signal = scorePublicPostSignal(candidate.text);
+      const lowValue = signal.reasons.includes('low-value planning or bookkeeping');
       return {
         ...signal,
-        score: signal.score > 0 ? signal.score + candidate.sourceBonus : 0,
+        score: signal.score > 0
+          ? signal.score + candidate.sourceBonus
+          : candidate.vetted && !lowValue
+            ? candidate.sourceBonus
+            : 0,
       };
     })
     .filter((signal) => signal.score > 0)

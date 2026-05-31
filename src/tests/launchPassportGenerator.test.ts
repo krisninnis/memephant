@@ -172,6 +172,20 @@ describe('generateLaunchPassport', () => {
     expect(founderStory?.content).toContain('The latest visible progress:');
   });
 
+  it('uses short user-entered recent progress without showing the empty-state warning', () => {
+    const passport = generateLaunchPassport({
+      ...project,
+      currentState: 'Project updated.',
+      recentProgressNote: 'Clearer first run.',
+      changelog: [],
+    }, '2026-05-29T12:00:00.000Z');
+
+    expect(passport.progressWarning).toBeNull();
+    expect(passport.markdown).toContain('Clearer first run');
+    expect(passport.markdown).not.toContain('No recent shipped updates found yet.');
+    expect(passport.markdown).not.toContain('Recent progress may be limited');
+  });
+
   it('uses projectReason for founder story, Show HN, Reddit, and demo framing', () => {
     const projectReason =
       'I got tired of re-explaining the same project every time I switched between ChatGPT, Claude, Cursor, or Gemini.';
