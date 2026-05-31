@@ -182,8 +182,16 @@ function makeHighlight(text: string, source: ShippingHighlight['source']): Shipp
   if (!summary || isLowSignalShippingEntry(summary)) return null;
   const publicSignal = assessPublicSignal(summary);
   const isUserProgress = source === 'recentProgressNote';
+  if (isUserProgress) {
+    return {
+      text: summary,
+      source,
+      score: scoreHighlight(summary, source),
+    };
+  }
+
   if (!hasTerm(summary, [...PRIORITY_TERMS, ...ACTION_TERMS]) && publicSignal.level !== 'high') return null;
-  if (publicSignal.level === 'low' && (!isUserProgress || !hasTerm(summary, ACTION_TERMS))) return null;
+  if (publicSignal.level === 'low') return null;
 
   return {
     text: summary,
@@ -209,15 +217,17 @@ function dedupeHighlights<T extends ShippingHighlight>(items: T[]): T[] {
 export function getRecentProgressNoteItems(note: string | undefined): string[] {
   if (!note?.trim()) return [];
 
-  const lineItems = note
+  const items = note
     .split(/\r?\n/)
-    .map((line) => line.replace(/^\s*(?:[-*]|\d+[.)])\s+/, ''))
-    .map((line) => cleanPublicText(line))
+    .flatMap((line) => {
+      const cleanedLine = line.replace(/^\s*(?:[-*]|\d+[.)])\s+/, '').trim();
+      return cleanedLine.match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g) ?? [];
+    })
+    .map((item) => item.replace(/^\s*(?:[-*]|\d+[.)])\s+/, ''))
+    .map((item) => cleanPublicText(item))
     .filter(Boolean);
 
-  if (lineItems.length > 1) return uniqueStable(lineItems);
-
-  return cleanPublicList([note]);
+  return items.length > 0 ? uniqueStable(items) : cleanPublicList([note]);
 }
 
 export function getShippingHighlights(

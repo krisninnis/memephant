@@ -148,6 +148,52 @@ describe('shipping highlights', () => {
     expect(highlights).toEqual(['Improved sign-in']);
   });
 
+  it('splits user-entered recent progress by sentence boundaries', () => {
+    const highlights = getShippingHighlights({
+      ...project,
+      recentProgressNote: 'Added Launch Studio tabs. Improved modal scrolling. Fixed sign-in.',
+      changelog: [],
+    });
+
+    expect(getRecentProgressNoteItems('Added Launch Studio tabs. Improved modal scrolling. Fixed sign-in.'))
+      .toEqual([
+        'Added Launch Studio tabs.',
+        'Improved modal scrolling.',
+        'Fixed sign-in.',
+      ]);
+    expect(highlights).toEqual([
+      'Added Launch Studio tabs',
+      'Improved modal scrolling',
+      'Improved sign-in',
+    ]);
+  });
+
+  it('trusts meaningful user-entered progress even without recognised action or priority terms', () => {
+    const highlights = getShippingHighlights({
+      ...project,
+      currentState: 'Project updated.',
+      recentProgressNote: 'The product story finally makes sense to new founders.',
+      changelog: [],
+    });
+
+    expect(highlights).toEqual(['The product story finally makes sense to new founders']);
+  });
+
+  it('still rejects copied export and checkpoint noise from user-entered progress', () => {
+    const highlights = getShippingHighlights({
+      ...project,
+      currentState: 'Project updated.',
+      recentProgressNote: [
+        'Copied project context for ChatGPT.',
+        'Export checkpoint created.',
+        'Checkpoint saved.',
+      ].join('\n'),
+      changelog: [],
+    });
+
+    expect(highlights).toEqual([]);
+  });
+
   it('suppresses maintenance-only updates when generating highlights', () => {
     const highlights = getShippingHighlights({
       ...project,
