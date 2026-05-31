@@ -78,9 +78,11 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
               const expanded = expandedSections[section.id] ?? false;
 
               return (
-                <article className="launch-passport-section" key={section.id}>
-                  <h3>{section.title}</h3>
-                  <p className={!expanded && canToggle ? 'launch-studio-preview-text--collapsed' : undefined}>
+                <article className="launch-studio-generated-card launch-passport-section" key={section.id}>
+                  <div className="launch-studio-generated-card__header">
+                    <h3>{section.title}</h3>
+                  </div>
+                  <p className={`launch-studio-generated-card__content${!expanded && canToggle ? ' launch-studio-preview-text--collapsed' : ''}`}>
                     {section.content}
                   </p>
                   {canToggle && (

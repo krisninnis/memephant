@@ -68,7 +68,7 @@ describe('content readiness', () => {
     ]));
     expect(report.suggestedImprovements).toEqual(expect.arrayContaining([
       'Describe who this is for.',
-      'Describe the frustrating problem this solves.',
+      'Explain why this project exists.',
       'Replace placeholder setup text.',
       'Your goals are broad; make one measurable.',
     ]));
@@ -123,5 +123,20 @@ describe('content readiness', () => {
     expect(problem?.evidence).toBe('The frustrating problem feels concrete.');
     expect(outcome?.status).toBe('strong');
     expect(report.score).toBeGreaterThanOrEqual(85);
+  });
+
+  it('recognises project reason as strong problem clarity', () => {
+    const report = evaluateContentReadiness({
+      ...strongProject,
+      summary: 'Memephant moves project context between AI tools.',
+      projectReason:
+        'I got tired of re-explaining the same project every time I switched between ChatGPT, Claude, Cursor, or Gemini.',
+    });
+
+    const problem = report.signals.find((signal) => signal.id === 'problemStatement');
+
+    expect(problem?.status).toBe('strong');
+    expect(problem?.evidence).toBe('The project reason explains the problem behind the product.');
+    expect(report.suggestedImprovements).not.toContain('Explain why this project exists.');
   });
 });

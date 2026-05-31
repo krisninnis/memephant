@@ -144,4 +144,89 @@ describe('generateLaunchPassport', () => {
     expect(showHn?.content).not.toContain('What shipped: Move your project between AI tools without ever rebuilding context.');
     expect(showHn?.content).toContain('Show HN: Memephant Landing Page Refresh - Move your project between AI tools without ever rebuilding context.');
   });
+
+  it('uses user-entered recent progress in Launch Kit shipped context', () => {
+    const shippedToday = [
+      'Added Launch Studio tabs.',
+      'Improved modal scrolling.',
+      'Added Social Bridge sharing actions.',
+      'Polished app-wide spacing.',
+    ].join('\n');
+    const passport = generateLaunchPassport({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      currentState: 'Project updated.',
+      recentProgressNote: shippedToday,
+      changelog: [],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const showHn = passport.sections.find((section) => section.id === 'showHn');
+    const founderStory = passport.sections.find((section) => section.id === 'founderStory');
+
+    expect(passport.progressWarning).toBeNull();
+    expect(passport.markdown).toContain('Added Launch Studio tabs.');
+    expect(passport.markdown).toContain('Improved modal scrolling.');
+    expect(passport.markdown).toContain('Added Social Bridge so generated content can be opened directly in X, LinkedIn, Reddit, and Facebook.');
+    expect(showHn?.content).toContain('What shipped:');
+    expect(showHn?.content).not.toContain('No recent shipped updates found yet.');
+    expect(founderStory?.content).toContain('The latest visible progress:');
+  });
+
+  it('uses projectReason for founder story, Show HN, Reddit, and demo framing', () => {
+    const projectReason =
+      'I got tired of re-explaining the same project every time I switched between ChatGPT, Claude, Cursor, or Gemini.';
+    const projectReasonFragment = projectReason.replace(/[.!?]+$/g, '');
+    const passport = generateLaunchPassport({
+      ...project,
+      projectReason,
+    }, '2026-05-29T12:00:00.000Z');
+
+    const positioning = passport.sections.find((section) => section.id === 'positioning');
+    const showHn = passport.sections.find((section) => section.id === 'showHn');
+    const reddit = passport.sections.find((section) => section.id === 'reddit');
+    const founderStory = passport.sections.find((section) => section.id === 'founderStory');
+    const demo = passport.sections.find((section) => section.id === 'demoVideo');
+
+    expect(positioning?.content).toContain(`Why it exists: ${projectReason}`);
+    expect(showHn?.content).toContain(`I built this because ${projectReason}`);
+    expect(reddit?.content).toContain(`I built Memephant Landing Page Refresh to solve this problem: ${projectReason}`);
+    expect(founderStory?.content).toContain(`I built Memephant Landing Page Refresh because ${projectReason}`);
+    expect(demo?.content).toContain(`state why it exists: ${projectReasonFragment}`);
+  });
+
+  it('does not use technical stack decisions as the Show HN reason', () => {
+    const passport = generateLaunchPassport({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      decisions: [
+        { decision: 'Supabase used for backend and auth.' },
+        { decision: 'Stripe planned for subscriptions.' },
+      ],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const showHn = passport.sections.find((section) => section.id === 'showHn');
+
+    expect(showHn?.content).toContain(
+      'I built this because Move your project between AI tools without ever rebuilding context.',
+    );
+    expect(showHn?.content).not.toContain('Supabase used for backend');
+    expect(showHn?.content).not.toContain('Stripe planned for subscriptions');
+  });
+
+  it('does not treat goals as founder motivation when projectReason is missing', () => {
+    const passport = generateLaunchPassport({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      goals: ['Get first 10 beta users'],
+      projectReason: undefined,
+    }, '2026-05-29T12:00:00.000Z');
+
+    const founderStory = passport.sections.find((section) => section.id === 'founderStory');
+
+    expect(founderStory?.content).toContain(
+      'I built Memephant Landing Page Refresh because Move your project between AI tools without ever rebuilding context.',
+    );
+    expect(founderStory?.content).not.toContain('because the project context kept pointing to the same need');
+    expect(founderStory?.content).not.toContain('because Get first 10 beta users');
+  });
 });

@@ -77,12 +77,12 @@ export function DailyContentPackModal({ project, onClose }: DailyContentPackModa
               const expanded = expandedSections[section.id] ?? false;
 
               return (
-                <article className="daily-content-pack-section" key={section.id}>
-                  <div>
+                <article className="launch-studio-generated-card daily-content-pack-section" key={section.id}>
+                  <div className="launch-studio-generated-card__header">
                     <h3>{section.title}</h3>
                     <span>{section.bestFor}</span>
                   </div>
-                  <p className={!expanded && canToggle ? 'launch-studio-preview-text--collapsed' : undefined}>
+                  <p className={`launch-studio-generated-card__content${!expanded && canToggle ? ' launch-studio-preview-text--collapsed' : ''}`}>
                     {section.content}
                   </p>
                   {canToggle && (

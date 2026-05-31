@@ -803,6 +803,15 @@ describe('normalizeOldProject — schema migration', () => {
     expect(result.openQuestion).toBe('Should we use Stripe?');
   });
 
+  it('migrates projectReason from legacy data when present', () => {
+    const raw = makeLegacyRaw({
+      projectReason: 'I got tired of re-explaining project context to every AI tool.',
+    });
+    const result = normalizeOldProject(raw);
+
+    expect(result.projectReason).toBe('I got tired of re-explaining project context to every AI tool.');
+  });
+
   it('filters out non-string entries in legacy inProgress array', () => {
     const raw = makeLegacyRaw({ inProgress: ['Valid task', 42, null, '  ', 'Another task'] });
     const result = normalizeOldProject(raw);

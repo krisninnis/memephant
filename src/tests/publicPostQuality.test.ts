@@ -106,6 +106,33 @@ describe('public post quality', () => {
     expect(context.recentProgressWarning).toBe('Recent progress may be limited because no meaningful shipped updates were found.');
   });
 
+  it('treats user-entered recent progress as recentHighlights instead of falling back to positioning', () => {
+    const shippedToday = [
+      'Added Launch Studio tabs.',
+      'Improved modal scrolling.',
+      'Added Social Bridge sharing actions.',
+      'Polished app-wide spacing.',
+    ].join('\n');
+    const context = getPublicPostContext({
+      ...project,
+      currentState: 'Project updated.',
+      recentProgressNote: shippedToday,
+      changelog: [],
+    });
+
+    expect(context.positioningSummary).toBe('Move your project between AI tools without ever rebuilding context.');
+    expect(context.recentHighlights).toEqual(expect.arrayContaining([
+      'Added Launch Studio tabs.',
+      'Improved modal scrolling.',
+      'Added Social Bridge so generated content can be opened directly in X, LinkedIn, Reddit, and Facebook.',
+      'Improved app-wide spacing.',
+    ]));
+    expect(context.primaryRecentHighlight).not.toBe(context.positioningSummary);
+    expect(context.primaryRecentHighlight).not.toBeNull();
+    expect(context.recentHighlights).not.toContain(context.positioningSummary);
+    expect(context.recentProgressWarning).toBeNull();
+  });
+
   it('scores shipped updates above strong project positioning without treating the summary as recent progress', () => {
     const context = getPublicPostContext({
       ...project,

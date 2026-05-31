@@ -212,6 +212,10 @@ export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
       typeof raw.lastSessionSummary === 'string' ? raw.lastSessionSummary : undefined,
     openQuestion:
       typeof raw.openQuestion === 'string' ? raw.openQuestion : undefined,
+    projectReason:
+      typeof raw.projectReason === 'string' && raw.projectReason.trim()
+        ? raw.projectReason
+        : undefined,
     recentProgressNote:
       typeof raw.recentProgressNote === 'string' && raw.recentProgressNote.trim()
         ? raw.recentProgressNote

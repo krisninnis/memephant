@@ -59,6 +59,8 @@ const PROBLEM_PATTERNS = [
   /\bslow\b/i,
   /\bwaste\b/i,
   /\bre-explain\b/i,
+  /\bre-explaining\b/i,
+  /\btired of\b/i,
   /\bwithout having to\b/i,
   /\blosing momentum\b/i,
   /\brebuilding context\b/i,
@@ -68,6 +70,7 @@ const PROBLEM_PATTERNS = [
   /\brepeat yourself\b/i,
   /\bevery AI\b/i,
   /\bswitching tools without continuity\b/i,
+  /\bswitching between\b.+\bAI\b/i,
   /\blosing project state\b/i,
   /\brestarting conversations\b/i,
   /\brestart conversations\b/i,
@@ -199,6 +202,7 @@ function lowSignalRepetitions(project: ProjectMemory): string[] {
     project.summary,
     project.currentState,
     project.lastSessionSummary,
+    project.projectReason,
     ...(project.goals ?? []),
     ...(project.nextSteps ?? []),
     ...(project.openQuestions ?? []),
@@ -225,6 +229,7 @@ function lowSignalRepetitions(project: ProjectMemory): string[] {
 
 export function evaluateContentReadiness(project: ProjectMemory): ContentReadinessReport {
   const summary = cleanPublicText(project.summary);
+  const projectReason = cleanPublicText(project.projectReason);
   const currentState = cleanPublicText(project.currentState);
   const goals = cleanPublicList(project.goals);
   const nextSteps = cleanPublicList(project.nextSteps);
@@ -235,6 +240,7 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
   const changelog = filterPublicChangelog(project.changelog, 3);
   const combined = [
     summary,
+    projectReason,
     currentState,
     listText(project.goals),
     listText(project.nextSteps),
@@ -251,6 +257,8 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
   const hasProblemSignal = textHas(PROBLEM_PATTERNS, combined);
   const hasEmotionalPain = textHas(EMOTIONAL_PAIN_PATTERNS, combined);
   const hasOutcomeSignal = textHas(OUTCOME_PATTERNS, combined);
+  const hasProjectReason = hasSpecificText(projectReason, 8);
+  const hasProjectReasonProblem = hasProjectReason && textHas([...PROBLEM_PATTERNS, ...EMOTIONAL_PAIN_PATTERNS], projectReason);
 
   const signals: ContentReadinessSignal[] = [
     makeSignal(
@@ -263,9 +271,9 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
     makeSignal(
       'problemStatement',
       'Frustrating problem',
-      hasEmotionalPain ? 10 : hasProblemSignal ? 9 : openQuestions.length > 0 ? 5 : 0,
-      hasEmotionalPain ? 'The frustrating problem feels concrete.' : hasProblemSignal ? 'The project names a problem people can recognise.' : "We don't yet know what frustrating problem this project solves.",
-      'Describe the frustrating problem this solves.',
+      hasEmotionalPain ? 10 : hasProjectReasonProblem ? 10 : hasProblemSignal ? 9 : hasProjectReason ? 7 : openQuestions.length > 0 ? 5 : 0,
+      hasEmotionalPain ? 'The frustrating problem feels concrete.' : hasProjectReasonProblem ? 'The project reason explains the problem behind the product.' : hasProblemSignal ? 'The project names a problem people can recognise.' : "We don't yet know what frustrating problem this project solves.",
+      hasProjectReason ? 'Add a clearer pain statement.' : 'Explain why this project exists.',
     ),
     makeSignal(
       'outcomeStatement',
@@ -328,6 +336,7 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
   const readinessBoost = Math.min(
     5,
     (hasEmotionalPain ? 2 : 0) +
+      (hasProjectReasonProblem ? 1 : 0) +
       (hasOutcomeSignal ? 1 : 0) +
       (hasAudienceTerm && hasProblemSignal && hasOutcomeSignal ? 2 : 0),
   );
@@ -339,9 +348,12 @@ export function evaluateContentReadiness(project: ProjectMemory): ContentReadine
     .filter((signal) => signal.status !== 'strong')
     .map((signal) => `${signal.label}: ${signal.evidence}`);
   const suggestedImprovements = uniqueStable(
-    signals
-      .filter((signal) => signal.status !== 'strong')
-      .map((signal) => signal.suggestion),
+    [
+      ...(hasProjectReason ? [] : ['Explain why this project exists.']),
+      ...signals
+        .filter((signal) => signal.status !== 'strong')
+        .map((signal) => signal.suggestion),
+    ],
   );
   const missingSignals = signals
     .filter((signal) => signal.status === 'missing')

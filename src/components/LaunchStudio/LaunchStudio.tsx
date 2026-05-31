@@ -49,6 +49,9 @@ const SHIPPED_TODAY_USED_BY = [
   'Future launch content',
 ];
 
+const PROJECT_REASON_PLACEHOLDER =
+  'Example: I got tired of re-explaining the same project every time I switched between ChatGPT, Claude, Cursor, or Gemini.';
+
 function getProgressLines(value: string): string[] {
   return value
     .split(/\r?\n/)
@@ -65,18 +68,42 @@ export function LaunchStudio() {
   const [buildUpdateOpen, setBuildUpdateOpen] = useState(false);
   const [dailyContentPackOpen, setDailyContentPackOpen] = useState(false);
   const [contentReadinessOpen, setContentReadinessOpen] = useState(false);
+  const [projectReasonDraft, setProjectReasonDraft] = useState('');
+  const [projectReasonSaved, setProjectReasonSaved] = useState(false);
   const [recentProgressDraft, setRecentProgressDraft] = useState('');
   const [recentProgressSaved, setRecentProgressSaved] = useState(false);
 
   const activePageConfig = LAUNCH_STUDIO_PAGES.find((page) => page.id === activePage) ?? LAUNCH_STUDIO_PAGES[0]!;
+  const savedProjectReason = activeProject?.projectReason ?? '';
+  const hasProjectReasonText = projectReasonDraft.trim().length > 0;
+  const projectReasonChanged = projectReasonDraft !== savedProjectReason;
   const savedRecentProgress = activeProject?.recentProgressNote ?? '';
   const hasRecentProgressText = recentProgressDraft.trim().length > 0;
   const recentProgressChanged = recentProgressDraft !== savedRecentProgress;
 
   useEffect(() => {
+    setProjectReasonDraft(activeProject?.projectReason ?? '');
+    setProjectReasonSaved(false);
+  }, [activeProject?.id, activeProject?.projectReason]);
+
+  useEffect(() => {
     setRecentProgressDraft(activeProject?.recentProgressNote ?? '');
     setRecentProgressSaved(false);
   }, [activeProject?.id, activeProject?.recentProgressNote]);
+
+  const handleSaveProjectReason = () => {
+    if (!activeProject) return;
+
+    updateProject(activeProject.id, {
+      projectReason: hasProjectReasonText ? projectReasonDraft : undefined,
+      updatedAt: new Date().toISOString(),
+    });
+    setProjectReasonSaved(true);
+    showToast(
+      hasProjectReasonText ? 'Project reason saved for Launch Kit.' : 'Project reason cleared.',
+      'success',
+    );
+  };
 
   const handleSaveRecentProgress = () => {
     if (!activeProject) return;
@@ -161,6 +188,50 @@ export function LaunchStudio() {
                 <h2 id={`launch-studio-page-${activePage}`}>{activePageConfig.label}</h2>
                 <p>{activePageConfig.question}</p>
               </div>
+
+              {activePage === 'clarity' && (
+                <section
+                  className="launch-studio-recent-progress launch-studio-project-reason"
+                  aria-label="Project reason"
+                >
+                  <div className="launch-studio-recent-progress__copy">
+                    <label
+                      id="launch-studio-project-reason-title"
+                      htmlFor="launch-studio-project-reason"
+                    >
+                      Why does this project exist?
+                    </label>
+                    <p>
+                      Explain the problem that made you build this. This helps Launch Kit create better founder stories, Show HN posts, and launch copy.
+                    </p>
+                  </div>
+                  <textarea
+                    id="launch-studio-project-reason"
+                    className="launch-studio-recent-progress__input"
+                    value={projectReasonDraft}
+                    onChange={(event) => {
+                      setProjectReasonDraft(event.target.value);
+                      setProjectReasonSaved(false);
+                    }}
+                    placeholder={PROJECT_REASON_PLACEHOLDER}
+                    rows={3}
+                  />
+                  <div className="launch-studio-recent-progress__actions">
+                    <button
+                      type="button"
+                      onClick={handleSaveProjectReason}
+                      disabled={!projectReasonChanged}
+                    >
+                      Save project reason
+                    </button>
+                    <small aria-live="polite">
+                      {projectReasonSaved
+                        ? 'Saved locally for Launch Kit.'
+                        : 'Preserved exactly as typed and used before goals or technical decisions.'}
+                    </small>
+                  </div>
+                </section>
+              )}
 
               {activePage !== 'share' && (
                 <section

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import LaunchStudio from '../components/LaunchStudio/LaunchStudio';
 import type { ProjectMemory } from '../types/memphant-types';
 import { copyExportToClipboard } from '../services/tauriActions';
+import { useProjectStore } from '../store/projectStore';
 
 const mockProject: ProjectMemory = {
   schema_version: '1.2.0',
@@ -22,6 +23,8 @@ const mockProject: ProjectMemory = {
 };
 
 let activeProject: ProjectMemory | undefined = mockProject;
+let updateProjectMock: jest.Mock;
+let showToastMock: jest.Mock;
 
 jest.mock('../hooks/useActiveProject', () => ({
   useActiveProject: () => activeProject,
@@ -38,6 +41,12 @@ describe('LaunchStudio', () => {
     jest.clearAllMocks();
     openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
     activeProject = mockProject;
+    updateProjectMock = jest.fn();
+    showToastMock = jest.fn();
+    useProjectStore.setState({
+      updateProject: updateProjectMock,
+      showToast: showToastMock,
+    });
   });
 
   afterEach(() => {
@@ -117,6 +126,86 @@ describe('LaunchStudio', () => {
     ]);
   });
 
+  it('saves local what-shipped-today progress for Launch Studio generators', () => {
+    render(<LaunchStudio />);
+
+    const input = screen.getByLabelText('What Did You Ship Today?');
+    const shippedToday = [
+      'Added Launch Studio tabs.',
+      'Improved modal scrolling.',
+      'Added Social Bridge sharing actions.',
+      'Polished app-wide spacing.',
+    ].join('\n');
+
+    expect(screen.getByText('Tell Memephant what changed today so it can generate better launch content.'))
+      .toBeInTheDocument();
+    expect(screen.getByText('These updates will be used by:')).toBeInTheDocument();
+    expect(screen.getByText('Future launch content')).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: {
+        value: shippedToday,
+      },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Progress' }));
+
+    expect(updateProjectMock).toHaveBeenCalledWith(
+      'launch-studio-project',
+      expect.objectContaining({
+        recentProgressNote: shippedToday,
+        changelog: expect.arrayContaining([
+          expect.objectContaining({
+            field: 'recentProgressNote',
+            action: 'added',
+            source: 'user',
+            summary: 'Added Launch Studio tabs.',
+          }),
+          expect.objectContaining({
+            field: 'recentProgressNote',
+            action: 'added',
+            source: 'user',
+            summary: 'Improved modal scrolling.',
+          }),
+        ]),
+      }),
+    );
+    expect(showToastMock).toHaveBeenCalledWith(
+      'Progress saved for Launch Studio.',
+      'success',
+    );
+  });
+
+  it('saves a local project reason for Launch Kit founder copy', () => {
+    render(<LaunchStudio />);
+
+    const input = screen.getByLabelText('Why does this project exist?');
+    const projectReason =
+      'I got tired of re-explaining the same project every time I switched between ChatGPT, Claude, Cursor, or Gemini.';
+
+    expect(screen.getByText(/Explain the problem that made you build this/i)).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: {
+        value: projectReason,
+      },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save project reason' }));
+
+    expect(updateProjectMock).toHaveBeenCalledWith(
+      'launch-studio-project',
+      expect.objectContaining({
+        projectReason,
+        updatedAt: expect.any(String),
+      }),
+    );
+    expect(showToastMock).toHaveBeenCalledWith(
+      'Project reason saved for Launch Kit.',
+      'success',
+    );
+  });
+
   it('opens and copies a Launch Kit generated from project context', async () => {
     render(<LaunchStudio />);
 
@@ -170,6 +259,7 @@ describe('LaunchStudio', () => {
     expect(within(dialog).getByText('Problem/solution post')).toBeInTheDocument();
     expect(within(dialog).getAllByText('Preview before posting. Memephant never posts automatically.')[0]).toBeInTheDocument();
     expect(within(dialog).getAllByRole('button', { name: 'Open in X' })[0]).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('button', { name: 'Copy' })[0]).toBeInTheDocument();
     const packText = within(dialog).getByLabelText('Daily Content Pack export text') as HTMLTextAreaElement;
     expect(packText.value).toContain('Launch Studio Project');
 
@@ -179,6 +269,15 @@ describe('LaunchStudio', () => {
       '_blank',
       'noopener,noreferrer',
     );
+
+    fireEvent.click(within(dialog).getAllByRole('button', { name: 'Copy' })[0]);
+
+    await waitFor(() => {
+      expect(copyExportToClipboard).toHaveBeenCalledWith(
+        expect.stringContaining('Launch Studio Project'),
+        'social-copy',
+      );
+    });
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Copy Daily Content Pack' }));
 
@@ -217,6 +316,7 @@ describe('LaunchStudio', () => {
 
     const xButtons = within(dialog).getAllByRole('button', { name: 'Open in X' });
     expect(xButtons[0]).toBeDisabled();
+    expect(within(dialog).getAllByRole('button', { name: 'Copy' })[0]).toBeDisabled();
 
     fireEvent.click(xButtons[0]);
     expect(openSpy).not.toHaveBeenCalled();

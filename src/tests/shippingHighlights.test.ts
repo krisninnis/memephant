@@ -1,4 +1,5 @@
 import {
+  getRecentProgressNoteItems,
   getShippingHighlights,
   isLowSignalShippingEntry,
   summarizeShippingChange,
@@ -101,6 +102,50 @@ describe('shipping highlights', () => {
     });
 
     expect(highlights).toEqual(['Improving demo clip captions for Launch Studio']);
+  });
+
+  it('prioritises user-entered recent progress over empty or noisy project history', () => {
+    const shippedToday = [
+      'Added Launch Studio tabs.',
+      'Improved modal scrolling.',
+      'Added Social Bridge sharing actions.',
+      'Polished app-wide spacing.',
+    ].join('\n');
+    const highlights = getShippingHighlights({
+      ...project,
+      recentProgressNote: shippedToday,
+      changelog: [
+        {
+          timestamp: '2026-05-28T09:00:00.000Z',
+          field: 'session',
+          action: 'updated',
+          summary: 'Last session summary updated',
+        },
+      ],
+    });
+
+    expect(highlights).toEqual([
+      'Added Launch Studio tabs',
+      'Improved modal scrolling',
+      'Added Social Bridge sharing actions',
+      'Improved app-wide spacing',
+    ]);
+    expect(getRecentProgressNoteItems(shippedToday)).toEqual([
+      'Added Launch Studio tabs.',
+      'Improved modal scrolling.',
+      'Added Social Bridge sharing actions.',
+      'Polished app-wide spacing.',
+    ]);
+  });
+
+  it('keeps concise user-entered shipped notes when they are real progress', () => {
+    const highlights = getShippingHighlights({
+      ...project,
+      recentProgressNote: 'Fixed sign-in.',
+      changelog: [],
+    });
+
+    expect(highlights).toEqual(['Improved sign-in']);
   });
 
   it('suppresses maintenance-only updates when generating highlights', () => {

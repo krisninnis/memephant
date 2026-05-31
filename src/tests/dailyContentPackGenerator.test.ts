@@ -202,4 +202,34 @@ describe('generateDailyContentPack', () => {
     expect(shippedToday?.shareable).toBe(false);
     expect(xPost?.content).toContain('Move your project between AI tools without ever rebuilding context.');
   });
+
+  it('uses user-entered recent progress for post today drafts', () => {
+    const shippedToday = [
+      'Added Launch Studio tabs.',
+      'Improved modal scrolling.',
+      'Added Social Bridge sharing actions.',
+      'Polished app-wide spacing.',
+    ].join('\n');
+    const pack = generateDailyContentPack({
+      ...project,
+      summary: 'Move your project between AI tools without ever rebuilding context.',
+      currentState: 'Project updated.',
+      inProgress: [],
+      recentProgressNote: shippedToday,
+      changelog: [],
+    }, '2026-05-29T12:00:00.000Z');
+
+    const xPost = pack.sections.find((section) => section.id === 'xPost');
+    const shippedTodaySection = pack.sections.find((section) => section.id === 'whatShippedToday');
+
+    expect(pack.progressWarning).toBeNull();
+    expect(xPost?.content).not.toContain('No recent shipped updates found yet.');
+    expect(pack.markdown).toContain('Added Launch Studio tabs.');
+    expect(pack.markdown).toContain('Improved modal scrolling.');
+    expect(pack.markdown).toContain('Added Social Bridge so generated content can be opened directly in X, LinkedIn, Reddit, and Facebook.');
+    expect(shippedTodaySection?.content).toContain('- Added Launch Studio tabs.');
+    expect(shippedTodaySection?.content).toContain('- Improved app-wide spacing.');
+    expect(shippedTodaySection?.content).not.toContain('No recent shipped updates found yet.');
+    expect(shippedTodaySection?.shareable).toBe(true);
+  });
 });

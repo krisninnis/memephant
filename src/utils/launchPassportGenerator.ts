@@ -1,4 +1,4 @@
-import type { Decision, ProjectMemory } from '../types/memphant-types';
+import type { ProjectMemory } from '../types/memphant-types';
 import {
   cleanPublicList,
   cleanPublicText,
@@ -54,10 +54,8 @@ function sentenceList(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
-function decisionSummary(decisions: Decision[]): string {
-  const useful = filterPublicDecisions(decisions, 2);
-
-  return useful.length > 0 ? sentenceList(useful) : 'the decisions already captured in the project';
+function sentenceFragment(value: string): string {
+  return value.replace(/[.!?]+$/g, '').trim();
 }
 
 function bulletList(items: string[]): string {
@@ -73,12 +71,16 @@ const NO_RECENT_HELP = 'Add what changed recently to generate better posts.';
 const RECENT_CHANGE_EXAMPLE =
   'Tell Memephant what changed recently, such as: Added Social Bridge, improved onboarding, fixed sign-in, shipped demo video.';
 
+const TECHNICAL_STACK_DECISION_PATTERN =
+  /\b(supabase|stripe|firebase|postgres|database|backend|frontend|api|auth provider|storage bucket|hosting|framework)\b/i;
+
 export function generateLaunchPassport(
   project: ProjectMemory,
   generatedAt = new Date().toISOString(),
 ): LaunchPassport {
   const name = cleanText(project.name, 'This project');
   const summary = cleanText(project.summary, `${name} is preparing for launch.`);
+  const projectReason = cleanText(project.projectReason);
   const currentState = cleanText(project.currentState, 'The project is ready for user feedback.');
   const goals = cleanList(project.goals, ['help users understand the product quickly']);
   const rules = cleanList(project.rules);
@@ -90,13 +92,18 @@ export function generateLaunchPassport(
   const workflowMode = getWorkflowModeConfig(project.workflowMode);
   const qualityWarning = getContentQualityWarning(project);
   const publicPost = getPublicPostContext(project, 5);
+  const publicDecisions = filterPublicDecisions(project.decisions, 2)
+    .filter((decision) => !TECHNICAL_STACK_DECISION_PATTERN.test(decision));
   const progressWarning = publicPost.recentProgressWarning;
   const positioningSummary = publicPost.positioningSummary || summary;
+  const problemFrame = projectReason || positioningSummary;
+  const problemSentence = sentenceFragment(problemFrame);
   const recentHighlights = publicPost.recentHighlights;
   const keyGoal = goals[0] ?? 'help users get value faster';
   const keyNextStep = nextSteps[0] ?? 'collect feedback';
   const contextSignals = firstItems([
     ...recentHighlights.map((item) => `Shipped: ${item}`),
+    ...publicDecisions.map((decision) => `Decision: ${decision}`),
     ...goals.map((goal) => `Goal: ${goal}`),
     ...inProgress.map((item) => `In progress: ${item}`),
     ...nextSteps.map((step) => `Next: ${step}`),
@@ -106,7 +113,10 @@ export function generateLaunchPassport(
     {
       id: 'positioning',
       title: 'One-line positioning',
-      content: `${name}: ${positioningSummary}`,
+      content: [
+        `${name}: ${positioningSummary}`,
+        `Why it exists: ${problemFrame}`,
+      ].join('\n'),
     },
     {
       id: 'xLaunch',
@@ -115,6 +125,8 @@ export function generateLaunchPassport(
         `Launching ${name}.`,
         '',
         positioningSummary,
+        '',
+        `Why it exists: ${problemFrame}`,
         '',
         `Current focus: ${currentState}`,
         ...(workflowMode ? [`Workflow mode: ${workflowMode.label} (${workflowMode.focus}).`] : []),
@@ -126,13 +138,15 @@ export function generateLaunchPassport(
     {
       id: 'shortX',
       title: 'Short X version',
-      content: `${name} is live: ${positioningSummary} Current focus: ${keyNextStep}. Feedback welcome.`,
+      content: `${name} is live: ${positioningSummary} Why it exists: ${problemFrame} Feedback welcome.`,
     },
     {
       id: 'reddit',
       title: 'Reddit launch version',
       content: [
-        `I built ${name} to solve this problem: ${positioningSummary}`,
+        `I built ${name} to solve this problem: ${problemFrame}`,
+        '',
+        `What it does: ${positioningSummary}`,
         '',
         `Current state: ${currentState}`,
         ...(workflowMode ? [`Current working lens: ${workflowMode.label} - ${workflowMode.guidance}`] : []),
@@ -154,7 +168,7 @@ export function generateLaunchPassport(
       content: [
         `Show HN: ${name} - ${positioningSummary}`,
         '',
-        `I built this because ${decisionSummary(project.decisions)}.`,
+        `I built this because ${problemSentence}.`,
         '',
         `Current state: ${currentState}`,
         recentHighlights.length > 0 ? `What shipped: ${sentenceList(firstItems(recentHighlights, 2))}.` : '',
@@ -169,13 +183,13 @@ export function generateLaunchPassport(
       id: 'founderStory',
       title: 'Founder story / why I built this',
       content: [
-        `I built ${name} because the project context kept pointing to the same need: ${keyGoal}.`,
+        `I built ${name} because ${problemSentence}.`,
         '',
         recentHighlights.length > 0
           ? `The latest visible progress: ${sentenceList(firstItems(recentHighlights, 2))}.`
           : `The product is currently here: ${currentState}`,
         '',
-        `The most important decision so far: ${decisionSummary(project.decisions)}.`,
+        `The launch goal now is to make that problem and outcome obvious quickly.`,
         instructions ? `\nWorking style note: ${instructions}` : '',
       ].filter(Boolean).join('\n'),
     },
@@ -183,9 +197,11 @@ export function generateLaunchPassport(
       id: 'demoVideo',
       title: 'Demo video outline',
       content: numberedList([
-        `Open ${name} and state the problem in one sentence.`,
-        `Show the current project state: ${currentState}`,
-        `Point to the core goal: ${keyGoal}`,
+        `Open ${name} and state why it exists: ${problemSentence}`,
+        `Show the product promise: ${positioningSummary}`,
+        recentHighlights.length > 0
+          ? `Show what recently changed: ${sentenceList(firstItems(recentHighlights, 2))}`
+          : `Show the current product state: ${currentState}`,
         `Show the next action: ${keyNextStep}`,
         'End by asking viewers for one concrete piece of feedback.',
       ]),
