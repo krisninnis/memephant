@@ -19,6 +19,7 @@ import { PROJECT_TEMPLATES } from '../../utils/projectTemplates';
 import type { ProjectTemplate } from '../../utils/projectTemplates';
 import { DEMO_PROJECT_ID, createDemoProject } from '../../utils/demoProject';
 import LaunchpadWizard from '../Launchpad/LaunchpadWizard';
+import BlueprintWizard from '../Blueprint/BlueprintWizard';
 import './WelcomeScreen.css';
 
 type Mode = 'landing' | 'wizard' | 'templates';
@@ -86,6 +87,7 @@ export function WelcomeScreen() {
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
   const [templateName, setTemplateName] = useState('');
   const [showLaunchpad, setShowLaunchpad] = useState(false);
+  const [showBlueprint, setShowBlueprint] = useState(false);
 
   const addProject = useProjectStore((s) => s.addProject);
   const projects = useProjectStore((s) => s.projects);
@@ -210,6 +212,12 @@ export function WelcomeScreen() {
       }}
     />
   ) : null;
+  const blueprintModal = showBlueprint ? (
+    <BlueprintWizard
+      onClose={() => setShowBlueprint(false)}
+      onProjectCreated={() => setShowBlueprint(false)}
+    />
+  ) : null;
 
   if (mode === 'landing') {
     return (
@@ -286,6 +294,10 @@ export function WelcomeScreen() {
                   + New Project
                 </button>
 
+                <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowBlueprint(true)}>
+                  New Project Blueprint
+                </button>
+
                 {/* TERTIARY: Templates */}
                 <button className="welcome-btn--link" onClick={() => setMode('templates')}>
                   From template
@@ -296,6 +308,10 @@ export function WelcomeScreen() {
                 {/* Web: New project is the primary action */}
                 <button className="welcome-btn welcome-btn--primary" onClick={() => setShowLaunchpad(true)}>
                   + New Project
+                </button>
+
+                <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowBlueprint(true)}>
+                  New Project Blueprint
                 </button>
 
                 <button className="welcome-btn welcome-btn--secondary" onClick={handleImportClick}>
@@ -352,6 +368,7 @@ export function WelcomeScreen() {
           </div>
         </div>
         {launchpadModal}
+        {blueprintModal}
       </>
     );
   }

@@ -175,6 +175,12 @@ function normalizeLinkedFolder(
   };
 }
 
+function normalizeProjectBlueprint(value: unknown): ProjectMemory['projectBlueprint'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const candidate = value as { version?: unknown };
+  return candidate.version === '1.0' ? (candidate as ProjectMemory['projectBlueprint']) : undefined;
+}
+
 export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
   return {
     schema_version: SCHEMA_VERSION,
@@ -220,6 +226,7 @@ export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
       typeof raw.recentProgressNote === 'string' && raw.recentProgressNote.trim()
         ? raw.recentProgressNote
         : undefined,
+    projectBlueprint: normalizeProjectBlueprint(raw.projectBlueprint),
     workflowMode: isAIWorkflowMode(raw.workflowMode) ? raw.workflowMode : undefined,
     nextIds: normalizeNextIds(raw.nextIds),
     checkpoints: normalizeCheckpoints(raw.checkpoints),

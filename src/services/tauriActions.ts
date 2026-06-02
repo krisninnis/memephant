@@ -284,7 +284,14 @@ type LegacyProject = Record<string, unknown> & {
   platformState?: Record<string, unknown>;
   projectReason?: string;
   recentProgressNote?: string;
+  projectBlueprint?: unknown;
 };
+
+function normalizeProjectBlueprint(value: unknown): ProjectMemory['projectBlueprint'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const candidate = value as { version?: unknown };
+  return candidate.version === '1.0' ? (candidate as ProjectMemory['projectBlueprint']) : undefined;
+}
 
 export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory {
   const legacy = raw as LegacyProject;
@@ -496,6 +503,7 @@ export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory
       typeof raw.recentProgressNote === 'string' && raw.recentProgressNote.trim()
         ? raw.recentProgressNote
         : undefined,
+    projectBlueprint: normalizeProjectBlueprint(raw.projectBlueprint),
   };
 }
 
@@ -516,6 +524,7 @@ export function toOldFormat(project: ProjectMemory): Record<string, unknown> {
     currentState: project.currentState,
     projectReason: project.projectReason ?? '',
     recentProgressNote: project.recentProgressNote ?? '',
+    projectBlueprint: project.projectBlueprint,
     nextSteps: project.nextSteps,
     openQuestions: project.openQuestions,
     importantAssets: project.importantAssets,

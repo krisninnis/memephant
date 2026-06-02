@@ -19,6 +19,28 @@ export type Platform = string;
 export type ExportMode = 'quick' | 'full' | 'delta' | 'specialist' | 'smart';
 export type PlatformCategory = 'chat' | 'dev' | 'local' | 'custom';
 export type AIWorkflowMode = 'build' | 'debug' | 'launch' | 'research' | 'investor';
+export type ProjectBlueprintProjectType =
+  | 'saas'
+  | 'desktop-app'
+  | 'mobile-app'
+  | 'ai-tool'
+  | 'browser-extension'
+  | 'api'
+  | 'internal-tool'
+  | 'game'
+  | 'content-business'
+  | 'other';
+export type ProjectBlueprintQuality = 'beginner-friendly' | 'production-grade';
+export type ProjectBlueprintPreference = 'yes' | 'no' | 'unsure';
+export type ProjectBlueprintWorkingStyle = 'solo-founder' | 'small-team' | 'agency' | 'hobby-project';
+export type ProjectBlueprintPrimaryAI =
+  | 'chatgpt'
+  | 'claude'
+  | 'codex'
+  | 'cursor'
+  | 'gemini'
+  | 'grok'
+  | 'other';
 
 // -- Agent Handoff -------------------------------------------------------------
 
@@ -131,6 +153,53 @@ export interface GitCommit {
   author: string;
 }
 
+export interface ProjectBlueprintInput {
+  projectName: string;
+  idea: string;
+  problem: string;
+  targetAudience: string;
+  desiredOutcome: string;
+  projectType: ProjectBlueprintProjectType;
+  otherProjectType?: string;
+  quality: ProjectBlueprintQuality;
+  preferredStack?: string;
+  localFirst: ProjectBlueprintPreference;
+  authentication: ProjectBlueprintPreference;
+  payments: ProjectBlueprintPreference;
+  database: ProjectBlueprintPreference;
+  aiIntegrations: ProjectBlueprintPreference;
+  workingStyle: ProjectBlueprintWorkingStyle;
+  primaryAI: ProjectBlueprintPrimaryAI;
+  otherPrimaryAI?: string;
+}
+
+export interface ProjectBlueprint {
+  version: '1.0';
+  generatedAt: string;
+  input: ProjectBlueprintInput;
+  projectSummary: {
+    vision: string;
+    purpose: string;
+    targetUsers: string;
+  };
+  productDefinition: {
+    mvpScope: string[];
+    nonGoals: string[];
+    risks: string[];
+  };
+  recommendedStack: string[];
+  folderStructureMarkdown: string;
+  roadmap: {
+    phase1: string[];
+    phase2: string[];
+    phase3: string[];
+  };
+  firstTenTasks: string[];
+  aiInstructions: string;
+  contextPassportSeed: string;
+  launchChecklist: string[];
+}
+
 // Human-readable schema version for the project data format.
 export const SCHEMA_VERSION = '1.2.0';
 
@@ -175,6 +244,8 @@ export interface ProjectCheckpointSnapshot {
   projectReason?: string;
   /** User-entered plain-English progress for Launch Studio public content. */
   recentProgressNote?: string;
+  /** Deterministic context-first project plan created before implementation starts. */
+  projectBlueprint?: ProjectBlueprint;
   /** Most recent AI session on this project. Written on every export copy. */
   lastAiSession?: LastAiSession;
   /** Lightweight context preset for how the next AI should think about the project. */
@@ -385,6 +456,9 @@ export function cloneCheckpointSnapshot(project: ProjectCheckpointSnapshot): Pro
     openQuestion: project.openQuestion,
     projectReason: project.projectReason,
     recentProgressNote: project.recentProgressNote,
+    projectBlueprint: project.projectBlueprint
+      ? JSON.parse(JSON.stringify(project.projectBlueprint)) as ProjectBlueprint
+      : undefined,
     lastAiSession: project.lastAiSession ? { ...project.lastAiSession } : undefined,
     workflowMode: project.workflowMode,
   };
@@ -404,6 +478,7 @@ export function hashProjectState(project: ProjectCheckpointSnapshot): string {
     project.openQuestion ?? '',
     project.projectReason ?? '',
     project.recentProgressNote ?? '',
+    project.projectBlueprint ? JSON.stringify(project.projectBlueprint) : '',
   ].join('::');
 
   let hash = 5381;

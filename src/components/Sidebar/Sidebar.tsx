@@ -24,6 +24,7 @@ import {
 import ProjectCard from "./ProjectCard";
 import ConfirmDialog from "../Shared/ConfirmDialog";
 import LaunchpadWizard from "../Launchpad/LaunchpadWizard";
+import BlueprintWizard from "../Blueprint/BlueprintWizard";
 import { PassportBadgeButton } from "../../features/passport/components/PassportBadgeButton";
 
 interface SidebarProps {
@@ -63,6 +64,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
 
   const [createMode, setCreateMode] = useState<CreateMode>("none");
   const [showLaunchpad, setShowLaunchpad] = useState(false);
+  const [showBlueprint, setShowBlueprint] = useState(false);
   const [newName, setNewName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -489,6 +491,18 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               type="button"
               className="sidebar-action-btn"
               onClick={() => {
+                resetCreate();
+                setShowBlueprint(true);
+              }}
+              title="Plan a new project before writing code"
+            >
+              New Project Blueprint
+            </button>
+
+            <button
+              type="button"
+              className="sidebar-action-btn"
+              onClick={() => {
                 setCreateMode("templates");
               }}
               title="Create a project from a starter template"
@@ -822,6 +836,16 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             setShowLaunchpad(false);
             setCreateMode("name");
             setTimeout(() => nameInputRef.current?.focus(), 50);
+          }}
+        />
+      )}
+
+      {showBlueprint && (
+        <BlueprintWizard
+          onClose={() => setShowBlueprint(false)}
+          onProjectCreated={() => {
+            setShowBlueprint(false);
+            onNavigate?.();
           }}
         />
       )}
