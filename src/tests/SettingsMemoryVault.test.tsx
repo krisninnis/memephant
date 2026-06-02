@@ -1494,7 +1494,7 @@ describe('Frontal Lobe AI Working Style profile', () => {
     const passport = screen.getByLabelText('Memephant Passport');
 
     expect(within(passport).getByRole('heading', { name: 'Memephant Passport' })).toBeInTheDocument();
-    expect(within(passport).getByText('AI Passport: Portable')).toBeInTheDocument();
+    expect(within(passport).getByText('Working Style Profile: Portable')).toBeInTheDocument();
     expect(within(passport).getByText('Passport 86% complete')).toBeInTheDocument();
     expect(
       within(passport).getByText(
@@ -1522,7 +1522,7 @@ describe('Frontal Lobe AI Working Style profile', () => {
     fireEvent.click(within(passport).getByRole('button', { name: 'Copy Passport Summary' }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      expect.stringContaining('AI Passport: Portable'),
+      expect.stringContaining('Working Style Profile: Portable'),
     );
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
       expect.stringContaining('Fingerprint: British English'),

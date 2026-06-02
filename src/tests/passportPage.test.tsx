@@ -28,7 +28,7 @@ function resetStores(): void {
 describe("PassportPage — empty state", () => {
   beforeEach(resetStores);
 
-  it("renders the Create AI Passport CTA when no passport exists", () => {
+  it("renders the Create Working Style Profile CTA when no passport exists", () => {
     render(<PassportPage />);
 
     expect(
@@ -36,7 +36,7 @@ describe("PassportPage — empty state", () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /Create your AI Passport/i }),
+      screen.getByRole("button", { name: /Create your Working Style Profile/i }),
     ).toBeInTheDocument();
   });
 
@@ -44,7 +44,7 @@ describe("PassportPage — empty state", () => {
     render(<PassportPage />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Create your AI Passport/i }),
+      screen.getByRole("button", { name: /Create your Working Style Profile/i }),
     );
 
     expect(usePassportStore.getState().isReeditingPassport).toBe(true);
@@ -58,16 +58,16 @@ describe("PassportPage — details subview", () => {
     usePassportStore.setState({ passport: createPassportData(FULL_PROFILE) });
   });
 
-  it("renders the AI Passport hero, identity label, and meta row", () => {
+  it("renders the Working Style Profile hero, label, and meta row", () => {
     render(<PassportPage />);
 
-    const region = screen.getByRole("region", { name: /AI Passport page/i });
+    const region = screen.getByRole("region", { name: /Working Style Profile page/i });
 
-    expect(within(region).getByText("AI Passport")).toBeInTheDocument();
+    expect(within(region).getByText("Working Style Profile")).toBeInTheDocument();
 
     expect(
       within(region).getByRole("heading", {
-        name: /Your AI working identity/i,
+        name: /Your AI working style/i,
       }),
     ).toBeInTheDocument();
 
@@ -92,16 +92,16 @@ describe("PassportPage — details subview", () => {
     render(<PassportPage />);
 
     expect(
-      screen.getByRole("button", { name: /Copy AI Passport to clipboard/i }),
+      screen.getByRole("button", { name: /Copy Working Style Profile to clipboard/i }),
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /Edit your AI Passport/i }),
+      screen.getByRole("button", { name: /Edit your Working Style Profile/i }),
     ).toBeInTheDocument();
 
     expect(
       screen.getByRole("button", {
-        name: /See the difference your AI Passport makes/i,
+        name: /See the difference your Working Style Profile makes/i,
       }),
     ).toBeInTheDocument();
   });
@@ -110,7 +110,7 @@ describe("PassportPage — details subview", () => {
     render(<PassportPage />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Edit your AI Passport/i }),
+      screen.getByRole("button", { name: /Edit your Working Style Profile/i }),
     );
 
     expect(usePassportStore.getState().isReeditingPassport).toBe(true);
@@ -123,13 +123,13 @@ describe("PassportPage — details subview", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /See the difference your AI Passport makes/i,
+        name: /See the difference your Working Style Profile makes/i,
       }),
     );
 
     expect(
       screen.getByRole("heading", {
-        name: /See how your Passport changes the way AI responds/i,
+        name: /See how your profile changes the way AI responds/i,
       }),
     ).toBeInTheDocument();
   });
@@ -139,14 +139,14 @@ describe("PassportPage — details subview", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: /See the difference your AI Passport makes/i,
+        name: /See the difference your Working Style Profile makes/i,
       }),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Back to Passport/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Back to Profile/i }));
 
     expect(
-      screen.getByRole("heading", { name: /Your AI working identity/i }),
+      screen.getByRole("heading", { name: /Your AI working style/i }),
     ).toBeInTheDocument();
   });
 
@@ -168,7 +168,7 @@ describe("PassportPage — details subview", () => {
     render(<PassportPage />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Copy AI Passport to clipboard/i }),
+      screen.getByRole("button", { name: /Copy Working Style Profile to clipboard/i }),
     );
 
     await Promise.resolve();
@@ -192,12 +192,10 @@ describe("PassportPage — Delete Passport", () => {
   it("shows a Delete Passport action on the Passport page", () => {
     render(<PassportPage />);
 
-    expect(
-      screen.getByRole("heading", { name: /Delete Passport/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Delete Profile/i })).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /Delete AI Passport/i }),
+      screen.getByRole("button", { name: /Delete Working Style Profile/i }),
     ).toBeInTheDocument();
   });
 
@@ -205,17 +203,17 @@ describe("PassportPage — Delete Passport", () => {
     render(<PassportPage />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Delete AI Passport/i }),
+      screen.getByRole("button", { name: /Delete Working Style Profile/i }),
     );
 
     expect(screen.getByText(/Are you sure/i)).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /Cancel deleting AI Passport/i }),
+      screen.getByRole("button", { name: /Cancel deleting Working Style Profile/i }),
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /Confirm delete AI Passport/i }),
+      screen.getByRole("button", { name: /Confirm delete Working Style Profile/i }),
     ).toBeInTheDocument();
   });
 
@@ -225,17 +223,17 @@ describe("PassportPage — Delete Passport", () => {
     const existingPassport = usePassportStore.getState().passport;
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Delete AI Passport/i }),
+      screen.getByRole("button", { name: /Delete Working Style Profile/i }),
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Cancel deleting AI Passport/i }),
+      screen.getByRole("button", { name: /Cancel deleting Working Style Profile/i }),
     );
 
     expect(usePassportStore.getState().passport).toEqual(existingPassport);
 
     expect(
-      screen.getByRole("heading", { name: /Your AI working identity/i }),
+      screen.getByRole("heading", { name: /Your AI working style/i }),
     ).toBeInTheDocument();
   });
 
@@ -243,11 +241,11 @@ describe("PassportPage — Delete Passport", () => {
     render(<PassportPage />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Delete AI Passport/i }),
+      screen.getByRole("button", { name: /Delete Working Style Profile/i }),
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Confirm delete AI Passport/i }),
+      screen.getByRole("button", { name: /Confirm delete Working Style Profile/i }),
     );
 
     expect(usePassportStore.getState().passport).toBeNull();
@@ -257,7 +255,7 @@ describe("PassportPage — Delete Passport", () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /Create your AI Passport/i }),
+      screen.getByRole("button", { name: /Create your Working Style Profile/i }),
     ).toBeInTheDocument();
   });
 });

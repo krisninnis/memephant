@@ -4,7 +4,7 @@
 
 - Run `npm run build`.
 - Confirm `dist/index.html` contains current Open Graph/Twitter metadata.
-- Confirm `/privacy/`, `/terms/`, `/data-handling/`, and `/local-first/` build into `dist`.
+- Confirm `/privacy/`, `/terms/`, `/billing/`, `/data-handling/`, and `/local-first/` build into `dist`.
 - Confirm public download page points to the intended release source.
 - Confirm serverless API environment variables are configured only in Vercel.
 

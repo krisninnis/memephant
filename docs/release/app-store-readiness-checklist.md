@@ -10,6 +10,7 @@ This checklist is for future Microsoft Store and Mac App Store preparation. Do n
 - Support URL: `https://memephant.com/`
 - Privacy URL: `https://memephant.com/privacy/`
 - Terms URL: `https://memephant.com/terms/`
+- Billing/refund URL: `https://memephant.com/billing/`
 - Data handling URL: `https://memephant.com/data-handling/`
 - Screenshots: prepare current desktop screenshots for each required size.
 - Review notes: explain local-first storage, optional cloud backup, optional crash reporting, and no forced account.

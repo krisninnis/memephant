@@ -255,23 +255,76 @@
 
 @media (max-width: 760px) {
   .blueprint-backdrop {
-    padding: 12px;
+    align-items: stretch;
+    padding: 8px;
   }
 
   .blueprint-modal {
-    max-height: calc(100vh - 24px);
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    border-radius: 14px;
   }
 
   .blueprint-header,
   .blueprint-footer {
-    padding-left: 18px;
-    padding-right: 18px;
+    padding-left: 14px;
+    padding-right: 14px;
   }
 
   .blueprint-steps,
   .blueprint-body {
-    padding-left: 18px;
-    padding-right: 18px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .blueprint-header {
+    gap: 12px;
+    padding-top: 18px;
+    padding-bottom: 12px;
+  }
+
+  .blueprint-header h2 {
+    font-size: 1.32rem;
+  }
+
+  .blueprint-header p {
+    font-size: 0.86rem;
+  }
+
+  .blueprint-close {
+    width: 40px;
+    height: 40px;
+  }
+
+  .blueprint-steps {
+    gap: 6px;
+    padding-bottom: 12px;
+  }
+
+  .blueprint-step {
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 0.78rem;
+  }
+
+  .blueprint-form input,
+  .blueprint-form textarea,
+  .blueprint-form select {
+    min-height: 44px;
+  }
+
+  .blueprint-footer {
+    position: sticky;
+    bottom: 0;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .blueprint-primary,
+  .blueprint-secondary {
+    min-height: 44px;
+    flex: 1 1 140px;
   }
 
   .blueprint-form--grid,
@@ -281,5 +334,9 @@
 
   .blueprint-preview__header {
     flex-direction: column;
+  }
+
+  .blueprint-preview pre {
+    max-height: 180px;
   }
 }

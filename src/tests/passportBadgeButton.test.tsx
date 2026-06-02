@@ -27,10 +27,10 @@ function resetStores(): void {
 describe("PassportBadgeButton — sidebar navigation behaviour", () => {
   beforeEach(resetStores);
 
-  it("no-passport state: clicking 'Create AI Passport' starts the edit flow", () => {
+  it("no-passport state: clicking 'Create Working Style Profile' starts the edit flow", () => {
     render(<PassportBadgeButton />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Create AI Passport" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create Working Style Profile" }));
 
     expect(usePassportStore.getState().isReeditingPassport).toBe(true);
     expect(usePassportStore.getState().flowStep).toBe("welcome");
@@ -40,16 +40,16 @@ describe("PassportBadgeButton — sidebar navigation behaviour", () => {
     const onNavigate = jest.fn();
     render(<PassportBadgeButton onNavigate={onNavigate} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Create AI Passport" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create Working Style Profile" }));
 
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
 
-  it("with-passport state: clicking 'Open AI Passport' navigates to the Passport page", () => {
+  it("with-passport state: clicking 'Open Working Style Profile' navigates to the Passport page", () => {
     usePassportStore.setState({ passport: createPassportData(FULL_PROFILE) });
     render(<PassportBadgeButton />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Open AI Passport" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Working Style Profile" }));
 
     expect(useProjectStore.getState().currentView).toBe("passport");
   });
@@ -59,7 +59,7 @@ describe("PassportBadgeButton — sidebar navigation behaviour", () => {
     const onNavigate = jest.fn();
     render(<PassportBadgeButton onNavigate={onNavigate} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Open AI Passport" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Working Style Profile" }));
 
     expect(onNavigate).toHaveBeenCalledTimes(1);
     expect(useProjectStore.getState().currentView).toBe("passport");
@@ -69,17 +69,17 @@ describe("PassportBadgeButton — sidebar navigation behaviour", () => {
     usePassportStore.setState({ passport: createPassportData(FULL_PROFILE) });
     render(<PassportBadgeButton />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Open AI Passport" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Working Style Profile" }));
 
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("badge shows the AI Passport identity label and short ID", () => {
+  it("badge shows the Working Style Profile label and short ID", () => {
     const passport = createPassportData(FULL_PROFILE);
     usePassportStore.setState({ passport });
     render(<PassportBadgeButton />);
 
-    expect(screen.getByText("AI Passport")).toBeInTheDocument();
+    expect(screen.getByText("Working Style Profile")).toBeInTheDocument();
     const expectedShortId = passport.id.split("-").slice(1, 3).join("-");
     expect(screen.getByText(expectedShortId)).toBeInTheDocument();
   });

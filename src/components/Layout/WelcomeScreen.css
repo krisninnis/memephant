@@ -498,25 +498,95 @@
 }
 @media (max-width: 900px) {
   .welcome-screen {
-    padding: 20px 16px;
+    width: 100%;
+    min-width: 0;
+    padding: 18px 14px;
     align-items: flex-start;
   }
 
   .welcome-card {
-    padding: 28px 20px;
+    max-width: 100%;
+    padding: 24px 18px;
     border-radius: 14px;
+    gap: 14px;
   }
 
   .welcome-logo__image {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
   }
 
   .welcome-title {
+    max-width: 18rem;
     font-size: 22px;
+    line-height: 1.16;
+    overflow-wrap: anywhere;
   }
 
   .welcome-tagline {
     font-size: 14px;
+    max-width: 22rem;
+  }
+
+  .welcome-flow {
+    gap: 8px;
+  }
+
+  .welcome-flow__step {
+    gap: 10px;
+    padding: 11px 12px;
+    font-size: 13px;
+  }
+
+  .welcome-flow__number {
+    width: 22px;
+    height: 22px;
+  }
+
+  .welcome-actions {
+    gap: 9px;
+    margin-top: 4px;
+  }
+
+  .welcome-btn {
+    min-height: 48px;
+    padding: 12px 14px;
+    text-align: left;
+  }
+
+  .welcome-btn__text {
+    min-width: 0;
+  }
+
+  .welcome-btn__subtitle {
+    line-height: 1.35;
+  }
+
+  .welcome-description,
+  .welcome-privacy {
+    max-width: 22rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .welcome-screen {
+    padding: 12px 10px;
+  }
+
+  .welcome-card {
+    padding: 20px 14px;
+  }
+
+  .welcome-title {
+    font-size: 20px;
+  }
+
+  .welcome-tagline,
+  .welcome-flow__step {
+    font-size: 12.5px;
+  }
+
+  .template-grid {
+    grid-template-columns: 1fr;
   }
 }

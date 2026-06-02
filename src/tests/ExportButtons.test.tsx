@@ -158,7 +158,7 @@ describe('ExportButtons export preview', () => {
     render(<ExportButtons />);
 
     expect(screen.getByText(
-      'Attach your AI Passport to help the next AI understand how you like to work.',
+      'Attach your Working Style Profile to help the next AI understand how you like to work.',
     )).toBeInTheDocument();
   });
 
@@ -371,7 +371,7 @@ describe('ExportButtons export preview', () => {
   it('shows Passport Attachment as excluded by default with an exact preview', async () => {
     const dialog = await openPreview();
 
-    expect(within(dialog).getByRole('heading', { name: 'AI Passport' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('heading', { name: 'Working Style Profile' })).toBeInTheDocument();
     expect(within(dialog).getAllByText('Excluded')).toHaveLength(2);
     expect(within(dialog).getByText(
       'Your project context will be copied without your AI working identity.',

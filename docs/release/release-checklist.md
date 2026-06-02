@@ -32,7 +32,7 @@ Use this before publishing any standalone desktop or web release.
 
 ## Final Human Checks
 
-- Review public privacy, terms, data-handling, and local-first pages.
+- Review public privacy, terms, billing, data-handling, and local-first pages.
 - Review screenshots and product copy for accurate claims.
 - Review known limitations and support contact.
 - Tag the release only after artifacts have been verified.
