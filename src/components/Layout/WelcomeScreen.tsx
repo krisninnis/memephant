@@ -20,6 +20,7 @@ import type { ProjectTemplate } from '../../utils/projectTemplates';
 import { DEMO_PROJECT_ID, createDemoProject } from '../../utils/demoProject';
 import LaunchpadWizard from '../Launchpad/LaunchpadWizard';
 import BlueprintWizard from '../Blueprint/BlueprintWizard';
+import { track } from '../../lib/analytics';
 import './WelcomeScreen.css';
 
 type Mode = 'landing' | 'wizard' | 'templates';
@@ -135,6 +136,7 @@ export function WelcomeScreen() {
       await saveToDisk(project);
       addProject(project);
       setActiveProject(project.id);
+      track('project_created');
       showToast(`"${project.name}" is ready - copy it for your AI to get started.`);
     } catch (err) {
       console.error('Create failed:', err);
@@ -153,6 +155,7 @@ export function WelcomeScreen() {
       if (existingDemo) {
         setActiveProject(existingDemo.id);
         setCurrentView('projects');
+        track('demo_project_opened');
         showToast('Demo project opened. Generate a Context Passport to try the handoff.');
         return;
       }
@@ -162,6 +165,7 @@ export function WelcomeScreen() {
       addProject(project);
       setActiveProject(project.id);
       setCurrentView('projects');
+      track('demo_project_opened');
       showToast('Demo project ready. Generate a Context Passport to see the handoff.');
     } catch (err) {
       console.error('Demo project failed:', err);
@@ -228,21 +232,21 @@ export function WelcomeScreen() {
             <img src="/icons/icon-192.png" alt="Memephant logo" className="welcome-logo__image" />
           </div>
 
-          <h1 className="welcome-title">Carry project context between AI tools</h1>
+          <h1 className="welcome-title">Explain your project once. Continue in any AI.</h1>
           <p className="welcome-tagline">
-            Create or load a project, generate a Context Passport, then paste it into ChatGPT,
-            Claude, Gemini, Grok, Cursor, or another AI.
+            Build a project memory, generate a Context Passport, and paste it into ChatGPT,
+            Claude, Gemini, Grok, Cursor — any AI picks up exactly where you left off.
           </p>
 
           <div className="welcome-flow">
             <div className="welcome-flow__step">
               <span className="welcome-flow__number">1</span>
               <div>
-                <strong>Load project context</strong>
+                <strong>Describe your project once</strong>
                 <div>
                   {desktopApp
-                    ? 'Scan a folder or describe the project once.'
-                    : 'Import a project or describe it once.'}
+                    ? 'Scan a folder or fill in the details. Takes under two minutes.'
+                    : 'Fill in the details or import an existing project. Takes under two minutes.'}
                 </div>
               </div>
             </div>
@@ -250,14 +254,14 @@ export function WelcomeScreen() {
               <span className="welcome-flow__number">2</span>
               <div>
                 <strong>Generate a Context Passport</strong>
-                <div>Inspect exactly what will be copied before anything leaves your device.</div>
+                <div>Preview exactly what you're sharing — nothing leaves your device until you copy.</div>
               </div>
             </div>
             <div className="welcome-flow__step">
               <span className="welcome-flow__number">3</span>
               <div>
-                <strong>Paste into another AI</strong>
-                <div>ChatGPT, Claude, Gemini, Grok, Cursor, or another tool can continue.</div>
+                <strong>Paste into any AI and continue</strong>
+                <div>ChatGPT, Claude, Gemini, Grok, Cursor — the AI reads your context and picks up immediately.</div>
               </div>
             </div>
           </div>
@@ -352,8 +356,7 @@ export function WelcomeScreen() {
           </div>
 
           <p className="welcome-description">
-            Create a project memory once, copy a Context Passport, and let the next AI continue
-            from there.
+            No more re-explaining your project at the start of every chat. One Context Passport, any AI.
           </p>
           <p className="welcome-privacy">
             Local-first by default. Sign in only if you want cloud backup across devices.

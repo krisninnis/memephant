@@ -6,6 +6,7 @@ describe("analytics privacy contract", () => {
     join(process.cwd(), "src/lib/analytics.ts"),
     "utf8",
   );
+  const mainSource = readFileSync(join(process.cwd(), "src/main.tsx"), "utf8");
 
   it("keeps tracking event-name-only with no payload parameter", () => {
     expect(analyticsSource).toContain(
@@ -41,5 +42,11 @@ describe("analytics privacy contract", () => {
     );
     expect(analyticsSource).toContain('host === "memephant.com"');
     expect(analyticsSource).toContain('host.endsWith(".vercel.app")');
+  });
+
+  it("fires the first anonymous landing event from app bootstrap", () => {
+    expect(mainSource).toContain('import { initAnalytics, track } from "./lib/analytics";');
+    expect(mainSource).toContain("initAnalytics();");
+    expect(mainSource).toContain('track("landing_page_view");');
   });
 });

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { initialiseSentry } from "./services/sentryService";
+import { initAnalytics, track } from "./lib/analytics";
 
 // Initialise Sentry only if the user opted in (stored in settings).
 // We read the setting directly from localStorage here to avoid waiting for the
@@ -26,6 +27,9 @@ try {
 } catch {
   // If settings can't be read, stay silent — don't block app startup.
 }
+
+initAnalytics();
+track("landing_page_view");
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
