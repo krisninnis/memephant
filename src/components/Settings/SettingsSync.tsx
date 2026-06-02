@@ -13,11 +13,8 @@ import {
 import type { ProjectMemory } from '../../types/memphant-types';
 import { replaceCloudHydrationAutosaveSkipIds } from '../../utils/cloudHydrationAutosave';
 import { devError, devWarn } from '../../utils/devLogging';
-
-type AppEnv = {
-  VITE_APP_URL?: string;
-  VITE_API_URL?: string;
-};
+import { getAuthCallbackUrl } from '../../utils/authCallbackUrl';
+import { getRuntimeEnv } from '../../utils/runtimeEnv';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -97,21 +94,6 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function getAppEnv(): AppEnv {
-  return import.meta.env as AppEnv;
-}
-
-function getAuthCallbackUrl(): string {
-  const env = getAppEnv();
-  if (env.VITE_APP_URL) {
-    return `${env.VITE_APP_URL}/auth/callback`;
-  }
-  if (env.VITE_API_URL) {
-    return `${env.VITE_API_URL}/auth/callback`;
-  }
-  return 'https://memephant.com/auth/callback';
-}
-
 function clearAuthUrlState(): void {
   if (typeof window === 'undefined') return;
 
@@ -155,7 +137,7 @@ function DeleteAccountSection({
       const token = session?.access_token;
       if (!token) throw new Error('Not signed in.');
 
-      const API_BASE = getAppEnv().VITE_API_URL ?? '';
+      const API_BASE = getRuntimeEnv().VITE_API_URL ?? '';
       const res = await fetch(`${API_BASE}/api/delete-account`, {
         method: 'POST',
         headers: {

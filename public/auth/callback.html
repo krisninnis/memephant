@@ -73,6 +73,21 @@
 
       .instructions strong { color: #f0f0ff; }
 
+      .debug {
+        display: none;
+        font-size: 12px;
+        color: #9fb0c8;
+        background: #101827;
+        border: 1px solid #26344f;
+        border-radius: 10px;
+        padding: 12px 14px;
+        text-align: left;
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+
+      .debug strong { color: #e0e7ff; }
+
       .close-btn {
         display: none;
         width: 100%;
@@ -124,6 +139,7 @@
       </div>
 
       <div class="instructions" id="instructions"></div>
+      <div class="debug" id="debug"></div>
       <button class="close-btn" id="close-btn" type="button">Return to Memephant</button>
 
       <div class="wordmark">Memephant - Remember everything. Explain nothing.</div>
@@ -136,7 +152,15 @@
         const statusText = document.getElementById('status-text');
         const spinnerEl = document.getElementById('spinner');
         const instrEl = document.getElementById('instructions');
+        const debugEl = document.getElementById('debug');
         const closeBtn = document.getElementById('close-btn');
+        const debugState = {
+          configExists: false,
+          callbackMode: 'checking',
+          refreshTokenPresent: false,
+          operation: 'pending',
+          error: '',
+        };
 
         closeBtn.addEventListener('click', () => {
           window.location.assign('/');
@@ -157,6 +181,33 @@
           spinnerEl.style.display = 'none';
           statusEl.className = 'status status--error';
           statusText.textContent = msg;
+          renderDebug();
+        }
+
+        function escapeHtml(value) {
+          return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+
+        function renderDebug() {
+          debugEl.innerHTML = [
+            '<strong>Safe callback debug</strong>',
+            'Config exists: ' + (debugState.configExists ? 'yes' : 'no'),
+            'Callback mode: ' + escapeHtml(debugState.callbackMode),
+            'Refresh token present: ' + (debugState.refreshTokenPresent ? 'yes' : 'no'),
+            'Auth operation: ' + escapeHtml(debugState.operation),
+            debugState.error ? 'Supabase error: ' + escapeHtml(debugState.error) : '',
+          ].filter(Boolean).join('<br>');
+          debugEl.style.display = 'block';
+        }
+
+        function markDebug(update) {
+          Object.assign(debugState, update);
+          renderDebug();
         }
 
         function clearSensitiveHash() {
@@ -182,12 +233,25 @@
           const hash = new URLSearchParams(window.location.hash.replace('#', ''));
           const hashAccessToken = hash.get('access_token');
           const hashRefreshToken = hash.get('refresh_token');
+          const params = new URLSearchParams(window.location.search);
+          const code = params.get('code');
+          const callbackMode = hashAccessToken
+            ? 'hash tokens'
+            : code
+              ? 'pkce code'
+              : 'no payload';
+          markDebug({
+            callbackMode,
+            refreshTokenPresent: Boolean(hashRefreshToken),
+          });
           clearSensitiveHash();
 
           const SUPABASE_URL = document.querySelector('meta[name="supa-url"]')?.content || '';
           const SUPABASE_ANON = document.querySelector('meta[name="supa-anon"]')?.content || '';
+          markDebug({ configExists: Boolean(SUPABASE_URL && SUPABASE_ANON) });
 
           if (!SUPABASE_URL || !SUPABASE_ANON) {
+            markDebug({ operation: 'failed', error: 'Missing Supabase callback config.' });
             showError('Auth is not configured for this deployment.');
             return;
           }
@@ -197,9 +261,13 @@
           });
 
           const { data, error } = await supabase.auth.getSession();
-          if (error) throw error;
+          if (error) {
+            markDebug({ operation: 'failed', error: getSafeErrorMessage(error) });
+            throw error;
+          }
 
           if (data?.session) {
+            markDebug({ operation: 'existing session found' });
             showSuccess('You are signed in.', `
               <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.<br><br>
               <strong>Web users:</strong> your session is saved. Return to Memephant to continue.
@@ -207,14 +275,16 @@
             return;
           }
 
-          const params = new URLSearchParams(window.location.search);
-          const code = params.get('code');
-
           if (code) {
+            markDebug({ operation: 'exchanging code' });
             const { data: exchanged, error: exchErr } = await supabase.auth.exchangeCodeForSession(code);
-            if (exchErr) throw exchErr;
+            if (exchErr) {
+              markDebug({ operation: 'failed', error: getSafeErrorMessage(exchErr) });
+              throw exchErr;
+            }
 
             if (exchanged?.session) {
+              markDebug({ operation: 'exchange succeeded' });
               showSuccess('You are signed in.', `
                 <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.<br><br>
                 <strong>Web users:</strong> your session is saved. Return to Memephant to continue.
@@ -222,22 +292,29 @@
               return;
             }
 
+            markDebug({ operation: 'failed', error: 'No session returned from code exchange.' });
             showError('Could not establish a session. Please try signing in again.');
             return;
           }
 
           if (hashAccessToken && hashRefreshToken) {
+            markDebug({ operation: 'setting hash session' });
             const { data: hashSession, error: hashErr } = await supabase.auth.setSession({
               access_token: hashAccessToken,
               refresh_token: hashRefreshToken,
             });
-            if (hashErr) throw hashErr;
+            if (hashErr) {
+              markDebug({ operation: 'failed', error: getSafeErrorMessage(hashErr) });
+              throw hashErr;
+            }
 
             if (!hashSession?.session) {
+              markDebug({ operation: 'failed', error: 'No session returned from hash tokens.' });
               showError('Could not establish a session. Please try signing in again.');
               return;
             }
 
+            markDebug({ operation: 'setSession succeeded' });
             showSuccess('You are signed in.', `
               <strong>Desktop app users:</strong> Desktop browser-to-app OAuth bridging is not available yet.<br><br>
               <strong>Web users:</strong> your session is saved. Return to Memephant to continue.
@@ -246,14 +323,18 @@
           }
 
           if (hashAccessToken) {
+            markDebug({ operation: 'failed', error: 'Missing refresh token.' });
             showError('A sign-in token was received, but no refresh token was provided. Please try signing in again.');
             return;
           }
 
+          markDebug({ operation: 'failed', error: 'No auth payload received.' });
           showError('No session was received. Please go back and try again.');
         } catch (err) {
-          console.error('[Memephant] Auth callback error:', getSafeErrorMessage(err));
-          showError('Something went wrong: ' + getSafeErrorMessage(err));
+          const safeError = getSafeErrorMessage(err);
+          console.error('[Memephant] Auth callback error:', safeError);
+          markDebug({ operation: 'failed', error: safeError });
+          showError('Something went wrong: ' + safeError);
         }
       })();
     </script>

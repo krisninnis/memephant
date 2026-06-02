@@ -21,6 +21,18 @@ describe('auth session rehydration contract', () => {
     join(process.cwd(), 'src/utils/runtimeEnv.ts'),
     'utf8',
   );
+  const authCallbackUrl = readFileSync(
+    join(process.cwd(), 'src/utils/authCallbackUrl.ts'),
+    'utf8',
+  );
+  const settingsSync = readFileSync(
+    join(process.cwd(), 'src/components/Settings/SettingsSync.tsx'),
+    'utf8',
+  );
+  const cloudSync = readFileSync(
+    join(process.cwd(), 'src/services/cloudSync.ts'),
+    'utf8',
+  );
 
   it('persists hash callback tokens into Supabase auth storage before returning to the app', () => {
     expect(callbackHtml).toContain('supabase.auth.setSession({');
@@ -53,6 +65,30 @@ describe('auth session rehydration contract', () => {
     expect(supabaseClient).toContain('const key = supabaseEnv.VITE_SUPABASE_ANON_KEY;');
     expect(supabaseClient).not.toContain(
       'const url = import.meta.env.VITE_SUPABASE_URL',
+    );
+  });
+
+  it('keeps OAuth redirects on the active production origin', () => {
+    expect(authCallbackUrl).toContain('export function getCurrentWebOrigin()');
+    expect(authCallbackUrl).toContain('window.location.origin');
+    expect(authCallbackUrl).toContain("'__TAURI_INTERNALS__' in window");
+    expect(authCallbackUrl).toContain("'tauri.localhost'");
+    expect(authCallbackUrl).toContain('return `${trimTrailingSlash(currentOrigin)}/auth/callback`;');
+    expect(authCallbackUrl).toContain('env.VITE_APP_URL || env.VITE_API_URL');
+    expect(settingsSync).toContain("import { getAuthCallbackUrl } from '../../utils/authCallbackUrl';");
+    expect(settingsSync).toContain('redirectTo: getAuthCallbackUrl()');
+    expect(settingsSync).not.toContain('import.meta.env.VITE_APP_URL');
+    expect(cloudSync).toContain("import { getAuthCallbackUrl } from '../utils/authCallbackUrl';");
+    expect(cloudSync).toContain('const AUTH_CALLBACK_URL = getAuthCallbackUrl();');
+  });
+
+  it('serves runtime app URL from the request origin before deployment env fallbacks', () => {
+    expect(runtimeEnvApi).toContain('function requestOrigin(req: VercelRequest): string');
+    expect(runtimeEnvApi).toContain(
+      'const appUrl = requestOrigin(req) || process.env.VITE_APP_URL || process.env.APP_URL || vercelUrl',
+    );
+    expect(runtimeEnvApi).toContain(
+      'VITE_API_URL: requestOrigin(req) || process.env.VITE_API_URL || appUrl',
     );
   });
 });

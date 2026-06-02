@@ -47,6 +47,22 @@ describe('auth callback safety', () => {
     expect(callbackHtml).toContain("provider_token=[redacted]");
   });
 
+  it('shows callback-only safe debug status without token values', () => {
+    expect(callbackHtml).toContain('Safe callback debug');
+    expect(callbackHtml).toContain('Config exists: ');
+    expect(callbackHtml).toContain('Callback mode: ');
+    expect(callbackHtml).toContain('Refresh token present: ');
+    expect(callbackHtml).toContain('Auth operation: ');
+    expect(callbackHtml).toContain('function escapeHtml(value)');
+    expect(callbackHtml).toContain("callbackMode: 'checking'");
+    expect(callbackHtml).toContain("operation: 'exchange succeeded'");
+    expect(callbackHtml).toContain("operation: 'setSession succeeded'");
+    expect(callbackHtml).not.toContain('debugState.accessToken');
+    expect(callbackHtml).not.toContain('debugState.refresh_token');
+    expect(callbackHtml).not.toContain('debugState.email');
+    expect(callbackHtml).not.toContain('debugEl.innerHTML = window.location');
+  });
+
   it('returns to Memephant without calling window.close', () => {
     expect(callbackHtml).toContain('Return to Memephant');
     expect(callbackHtml).toContain("window.location.assign('/')");

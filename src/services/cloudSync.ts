@@ -28,6 +28,7 @@ import {
   queuedEntriesForUser,
 } from './syncQueue';
 import { getRuntimeEnv } from '../utils/runtimeEnv';
+import { getAuthCallbackUrl } from '../utils/authCallbackUrl';
 import { devError, devWarn } from '../utils/devLogging';
 import { toCloudProjectData } from './toCloudProjectData';
 
@@ -113,11 +114,7 @@ type CloudSyncEnv = {
 // ─── Auth callback URL ────────────────────────────────────────────────────────
 
 const cloudSyncEnv = getRuntimeEnv() as CloudSyncEnv;
-const AUTH_CALLBACK_URL = cloudSyncEnv.VITE_APP_URL
-  ? `${cloudSyncEnv.VITE_APP_URL}/auth/callback`
-  : cloudSyncEnv.VITE_API_URL
-    ? `${cloudSyncEnv.VITE_API_URL}/auth/callback`
-    : 'https://memephant.com/auth/callback';
+const AUTH_CALLBACK_URL = getAuthCallbackUrl();
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
