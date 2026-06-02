@@ -384,12 +384,36 @@ export function SettingsPrivacy() {
       <h2 className="settings-section-title">Privacy &amp; Security</h2>
 
       <div className="settings-trust-box">
-        <div>Memephant is local-first. You decide when anything leaves this device.</div>
+        <div>Memephant is local-first. You decide when project context is copied, synced, or shared.</div>
         <div className="settings-trust-list">
           <div>- Projects and checkpoints stay local by default</div>
           <div>- Cloud backup only runs if you sign in</div>
           <div>- AI exports only happen when you click copy</div>
           <div>- Private Mode keeps Local AI on this device</div>
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <div className="settings-group-title">Legal &amp; trust</div>
+
+        <div className="setting-row setting-row--stacked">
+          <div className="setting-info">
+            <div className="setting-label">Public trust pages</div>
+            <div className="setting-description">
+              Plain-English details about local storage, Cloud Backup, exports, billing, and account data.
+            </div>
+          </div>
+          <div className="settings-link-actions">
+            <button type="button" className="setting-btn" onClick={() => void openExternalUrl('https://memephant.com/data-handling/')}>
+              Data &amp; Trust
+            </button>
+            <button type="button" className="setting-btn" onClick={() => void openExternalUrl('https://memephant.com/privacy/')}>
+              Privacy
+            </button>
+            <button type="button" className="setting-btn" onClick={() => void openExternalUrl('https://memephant.com/terms/')}>
+              Terms
+            </button>
+          </div>
         </div>
       </div>
 
@@ -416,12 +440,12 @@ export function SettingsPrivacy() {
       <div className="settings-group">
         <div className="settings-group-title">Crash reporting</div>
 
-        <div className="setting-row" title="Send anonymous crash reports without project content">
+        <div className="setting-row" title="Send diagnostic crash reports">
           <div className="setting-info">
             <div className="setting-label">Send crash reports</div>
             <div className="setting-description">
-              Help improve Memephant by sending anonymous error reports when the app crashes.
-              Only stack traces are sent — never your project content or personal data.
+              Help improve Memephant by sending diagnostic error reports when the app crashes.
+              The crash reporter is designed to avoid project content and personal details where possible.
               Disabled by default.
             </div>
           </div>
@@ -476,7 +500,7 @@ export function SettingsPrivacy() {
             <div className="setting-label">Private Mode</div>
             <div className="setting-description">
               <div className="setting-desc-stack">
-                <div>Run AI locally on your device for maximum privacy.</div>
+                <div>Use a local model on your device when you want a more local workflow.</div>
                 <div className="setting-desc-bullets setting-desc-muted">
                   <div>- Runs locally on this device</div>
                   <div>- Never required for normal usage</div>
@@ -484,7 +508,7 @@ export function SettingsPrivacy() {
                 </div>
                 <div className="setting-desc-muted">
                   When enabled, Memephant will use a local model (via Ollama) to detect project updates.
-                  Your data never leaves your machine. If unavailable, Memephant safely falls back to built-in detection.
+                  This is designed to run against your configured local endpoint. If unavailable, Memephant falls back to built-in detection.
                 </div>
               </div>
             </div>
@@ -706,7 +730,7 @@ export function SettingsPrivacy() {
           <div className="setting-info">
             <div className="setting-label">Download all my data</div>
             <div className="setting-description">
-              Export all your projects and settings as a single JSON file for backup or GDPR requests.
+              Export all your projects and settings as a single JSON file for backup or access requests.
             </div>
           </div>
           <button

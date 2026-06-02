@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Memephant Terms</title>
-  <meta name="description" content="Starter terms page for Memephant." />
+  <title>Memephant Terms of Service</title>
+  <meta name="description" content="Terms of Service for Memephant." />
   <link rel="canonical" href="https://memephant.com/terms/" />
   <style>
     :root {
@@ -14,6 +14,7 @@
       --border: #2a2a40;
       --text: #e8e8f4;
       --muted: #a7a7bf;
+      --subtle: #74748f;
       --accent: #d97706;
     }
     * { box-sizing: border-box; }
@@ -26,7 +27,7 @@
       padding: 32px 18px;
     }
     main {
-      width: min(880px, 100%);
+      width: min(900px, 100%);
       margin: 0 auto;
       padding: 32px;
       border: 1px solid var(--border);
@@ -38,6 +39,7 @@
     h2 { margin: 28px 0 8px; color: #f4f4fb; }
     p, li { color: var(--muted); }
     a { color: var(--accent); }
+    .meta { margin: 0 0 24px; color: var(--subtle); }
     .notice {
       margin: 20px 0;
       padding: 14px 16px;
@@ -46,42 +48,104 @@
       background: rgba(217, 119, 6, 0.08);
       color: #f8d9a6;
     }
-    .meta { margin: 0 0 24px; color: #74748f; }
   </style>
 </head>
 <body>
   <main>
-    <h1>Terms</h1>
-    <p class="meta">Draft placeholder for store-readiness review. Last updated: May 2026</p>
+    <h1>Terms of Service</h1>
+    <p class="meta">Last updated: June 2026</p>
 
     <div class="notice">
-      This is a starter terms page for pre-submission readiness. It should be reviewed before any
-      paid distribution or app store submission.
+      These are founder-friendly early beta terms for Memephant. They are not legal advice and
+      should be reviewed by a qualified lawyer before wider commercial release.
     </div>
 
-    <h2>Use of Memephant</h2>
+    <h2>What Memephant is</h2>
     <p>
-      Memephant is project continuity software for organizing local project memory and preparing
-      user-controlled handoffs to AI tools. You are responsible for what you enter, store, copy, or
-      paste into third-party services.
+      Memephant is local-first project continuity software designed to help you store project
+      context, generate user-controlled exports, and move work between AI tools without repeatedly
+      rebuilding context.
+    </p>
+    <p>
+      Memephant is currently early-stage software. Features, pricing, availability, cloud services,
+      and generated outputs may change as the product develops.
     </p>
 
-    <h2>Local-First Behavior</h2>
+    <h2>Your responsibilities</h2>
+    <ul>
+      <li>You are responsible for the projects, notes, files, exports, and content you create or store in Memephant.</li>
+      <li>You are responsible for reviewing exports before pasting them into AI tools, social platforms, or public channels.</li>
+      <li>You should remove secrets, credentials, personal data, confidential information, and regulated data before sharing exports.</li>
+      <li>You are responsible for following the terms and policies of any third-party service you use with Memephant.</li>
+    </ul>
+
+    <h2>Exports and generated content</h2>
     <p>
-      The app is designed to work locally by default. Optional cloud backup, billing, support,
-      update, and crash reporting flows may require network services when you choose to use them.
+      Memephant can generate Context Passports, Launch Studio content, Build Updates, Daily Content
+      Packs, Project Blueprints, and other structured drafts from your project context. These outputs
+      are aids for your review. They may be incomplete, inaccurate, unsuitable, or need editing before
+      use.
+    </p>
+    <p>
+      You are responsible for any exported or public content you choose to copy, publish, send, or
+      paste into another service.
     </p>
 
-    <h2>Third-Party Services</h2>
+    <h2>No professional advice</h2>
     <p>
-      Memephant is not affiliated with OpenAI, Anthropic, Google, xAI, Perplexity, Ollama, or other
-      AI providers. Third-party AI tools and billing services are governed by their own terms.
+      Memephant does not provide legal, financial, tax, medical, security, compliance, or investment
+      advice. Do not rely on Memephant-generated content as professional advice.
     </p>
 
-    <h2>No Professional Advice</h2>
+    <h2>Acceptable use</h2>
+    <p>You agree not to use Memephant to:</p>
+    <ul>
+      <li>break laws or violate third-party rights;</li>
+      <li>store, publish, or distribute unlawful, abusive, or harmful material;</li>
+      <li>attempt to access another user's account or cloud data;</li>
+      <li>attack, overload, scrape, or interfere with Memephant services or third-party services;</li>
+      <li>use exports or generated drafts in ways that mislead others about authorship, facts, or endorsements.</li>
+    </ul>
+
+    <h2>Accounts and cloud features</h2>
     <p>
-      Memephant helps organize project context. It does not provide legal, financial, medical, or
-      security advice.
+      You can use core local features without an account. Optional cloud backup, billing, subscription,
+      and account-management features require sign-in and may depend on Supabase, Stripe, Vercel, or
+      other service providers.
+    </p>
+    <p>
+      Memephant may suspend or terminate access to account-based services if needed to protect the
+      product, comply with law, prevent abuse, or resolve billing/security issues.
+    </p>
+
+    <h2>Billing</h2>
+    <p>
+      Memephant is free during early access for public users at the time this page was updated.
+      Paid plans may be introduced later. Where billing is available, payment and subscription
+      management are handled through Stripe-hosted flows. See the
+      <a href="/billing/">Refund / Billing Policy</a> for current billing notes.
+    </p>
+
+    <h2>Availability and changes</h2>
+    <p>
+      Memephant is provided on an as-available basis. Local features may continue to work without a
+      network connection, but web, cloud sync, auth, billing, update, and support flows can depend on
+      third-party services and may be interrupted.
+    </p>
+
+    <h2>Warranty disclaimer and limitation of liability</h2>
+    <p>
+      To the maximum extent allowed by law, Memephant is provided without warranties of any kind.
+      Memephant and its operator will not be liable for indirect, incidental, special, consequential,
+      or punitive damages, or for loss of profits, data, goodwill, or business opportunities arising
+      from use of the product.
+    </p>
+
+    <h2>Third-party services</h2>
+    <p>
+      Memephant is not affiliated with OpenAI, Anthropic, Google, xAI, Perplexity, Ollama, Stripe,
+      Supabase, or other third-party services unless explicitly stated. Those services are governed
+      by their own terms and privacy policies.
     </p>
 
     <h2>Contact</h2>

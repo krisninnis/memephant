@@ -14,6 +14,7 @@
       --border: #2a2a40;
       --text: #e8e8f4;
       --muted: #a7a7bf;
+      --subtle: #74748f;
       --accent: #d97706;
     }
     * { box-sizing: border-box; }
@@ -26,7 +27,7 @@
       padding: 32px 18px;
     }
     main {
-      width: min(880px, 100%);
+      width: min(900px, 100%);
       margin: 0 auto;
       padding: 32px;
       border: 1px solid var(--border);
@@ -38,66 +39,112 @@
     h2 { margin: 28px 0 8px; color: #f4f4fb; }
     p, li { color: var(--muted); }
     a { color: var(--accent); }
-    .meta { margin: 0 0 24px; color: #74748f; }
+    .meta { margin: 0 0 24px; color: var(--subtle); }
+    .notice {
+      margin: 20px 0;
+      padding: 14px 16px;
+      border: 1px solid rgba(217, 119, 6, 0.35);
+      border-radius: 12px;
+      background: rgba(217, 119, 6, 0.08);
+      color: #f8d9a6;
+    }
   </style>
 </head>
 <body>
   <main>
     <h1>Privacy Policy</h1>
-    <p class="meta">Last updated: May 2026</p>
+    <p class="meta">Last updated: June 2026</p>
+
+    <div class="notice">
+      This page is a plain-English privacy summary for Memephant. It is not legal advice and should
+      be reviewed by a qualified professional before wider commercial launch.
+    </div>
 
     <p>
-      Memephant is local-first project continuity software. By default, project memory is stored on
-      your device and nothing is sent to an AI service automatically.
+      Memephant is designed as a local-first project continuity app. Its core purpose is to help you
+      store project context and copy user-approved handoffs into the AI tools you choose.
     </p>
 
-    <h2>What Memephant Stores</h2>
+    <h2>What is stored locally</h2>
     <p>
-      Memephant stores project names, summaries, goals, decisions, notes, linked-folder metadata,
-      checkpoints, settings, and other project memory you choose to enter. Desktop project data is
-      stored in the operating system application data directory.
+      Memephant stores project memory you enter or generate inside the app, including project names,
+      summaries, goals, decisions, notes, current state, changelog entries, workflow settings,
+      export checkpoints, Project Blueprint data, Launch Studio fields, and app settings.
+    </p>
+    <p>
+      In the desktop app, project files are stored in your operating system's application data
+      folder as local project data. In the web/PWA version, project data and settings may be stored
+      in browser storage for the active origin. Local settings may also include feature preferences,
+      privacy settings, and Supabase auth session data after sign-in.
     </p>
 
-    <h2>When Data Leaves Your Device</h2>
-    <p>Data leaves your device only when you choose a feature that requires it, such as:</p>
+    <h2>What may leave your device</h2>
+    <p>Memephant does not send project context to another AI automatically. Data may leave your device when you choose or use features such as:</p>
     <ul>
-      <li>copying an export to your clipboard and pasting it into another service;</li>
-      <li>signing in and enabling optional cloud backup;</li>
-      <li>using hosted account, checkout, billing, or support flows;</li>
-      <li>enabling optional crash reporting.</li>
+      <li>copying a Context Passport, export, Launch Kit, Build Update, or social draft and pasting it into another service;</li>
+      <li>opening Social Bridge composer links, where the selected draft is passed to the chosen platform where supported;</li>
+      <li>signing in with Supabase Auth, email/password, Google OAuth, or other enabled auth providers;</li>
+      <li>turning on optional Cloud Backup, which stores cloud-safe project data in Supabase;</li>
+      <li>using Stripe-hosted checkout or customer portal flows where billing is available;</li>
+      <li>submitting the landing-page email update form, which stores your email address in Supabase;</li>
+      <li>enabling optional crash reporting, which is intended to send diagnostic error information rather than project content.</li>
     </ul>
 
-    <h2>Telemetry and Crash Reporting</h2>
+    <h2>Supabase, auth, and cloud backup</h2>
     <p>
-      Memephant does not use product analytics or ad tracking in the core app. Crash reporting is
-      optional, disabled by default, and intended to send error diagnostics rather than project
-      content. Do not enable it if you do not want diagnostic data sent to a third-party crash
-      reporting provider.
+      Memephant uses Supabase for optional account authentication, Google OAuth sign-in where
+      configured, cloud project sync, subscription lookup, account deletion, and email update
+      subscriptions. If Cloud Backup is enabled, project rows are saved to Supabase and associated
+      with your authenticated user account. Cloud sync attempts to redact obvious local paths and
+      secrets before upload, but you should still avoid storing secrets in project memory.
     </p>
 
-    <h2>Local AI</h2>
+    <h2>Stripe billing</h2>
     <p>
-      Private Mode is optional. When enabled, Memephant connects to your configured local Ollama
-      endpoint on this device. Local AI is not required for normal use.
+      Stripe is integrated for hosted checkout, customer portal, subscription webhooks, invoices,
+      and payment method handling where paid features are available. Memephant does not intentionally
+      store full card details. Stripe may receive account, billing, customer, invoice, subscription,
+      and payment information needed to process billing.
     </p>
 
-    <h2>Cloud Backup</h2>
+    <h2>Google OAuth</h2>
     <p>
-      Cloud backup is optional and requires sign-in. If enabled, project data is transmitted over
-      HTTPS to the configured backend so it can sync across your devices.
+      If you sign in with Google, the OAuth flow is handled through Google and Supabase Auth.
+      Memephant receives the authenticated Supabase session and basic account details needed to sign
+      you in, such as a user ID and email address.
     </p>
 
-    <h2>Your Control</h2>
+    <h2>AI processing</h2>
+    <p>
+      Memephant does not intentionally call hosted AI APIs for the core Context Passport, Launch
+      Studio, Build Update, Daily Content Pack, or Project Blueprint features. Exports are generated
+      locally and are copied only when you choose. Optional Local AI/Private Mode may call a local
+      Ollama endpoint you configure on your device.
+    </p>
+
+    <h2>Crash reporting and telemetry</h2>
+    <p>
+      Memephant does not use product analytics or ad-tracking code in the core app. Optional crash
+      reporting is disabled by default and controlled in Settings. The crash-reporting code is
+      designed to strip breadcrumbs and user-authored content where possible, but you should leave
+      it disabled if you do not want diagnostics sent to a third-party crash reporting provider.
+    </p>
+
+    <h2>Your controls</h2>
     <ul>
-      <li>You can use Memephant without signing in.</li>
-      <li>You can download your data from the app.</li>
-      <li>You can clear local project data from the app.</li>
-      <li>You can disconnect cloud backup if you enabled it.</li>
+      <li>You can use core Memephant features without signing in.</li>
+      <li>You can turn Cloud Backup off or disconnect cloud backup in Settings.</li>
+      <li>You can download local project data from Settings.</li>
+      <li>You can delete local projects from this device.</li>
+      <li>If signed in, you can request cloud account deletion from the app where available.</li>
+      <li>You can contact Memephant about privacy, access, or deletion requests.</li>
     </ul>
 
     <h2>Contact</h2>
     <p>
-      Privacy questions can be sent to <a href="mailto:hello@memephant.com">hello@memephant.com</a>.
+      Privacy, access, billing, or deletion questions can be sent to
+      <a href="mailto:hello@memephant.com">hello@memephant.com</a>. If that address changes before
+      wider launch, this page should be updated.
     </p>
   </main>
 </body>

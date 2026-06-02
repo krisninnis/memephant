@@ -3,54 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Memephant Data Handling</title>
-  <meta name="description" content="How Memephant handles local project data, exports, cloud backup, and telemetry." />
+  <title>Memephant Data &amp; Trust</title>
+  <meta name="description" content="How Memephant handles local project data, Context Passport exports, cloud backup, auth, billing, and trust boundaries." />
   <link rel="canonical" href="https://memephant.com/data-handling/" />
   <style>
-    :root { color-scheme: dark; --bg:#0d0d1a; --card:#12121f; --border:#2a2a40; --text:#e8e8f4; --muted:#a7a7bf; --accent:#d97706; }
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d1a;
+      --card: #12121f;
+      --panel: #0f1726;
+      --border: #2a2a40;
+      --text: #e8e8f4;
+      --muted: #a7a7bf;
+      --subtle: #74748f;
+      --accent: #d97706;
+    }
     * { box-sizing: border-box; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; line-height:1.65; padding:32px 18px; }
-    main { width:min(880px,100%); margin:0 auto; padding:32px; border:1px solid var(--border); border-radius:18px; background:var(--card); }
-    h1,h2 { line-height:1.2; }
-    h1 { margin:0 0 8px; font-size:clamp(2rem,5vw,3rem); }
-    h2 { margin:28px 0 8px; }
-    p,li { color:var(--muted); }
-    strong { color:var(--text); }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.65;
+      padding: 32px 18px;
+    }
+    main {
+      width: min(960px, 100%);
+      margin: 0 auto;
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--card);
+    }
+    h1, h2, h3 { line-height: 1.2; }
+    h1 { margin: 0 0 8px; font-size: clamp(2rem, 5vw, 3rem); }
+    h2 { margin: 30px 0 8px; color: #f4f4fb; }
+    h3 { margin: 0 0 6px; font-size: 1rem; color: #f4f4fb; }
+    p, li { color: var(--muted); }
+    a { color: var(--accent); }
+    .meta { margin: 0 0 24px; color: var(--subtle); }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .cardlet {
+      background: var(--panel);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .flow {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+    }
+    .flow-row {
+      display: grid;
+      grid-template-columns: minmax(160px, 0.9fr) 1.4fr;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      border-radius: 10px;
+      background: rgba(15, 23, 38, 0.72);
+    }
+    .flow-row strong { color: #f4f4fb; }
+    .flow-row span { color: var(--muted); }
+    .notice {
+      margin: 20px 0;
+      padding: 14px 16px;
+      border: 1px solid rgba(217, 119, 6, 0.35);
+      border-radius: 12px;
+      background: rgba(217, 119, 6, 0.08);
+      color: #f8d9a6;
+    }
+    @media (max-width: 720px) {
+      main { padding: 24px; }
+      .grid, .flow-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>Data Handling Summary</h1>
-    <p>Memephant is local-first. This page summarizes the main data flows.</p>
+    <h1>Data &amp; Trust</h1>
+    <p class="meta">Last updated: June 2026</p>
 
-    <h2>Stored Locally</h2>
-    <ul>
-      <li>Project memory, checkpoints, and settings.</li>
-      <li>Personal Memory Vault data.</li>
-      <li>Passport profile data.</li>
-      <li>Optional offline sync queue data when cloud backup is enabled and temporarily unavailable.</li>
-    </ul>
-
-    <h2>User-Controlled Exports</h2>
     <p>
-      Handoffs are generated locally and copied only when you click a copy/export action. Export
-      sanitisation and linked-folder path redaction are part of the export boundary.
+      Memephant is designed to turn project context into user-controlled handoffs. The important
+      boundary is simple: Memephant prepares context locally where possible; you decide when to copy,
+      sync, sign in, or publish.
     </p>
 
-    <h2>Optional Network Features</h2>
+    <div class="grid">
+      <div class="cardlet">
+        <h3>Local-first project storage</h3>
+        <p>Project memory starts on your device. Desktop data is stored in local app data; web/PWA data can use browser storage.</p>
+      </div>
+      <div class="cardlet">
+        <h3>User-controlled exports</h3>
+        <p>Context Passport and Launch Studio outputs are copied, exported, or shared only when you choose an action.</p>
+      </div>
+      <div class="cardlet">
+        <h3>Optional cloud sync</h3>
+        <p>Cloud Backup requires sign-in and stores cloud-safe project rows in Supabase for sync.</p>
+      </div>
+      <div class="cardlet">
+        <h3>Review before sharing</h3>
+        <p>Redaction is pattern-based and helpful, not magic. Review exports before sending them anywhere.</p>
+      </div>
+    </div>
+
+    <h2>Data flow</h2>
+    <div class="flow">
+      <div class="flow-row">
+        <strong>Project context</strong>
+        <span>Stored locally first as project memory, settings, checkpoints, and structured fields.</span>
+      </div>
+      <div class="flow-row">
+        <strong>Cloud sync enabled</strong>
+        <span>Cloud-safe project data is transmitted to Supabase and linked to the signed-in user.</span>
+      </div>
+      <div class="flow-row">
+        <strong>Login</strong>
+        <span>Handled by Supabase Auth. Google OAuth is handled through Google and Supabase where configured.</span>
+      </div>
+      <div class="flow-row">
+        <strong>Billing</strong>
+        <span>Handled through Stripe-hosted checkout, customer portal, and subscription webhooks where paid plans are available.</span>
+      </div>
+      <div class="flow-row">
+        <strong>Context Passport</strong>
+        <span>Generated for review and copied only when you choose. Nothing is sent to another AI unless you copy/paste it.</span>
+      </div>
+      <div class="flow-row">
+        <strong>Social Bridge</strong>
+        <span>Opens manual composer/share links. Memephant does not auto-post or store social access tokens.</span>
+      </div>
+    </div>
+
+    <h2>Export boundary</h2>
+    <p>
+      Memephant formats exports for AI handoff and launch/social workflows. The app includes
+      deterministic redaction for known secret patterns and local path handling. This is designed to
+      reduce accidental sharing of obvious secrets, but it may not catch every sensitive phrase,
+      proprietary detail, personal data item, or unusual credential format.
+    </p>
+
+    <div class="notice">
+      Before sharing an export, read it. You control what leaves Memephant.
+    </div>
+
+    <h2>What Memephant does not do by default</h2>
     <ul>
-      <li><strong>Cloud backup:</strong> requires sign-in and sends project data to the configured backend.</li>
-      <li><strong>Billing:</strong> uses hosted checkout and billing provider flows.</li>
-      <li><strong>Desktop updates:</strong> checks signed release metadata when used in the installed desktop app.</li>
-      <li><strong>Crash reporting:</strong> optional and disabled by default.</li>
+      <li>It does not send project content to ChatGPT, Claude, Gemini, Grok, Perplexity, or other AI platforms automatically.</li>
+      <li>It does not auto-post to social networks.</li>
+      <li>It does not store OAuth tokens for social platforms.</li>
+      <li>It does not require product analytics to use the app.</li>
+      <li>It does not rewrite your project memory silently.</li>
     </ul>
 
-    <h2>Not Included Automatically</h2>
+    <h2>Current limits</h2>
     <ul>
-      <li>Personal Memory Vault contents are not included in project exports by default.</li>
-      <li>Memephant does not send project data directly to AI providers.</li>
-      <li>Telemetry and analytics are not required to use the app.</li>
+      <li>Cloud sync is optional, but when enabled it depends on Supabase and internet availability.</li>
+      <li>Pattern-based sanitisation is not a substitute for human review.</li>
+      <li>Exports copied into third-party tools are then governed by those tools' policies.</li>
+      <li>Crash reporting, if enabled, depends on a third-party provider and is intended for diagnostics.</li>
+      <li>Billing, where available, depends on Stripe-hosted flows.</li>
     </ul>
+
+    <h2>Related pages</h2>
+    <p>
+      Read the <a href="/privacy/">Privacy Policy</a>, <a href="/terms/">Terms of Service</a>, and
+      <a href="/billing/">Refund / Billing Policy</a>.
+    </p>
   </main>
 </body>
 </html>

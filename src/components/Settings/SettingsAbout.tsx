@@ -21,10 +21,10 @@ function isTauri(): boolean {
 }
 
 const PRIVACY_SUMMARY = `Memephant stores your project memory on your device first.
-Cloud backup is optional. There is no tracking or analytics.
+Cloud backup is optional. The core app does not use product analytics or ad tracking.
 
 When you click "Copy for [Platform]", text goes to your clipboard only.
-Memephant does not connect to ChatGPT, Claude, or any AI service directly.
+Memephant does not intentionally connect to hosted AI services for core exports.
 
 Source available under BSL 1.1 - inspect the code on GitHub.`;
 
@@ -496,13 +496,13 @@ export function SettingsAbout() {
       )}
 
       <div className="settings-group">
-        <div className="settings-group-title">Privacy</div>
+        <div className="settings-group-title">Legal &amp; trust</div>
 
         <div className="setting-row">
           <div className="setting-info">
             <div className="setting-label">Privacy policy</div>
             <div className="setting-description">
-              What data is stored locally, what cloud backup does, and what never leaves your device
+              What is stored locally, what optional cloud features do, and what you control
             </div>
           </div>
           <button className="setting-btn" onClick={() => setShowPrivacy((v) => !v)}>
@@ -511,6 +511,21 @@ export function SettingsAbout() {
         </div>
 
         {showPrivacy && <div className="about-privacy-body">{PRIVACY_SUMMARY}</div>}
+
+        <div className="settings-link-actions">
+          <button className="setting-btn" onClick={() => openLink('https://memephant.com/data-handling/')}>
+            Data &amp; Trust
+          </button>
+          <button className="setting-btn" onClick={() => openLink('https://memephant.com/privacy/')}>
+            Privacy
+          </button>
+          <button className="setting-btn" onClick={() => openLink('https://memephant.com/terms/')}>
+            Terms
+          </button>
+          <button className="setting-btn" onClick={() => openLink('https://memephant.com/billing/')}>
+            Billing
+          </button>
+        </div>
       </div>
 
       <div className="settings-group">

@@ -1151,7 +1151,7 @@
       <div class="feature-card">
         <div class="feature-icon">🔒</div>
         <h3>Secrets redaction</h3>
-        <p>API keys, tokens, and credentials are automatically stripped before every export. Your secrets stay on your machine, always.</p>
+        <p>Known API key, token, credential, and local path patterns are redacted before export where possible. You stay in control and should review before sharing.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📋</div>
@@ -1161,7 +1161,7 @@
       <div class="feature-card">
         <div class="feature-icon">☁️</div>
         <h3>Optional cloud backup</h3>
-        <p>Sign in to sync your projects across all your devices. Fully encrypted in transit. 100% opt-in — core features work completely offline.</p>
+        <p>Sign in to sync your projects across devices. Cloud backup is opt-in and uses Supabase; core project handoff features can be used without an account.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🔁</div>
@@ -1192,14 +1192,14 @@
         <div class="privacy-icon">🚫</div>
         <div>
           <h4>No analytics</h4>
-          <p>No telemetry. No trackers. Your data stays local by default. Cloud Backup is optional if you sign in, and Local AI is optional on your device.</p>
+          <p>No product analytics or ad tracking in the core app. Cloud Backup, update emails, billing, auth, and optional crash reporting use network services only when those flows are used.</p>
         </div>
       </div>
       <div class="privacy-item">
         <div class="privacy-icon">🔐</div>
         <div>
           <h4>Secrets stay secret</h4>
-          <p>Hardcoded patterns strip API keys, tokens, and credentials before every single export. Non-negotiable.</p>
+          <p>Deterministic redaction is designed to catch common API keys, tokens, credentials, and local paths before exports. Review every export before sharing.</p>
         </div>
       </div>
       <div class="privacy-item">
@@ -1287,7 +1287,7 @@ Becomes MIT licensed in 2030.
           Does Memephant send my data to any AI?
           <span class="faq-chevron">⌄</span>
         </button>
-        <div class="faq-a">No. Memephant never connects to any AI platform directly. It formats your context for you to copy and paste yourself. Your data never leaves your machine unless you explicitly enable cloud backup.</div>
+        <div class="faq-a">Memephant does not intentionally connect to hosted AI platforms for core exports. It formats your context for you to copy and paste yourself. Data can leave your device when you choose cloud backup, auth, billing, update emails, crash reporting, or third-party sharing flows.</div>
       </div>
       <div class="faq-item">
         <button class="faq-q" onclick="toggleFaq(this)">
@@ -1400,11 +1400,10 @@ Becomes MIT licensed in 2030.
         <li><a href="https://github.com/krisninnis/memphant" target="_blank" rel="noopener">GitHub</a></li>
         <li><a href="https://github.com/krisninnis/memphant/releases" target="_blank" rel="noopener">Releases</a></li>
         <li><a href="https://github.com/krisninnis/memphant/issues" target="_blank" rel="noopener">Report a bug</a></li>
-        <li>
-  <a href="https://github.com/krisninnis/memphant/blob/main/PRIVACY.md" target="_blank" rel="noopener">
-    Privacy
-  </a>
-</li>
+        <li><a href="/data-handling/">Data &amp; Trust</a></li>
+        <li><a href="/privacy/">Privacy</a></li>
+        <li><a href="/terms/">Terms</a></li>
+        <li><a href="/billing/">Billing</a></li>
       </ul>
       <div class="footer-right">
         Built by <a href="https://github.com/krisninnis" target="_blank" rel="noopener">Kris Ninnis</a>

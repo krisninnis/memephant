@@ -296,6 +296,12 @@
   margin-top: 8px;
 }
 
+.settings-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .memory-vault-hero {
   align-items: flex-start;
   display: flex;
@@ -1156,6 +1162,28 @@
   margin-top: 14px;
   font-size: 12px;
   color: #6c6c8a;
+}
+
+.sync-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.sync-legal-links button {
+  background: none;
+  border: 0;
+  color: #8ca2c7;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sync-legal-links button:hover {
+  color: #d8e6ff;
 }
 
 /* Tab switcher */

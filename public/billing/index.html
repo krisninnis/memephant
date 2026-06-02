@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memephant Refund / Billing Policy</title>
+  <meta name="description" content="Refund and billing policy for Memephant." />
+  <link rel="canonical" href="https://memephant.com/billing/" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d1a;
+      --card: #12121f;
+      --border: #2a2a40;
+      --text: #e8e8f4;
+      --muted: #a7a7bf;
+      --subtle: #74748f;
+      --accent: #d97706;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.65;
+      padding: 32px 18px;
+    }
+    main {
+      width: min(900px, 100%);
+      margin: 0 auto;
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--card);
+    }
+    h1, h2 { line-height: 1.2; }
+    h1 { margin: 0 0 8px; font-size: clamp(2rem, 5vw, 3rem); }
+    h2 { margin: 28px 0 8px; color: #f4f4fb; }
+    p, li { color: var(--muted); }
+    a { color: var(--accent); }
+    .meta { margin: 0 0 24px; color: var(--subtle); }
+    .notice {
+      margin: 20px 0;
+      padding: 14px 16px;
+      border: 1px solid rgba(217, 119, 6, 0.35);
+      border-radius: 12px;
+      background: rgba(217, 119, 6, 0.08);
+      color: #f8d9a6;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Refund / Billing Policy</h1>
+    <p class="meta">Last updated: June 2026</p>
+
+    <div class="notice">
+      Memephant is free during early access for public users at the time this page was updated.
+      Billing infrastructure exists so paid plans can be introduced carefully later.
+    </div>
+
+    <h2>Current billing status</h2>
+    <p>
+      Public early access is currently free. The product includes Stripe integration for hosted
+      checkout, customer portal, subscription webhooks, and subscription status lookup, but public
+      paid plans are not the main launch flow yet.
+    </p>
+
+    <h2>If paid plans are introduced</h2>
+    <p>
+      Where billing is available, payments are handled through Stripe-hosted checkout and billing
+      flows. Stripe may process payment method details, customer records, invoices, tax-relevant
+      billing information, and subscription status. Memephant uses Stripe and Supabase records to
+      understand which plan is attached to an authenticated account.
+    </p>
+
+    <h2>Cancellations</h2>
+    <p>
+      If you have an active paid subscription, cancellation should be available through the Stripe
+      customer portal or by contacting support. Cancellation generally stops future renewal charges;
+      it does not automatically remove your local project data.
+    </p>
+
+    <h2>Refunds</h2>
+    <p>
+      Refund requests are reviewed case by case. Memephant does not promise automatic refunds in all
+      situations unless a specific paid plan or jurisdiction requires it. If something was charged in
+      error, a billing flow failed, or the product materially did not work as expected, contact us so
+      it can be reviewed.
+    </p>
+
+    <h2>How to contact us</h2>
+    <p>
+      Send billing, cancellation, or refund questions to
+      <a href="mailto:hello@memephant.com">hello@memephant.com</a>. Include the account email used
+      for sign-in and a short description of the issue. Do not email card numbers or payment secrets.
+    </p>
+  </main>
+</body>
+</html>

@@ -1,63 +1,55 @@
 # Privacy Policy - Memephant
 
-**Last updated: April 2026**
+**Last updated: June 2026**
+
+This is a plain-English summary for an early beta product. It is not legal advice.
 
 ## The short version
 
-Memephant is local-first. By default, your project data stays on your device. Cloud Backup is optional and only used if you sign in. Local AI is optional and runs on your device through Ollama.
+Memephant is designed to be local-first. By default, project memory starts on your device and core handoff features can be used without an account.
 
-## What data does Memephant store?
+Data may leave your device when you choose optional or network-backed flows, including Cloud Backup, Supabase Auth, Google OAuth, Stripe billing, update emails, optional crash reporting, Social Bridge composer links, or copying/pasting an export into another service.
 
-Memephant stores the project data you put into the app, including project names, summaries, goals, decisions, notes, linked-folder metadata, and other structured project memory.
+## What Memephant stores locally
 
-By default, this data is stored locally on your device in your operating system's application data directory.
+Memephant stores the project data you put into the app, including project names, summaries, goals, decisions, notes, linked-folder metadata, checkpoints, Project Blueprint data, Launch Studio fields, and other structured project memory.
 
-## Does Memephant send data over the internet?
+Desktop data is stored in the operating system application data folder. Web/PWA data may be stored in browser storage for the active origin. Local settings may include privacy preferences, platform preferences, and Supabase auth session data after sign-in.
 
-Not by default.
+## What may be stored in Supabase
 
-Memephant can send data over the internet only in these optional cases:
+Supabase is used for optional account, auth, sync, subscription lookup, account deletion, and update-email flows.
 
-- If you sign in and enable Cloud Backup, your projects are sent to Supabase so they can sync across your devices.
-- If you subscribe to a paid plan, billing flows are handled through Stripe-hosted checkout and billing pages.
-- If you choose to use the web app instead of the desktop app, your browser will connect to the Memephant website and related backend endpoints.
-- If you explicitly enable crash reporting, diagnostic error reports may be sent to the configured crash reporting provider.
+If Cloud Backup is enabled, project data is saved to Supabase and associated with the signed-in user. Cloud sync attempts to redact obvious local paths and secrets before upload, but you should still avoid storing secrets in project memory.
 
-Memephant does not send your project data to ChatGPT, Claude, Gemini, Grok, Perplexity, or any other AI service directly. You choose what to copy and paste into those services yourself.
+If you submit the landing-page email update form, the email address is stored in Supabase for update notifications.
 
-## Cloud Backup
+## What Stripe handles
 
-Cloud Backup is optional.
+Stripe is integrated for hosted checkout, customer portal, subscription webhooks, invoices, and payment method handling where paid plans are available. Memephant does not intentionally store full card details.
 
-If you sign in, Memephant can back up your projects to Supabase so they are available across devices. Cloud data is transmitted over HTTPS. Your local project files remain available even if you never use Cloud Backup.
+## What Google OAuth / Supabase Auth handles
 
-## Local AI / Private Mode
+If you sign in with Google, the OAuth flow is handled by Google and Supabase Auth. Memephant receives the authenticated Supabase session and basic account details needed to sign you in, such as a user ID and email address.
 
-Local AI is optional.
+## AI processing
 
-If you enable Private Mode, Memephant can call a locally running Ollama model on your device to improve project update extraction. This runs against your local Ollama endpoint and is intended to keep processing on your machine.
+Memephant does not intentionally call hosted AI APIs for the core Context Passport, Launch Studio, Build Update, Daily Content Pack, or Project Blueprint features. Exports are generated locally and copied only when you choose.
 
-## Linked folders
+Optional Local AI/Private Mode may call a local Ollama endpoint you configure on your device.
 
-If you link a project folder, Memephant scans local files and metadata to help build project context. That scan is designed to stay local unless you later choose to copy exported context into another tool or enable Cloud Backup.
+## Crash reporting and telemetry
 
-## Billing and accounts
-
-If you create an account, Memephant stores account and authentication data through Supabase Auth. If you subscribe to a paid plan, Stripe stores billing and subscription data needed to manage payments.
-
-## Analytics, telemetry, and crash reporting
-
-Memephant does not use product analytics or ad-tracking code in the core app.
-Crash reporting is optional, disabled by default, and controlled in Settings.
-Cloud requests that support sign-in, sync, auth callbacks, subscriptions, and account management are still part of the product when those features are used.
+Memephant does not use product analytics or ad-tracking code in the core app. Crash reporting is optional, disabled by default, and controlled in Settings. The crash-reporting path is designed to strip user-authored content where possible, but leave it disabled if you do not want diagnostics sent to a third-party crash reporting provider.
 
 ## Your control
 
-- You can use Memephant locally without signing in.
-- You can export your data from the app.
-- You can delete your local data from the app.
-- You can delete your cloud account from the app if you have signed in.
+- You can use core Memephant features without signing in.
+- You can download your local data from the app.
+- You can delete local project data from the app.
+- You can disconnect Cloud Backup if you enabled it.
+- You can request cloud account deletion from the app where available.
 
 ## Contact
 
-If you have privacy questions, contact hello@memephant.com or open an issue in the repository.
+Privacy, access, deletion, or billing questions can be sent to hello@memephant.com.

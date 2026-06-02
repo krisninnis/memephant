@@ -225,6 +225,17 @@ function DeleteAccountSection({
 export function SettingsSync() {
   const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
+  const openLegalUrl = (path: string) => {
+    const url = `https://memephant.com${path}`;
+    if (isTauri) {
+      void import(/* @vite-ignore */ '@tauri-apps/plugin-opener')
+        .then(({ openUrl }) => openUrl(url));
+      return;
+    }
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const cloudUser = useProjectStore((s) => s.cloudUser);
   const cloudDisconnecting = useProjectStore((s) => s.cloudDisconnecting);
   const syncStatus = useProjectStore((s) => s.syncStatus);
@@ -1177,9 +1188,16 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
         </>
       )}
 
-          <p className="settings-description sync-hint">
-        Your data is stored locally first. Cloud backup is optional and encrypted in transit.
+      <p className="settings-description sync-hint">
+        Your data is stored locally first. Cloud backup is optional and uses Supabase when enabled.
       </p>
+
+      <div className="sync-legal-links" aria-label="Legal and trust links">
+        <button type="button" onClick={() => openLegalUrl('/privacy/')}>Privacy</button>
+        <button type="button" onClick={() => openLegalUrl('/terms/')}>Terms</button>
+        <button type="button" onClick={() => openLegalUrl('/billing/')}>Billing</button>
+        <button type="button" onClick={() => openLegalUrl('/data-handling/')}>Data &amp; Trust</button>
+      </div>
     </section>
   );
 }

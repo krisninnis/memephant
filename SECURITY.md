@@ -41,7 +41,10 @@ All project data is stored in plain JSON files in your OS application data folde
 - **macOS:** `~/Library/Application Support/memephant/projects/`
 - **Linux:** `~/.local/share/memephant/projects/`
 
-No data leaves your machine unless you explicitly sign in and enable cloud backup.
+Core project handoff features are designed to work locally without an account. Data may leave your
+device when you choose optional or network-backed flows such as cloud backup, Supabase Auth, Google
+OAuth, Stripe billing, update emails, optional crash reporting, or copying/pasting exports into
+third-party services.
 
 ### Cloud backup (opt-in)
 
@@ -54,7 +57,8 @@ When cloud backup is enabled:
 
 ### Secret redaction
 
-Before **every** export, Memephant scans the output and strips credentials matching:
+Memephant applies deterministic redaction before exports and cloud sync where possible. It is
+designed to catch common credential and local-path patterns, including:
 
 | Pattern | What it catches |
 |---------|-----------------|
@@ -65,7 +69,8 @@ Before **every** export, Memephant scans the output and strips credentials match
 | `-----BEGIN [A-Z ]+ KEY-----` | PEM private keys |
 | `eyJ[A-Za-z0-9+/=]{20,}` | JWT tokens |
 
-These patterns are hardcoded in the Rust backend and the TypeScript export utilities. They are **not** user-configurable and cannot be disabled.
+These patterns are implemented in the TypeScript export/cloud utilities and related desktop paths.
+They reduce obvious mistakes, but they are not a substitute for reviewing exports before sharing.
 
 ### Telemetry and diagnostics
 
