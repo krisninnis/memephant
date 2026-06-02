@@ -1241,7 +1241,7 @@ export function SettingsMemoryVault() {
             <h3>Memephant Passport</h3>
           </div>
           <span className="memory-vault-ai-passport__badge">
-            AI Passport: {passportSummary.status}
+            Working Style Profile: {passportSummary.status}
           </span>
         </div>
 
@@ -1699,7 +1699,7 @@ export function SettingsMemoryVault() {
         <div className="memory-vault-answer-style">
           <div className="memory-vault-answer-style__hero">
             <div className="memory-vault-answer-style__badge">
-              Portable AI identity
+              Portable working style
             </div>
 
             <h3 className="memory-vault-answer-style__title">

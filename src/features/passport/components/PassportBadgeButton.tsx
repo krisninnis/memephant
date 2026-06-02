@@ -1,8 +1,8 @@
 ﻿// -----------------------------------------------------------------------------
 // Memephant — Passport Badge Button (sidebar entry)
 //
-// Sidebar entry for the user's AI Passport.
-// Clicking opens the full-page AI Passport view.
+// Sidebar entry for the user's working style profile.
+// Clicking opens the full-page profile view.
 // This no longer opens an inline dropdown.
 //
 // Behaviour:
@@ -39,12 +39,12 @@ export function PassportBadgeButton({
         <button
           type="button"
           className="passport-badge-btn passport-badge-btn--stacked"
-          aria-label="Create AI Passport"
+          aria-label="Create Working Style Profile"
           onClick={() => {
             startPassportEdit();
             onNavigate?.();
           }}
-          title="Create AI Passport"
+          title="Create Working Style Profile"
         >
           <img
             className="passport-badge-btn__seal passport-badge-btn__seal--large"
@@ -55,7 +55,7 @@ export function PassportBadgeButton({
 
           <span className="passport-badge-btn__body passport-badge-btn__body--centered">
             <span className="passport-badge-btn__label">
-              Create AI Passport
+              Create Working Style Profile
             </span>
             <span className="passport-badge-btn__id">
               Set your AI working style
@@ -82,9 +82,9 @@ export function PassportBadgeButton({
       <button
         type="button"
         className="passport-badge-btn passport-badge-btn--stacked"
-        aria-label="Open AI Passport"
+        aria-label="Open Working Style Profile"
         onClick={handleOpenPage}
-        title="Open AI Passport"
+        title="Open Working Style Profile"
       >
         <img
           className="passport-badge-btn__seal passport-badge-btn__seal--large"
@@ -94,7 +94,7 @@ export function PassportBadgeButton({
         />
 
         <span className="passport-badge-btn__body passport-badge-btn__body--centered">
-          <span className="passport-badge-btn__label">AI Passport</span>
+          <span className="passport-badge-btn__label">Working Style Profile</span>
           <span className="passport-badge-btn__id">{shortId}</span>
         </span>
       </button>

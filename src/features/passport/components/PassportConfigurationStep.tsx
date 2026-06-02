@@ -499,7 +499,7 @@ export function PassportConfigurationStep() {
         </div>
 
         <p style={PRIVACY_NOTE}>
-          These working preferences stay local and can be edited later from your AI Passport.
+          These working preferences stay local and can be edited later from your Working Style Profile.
         </p>
       </form>
     </div>

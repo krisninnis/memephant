@@ -355,7 +355,7 @@ export function PassportPage() {
     return (
       <div className="workspace-scroll">
         <div className="workspace-main">
-          <section style={PAGE} aria-label="AI Passport page">
+          <section style={PAGE} aria-label="Working Style Profile page">
             <div style={EMPTY_HERO}>
               <img
                 src={passportStampBronze}
@@ -364,7 +364,7 @@ export function PassportPage() {
                 style={STAMP}
               />
               <div style={HERO_TEXT}>
-                <p style={EYEBROW}>AI Passport</p>
+                <p style={EYEBROW}>Working Style Profile</p>
                 <h1 style={TITLE}>Set your AI working style</h1>
                 <p style={SUBTITLE}>
                   Tell AI tools how you work once. Then carry that identity
@@ -378,9 +378,9 @@ export function PassportPage() {
                 type="button"
                 style={BTN_PRIMARY}
                 onClick={startPassportEdit}
-                aria-label="Create your AI Passport"
+                aria-label="Create your Working Style Profile"
               >
-                Create AI Passport
+                Create Working Style Profile
               </button>
             </div>
 
@@ -457,32 +457,32 @@ export function PassportPage() {
         </style>
 
         <div className="workspace-main">
-          <section style={STAMP_SHOWCASE} aria-label="AI Passport stamp showcase">
+          <section style={STAMP_SHOWCASE} aria-label="Working Style Profile stamp showcase">
             <div style={STAMP_SHOWCASE_FRAME}>
               <img
                 src={sealImage}
-                alt="AI Passport stamp"
+                alt="Working Style Profile stamp"
                 style={STAMP_SHOWCASE_IMAGE}
               />
             </div>
 
             <h1 style={STAMP_SHOWCASE_TITLE}>
               {hasConfiguration
-                ? "Silver Passport Activated"
-                : "Bronze Passport Activated"}
+                ? "Silver Profile Activated"
+                : "Bronze Profile Activated"}
             </h1>
 
             <p style={STAMP_SHOWCASE_SUBTITLE}>
-              Your AI working identity is ready.
+              Your AI working style is ready.
             </p>
 
             <button
               type="button"
               style={BTN_SECONDARY}
               onClick={() => setSubview("details")}
-              aria-label="Back to AI Passport"
+              aria-label="Back to Working Style Profile"
             >
-              Back to Passport
+              Back to Profile
             </button>
           </section>
         </div>
@@ -525,58 +525,58 @@ export function PassportPage() {
   return (
     <div className="workspace-scroll">
       <div className="workspace-main">
-        <section style={PAGE} aria-label="AI Passport page">
+        <section style={PAGE} aria-label="Working Style Profile page">
           {/* Hero */}
-          <header style={HERO} aria-label="AI Passport identity">
+          <header style={HERO} aria-label="Working Style Profile">
             <div style={HERO_STAMP_COLUMN}>
               <button
                 type="button"
                 style={STAMP_BUTTON}
                 onClick={() => setSubview("stamp")}
-                aria-label="Open AI Passport stamp showcase"
-                title="Open AI Passport stamp"
+                aria-label="Open Working Style Profile stamp showcase"
+                title="Open Working Style Profile stamp"
               >
                 <img src={sealImage} alt="" aria-hidden="true" style={STAMP} />
               </button>
 
-              <h2 style={HERO_ACTION_TITLE}>Use your Passport</h2>
+              <h2 style={HERO_ACTION_TITLE}>Use your profile</h2>
 
               <div
                 style={HERO_ACTIONS_VERTICAL}
                 role="group"
-                aria-label="Passport actions"
+                aria-label="Profile actions"
               >
                 <button
                   type="button"
                   style={copied ? BTN_PRIMARY_COPIED : BTN_PRIMARY}
                   onClick={() => void handleCopy()}
-                  aria-label="Copy AI Passport to clipboard"
+                  aria-label="Copy Working Style Profile to clipboard"
                 >
-                  {copied ? "Copied to clipboard" : "Copy Passport"}
+                  {copied ? "Copied to clipboard" : "Copy Profile"}
                 </button>
 
                 <button
                   type="button"
                   style={BTN_SECONDARY}
                   onClick={handleEdit}
-                  aria-label="Edit your AI Passport"
+                  aria-label="Edit your Working Style Profile"
                 >
-                  Edit Passport
+                  Edit Profile
                 </button>
 
                 <button
                   type="button"
                   style={BTN_SECONDARY}
                   onClick={handleSeeTheDifference}
-                  aria-label="See the difference your AI Passport makes"
+                  aria-label="See the difference your Working Style Profile makes"
                 >
                   See the Difference
                 </button>
               </div>
             </div>
             <div style={HERO_TEXT}>
-              <p style={EYEBROW}>AI Passport</p>
-              <h1 style={TITLE}>Your AI working identity</h1>
+              <p style={EYEBROW}>Working Style Profile</p>
+              <h1 style={TITLE}>Your AI working style</h1>
               <p style={SUBTITLE}>
                 Carry your style, tone, and preferences into every AI
                 conversation without re-explaining yourself.
@@ -620,7 +620,7 @@ export function PassportPage() {
           <section style={SECTION} aria-label="Identity preferences">
             <div style={SECTION_HEADER}>
               <h2 style={SECTION_TITLE}>Identity preferences</h2>
-              <p style={SECTION_HELP}>Edit Passport to refine these.</p>
+              <p style={SECTION_HELP}>Edit Profile to refine these.</p>
             </div>
             <div style={FACET_GRID}>
               {config.preferredName.trim() && (
@@ -664,25 +664,24 @@ export function PassportPage() {
               <h2 style={SECTION_TITLE}>Local-first by design</h2>
             </div>
             <p style={PRIVACY_NOTE}>
-              Your AI Passport is stored on this device only. It is never
-              uploaded to a server, never shared with another AI tool, and never
-              auto-attached to anything. Copy it yourself when you want to use
-              it - that is the only way it travels.
+              Your Working Style Profile is stored on this device only. It stays
+              local unless you copy it into an AI tool yourself.
             </p>
             <p style={PRIVACY_NOTE}>
               Project state lives in <strong>Context Passport</strong>, not here.
-              AI Passport is identity. Context Passport is the work in front of you.
+              Working Style Profile is personal preference; Context Passport is
+              the project handoff.
             </p>
           </section>
-          <section style={DANGER_SECTION} aria-label="Delete Passport">
+          <section style={DANGER_SECTION} aria-label="Delete Working Style Profile">
             <div style={SECTION_HEADER}>
-              <h2 style={SECTION_TITLE}>Delete Passport</h2>
+              <h2 style={SECTION_TITLE}>Delete Profile</h2>
             </div>
 
             {!confirmingDelete ? (
               <>
                 <p style={PRIVACY_NOTE}>
-                  Remove your local AI Passport from this device. This does not
+                  Remove your local Working Style Profile from this device. This does not
                   delete projects, Context Passport exports, or your Memory Vault.
                 </p>
 
@@ -691,16 +690,16 @@ export function PassportPage() {
                     type="button"
                     style={BTN_DANGER}
                     onClick={() => setConfirmingDelete(true)}
-                    aria-label="Delete AI Passport"
+                    aria-label="Delete Working Style Profile"
                   >
-                    Delete Passport
+                    Delete Profile
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <p style={WARNING_TEXT}>
-                  Are you sure? This removes your local Passport and you will
+                  Are you sure? This removes your local profile and you will
                   need to create it again before copying it into AI tools.
                 </p>
 
@@ -709,7 +708,7 @@ export function PassportPage() {
                     type="button"
                     style={BTN_SECONDARY}
                     onClick={() => setConfirmingDelete(false)}
-                    aria-label="Cancel deleting AI Passport"
+                    aria-label="Cancel deleting Working Style Profile"
                   >
                     Cancel
                   </button>
@@ -718,9 +717,9 @@ export function PassportPage() {
                     type="button"
                     style={BTN_DANGER_SOLID}
                     onClick={handleDeletePassport}
-                    aria-label="Confirm delete AI Passport"
+                    aria-label="Confirm delete Working Style Profile"
                   >
-                    Yes, delete Passport
+                    Yes, delete Profile
                   </button>
                 </div>
               </>
@@ -733,7 +732,3 @@ export function PassportPage() {
 }
 
 export default PassportPage;
-
-
-
-

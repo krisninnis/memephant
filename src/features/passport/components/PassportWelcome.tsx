@@ -216,7 +216,7 @@ export function PassportWelcome() {
 
         {/* Headline */}
         <h1 style={HEADLINE}>
-          Create your<br />AI Passport
+          Create your<br />Working Style Profile
         </h1>
 
         <p style={SUBHEADLINE}>Teach AI how you work, once.</p>
@@ -233,7 +233,7 @@ export function PassportWelcome() {
             onFocus={() => setHovered(true)}
             onBlur={() => setHovered(false)}
           >
-            Start Passport Setup
+            Start Profile Setup
             <ChevronRight size={15} color="currentColor" />
           </button>
           <button

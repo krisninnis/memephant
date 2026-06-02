@@ -228,9 +228,10 @@ export function WelcomeScreen() {
             <img src="/icons/icon-192.png" alt="Memephant logo" className="welcome-logo__image" />
           </div>
 
-          <h1 className="welcome-title">Memephant</h1>
+          <h1 className="welcome-title">Carry project context between AI tools</h1>
           <p className="welcome-tagline">
-            Carry serious project context between AI tools without starting from zero.
+            Create or load a project, generate a Context Passport, then paste it into ChatGPT,
+            Claude, Gemini, Grok, Cursor, or another AI.
           </p>
 
           <div className="welcome-flow">
@@ -277,15 +278,15 @@ export function WelcomeScreen() {
 
             {desktopApp ? (
               <>
-                {/* PRIMARY: Open an existing codebase */}
+                {/* PRIMARY: Start with complete context */}
                 <button
                   className="welcome-btn welcome-btn--primary"
-                  onClick={() => void createProjectFromFolder()}
+                  onClick={() => setShowBlueprint(true)}
                 >
-                  <span>📂</span>
+                  <span aria-hidden="true">+</span>
                   <span className="welcome-btn__text">
-                    Select a project folder
-                    <small className="welcome-btn__subtitle">Scan an existing codebase</small>
+                    New Project Blueprint
+                    <small className="welcome-btn__subtitle">Start with complete project context</small>
                   </span>
                 </button>
 
@@ -294,8 +295,8 @@ export function WelcomeScreen() {
                   + New Project
                 </button>
 
-                <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowBlueprint(true)}>
-                  New Project Blueprint
+                <button className="welcome-btn welcome-btn--secondary" onClick={() => void createProjectFromFolder()}>
+                  Select a project folder
                 </button>
 
                 {/* TERTIARY: Templates */}
@@ -305,13 +306,16 @@ export function WelcomeScreen() {
               </>
             ) : (
               <>
-                {/* Web: New project is the primary action */}
-                <button className="welcome-btn welcome-btn--primary" onClick={() => setShowLaunchpad(true)}>
-                  + New Project
+                {/* Web: Start with complete context */}
+                <button className="welcome-btn welcome-btn--primary" onClick={() => setShowBlueprint(true)}>
+                  <span className="welcome-btn__text">
+                    New Project Blueprint
+                    <small className="welcome-btn__subtitle">Start with complete project context</small>
+                  </span>
                 </button>
 
-                <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowBlueprint(true)}>
-                  New Project Blueprint
+                <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowLaunchpad(true)}>
+                  + New Project
                 </button>
 
                 <button className="welcome-btn welcome-btn--secondary" onClick={handleImportClick}>
@@ -348,7 +352,8 @@ export function WelcomeScreen() {
           </div>
 
           <p className="welcome-description">
-            Switch between ChatGPT, Claude, Grok, Perplexity and Gemini without starting over.
+            Create a project memory once, copy a Context Passport, and let the next AI continue
+            from there.
           </p>
           <p className="welcome-privacy">
             Local-first by default. Sign in only if you want cloud backup across devices.

@@ -156,9 +156,9 @@ export function PassportPreviewSimulator({
     <section style={SHELL} aria-labelledby="passport-preview-title">
       <div style={HEADER}>
         <div>
-          <p style={EYEBROW}>Passport Preview Simulator</p>
+          <p style={EYEBROW}>Working Style Preview</p>
           <h2 id="passport-preview-title" style={TITLE}>
-            See how your Passport changes the way AI responds.
+            See how your profile changes the way AI responds.
           </h2>
           <p style={SUBTITLE}>
             This is a local template preview, not a real AI response.
@@ -172,29 +172,29 @@ export function PassportPreviewSimulator({
 
       <div style={COMPARISON}>
         <article style={RESPONSE_CARD}>
-          <h3 style={RESPONSE_TITLE}>Without Passport</h3>
+          <h3 style={RESPONSE_TITLE}>Without Profile</h3>
           <p style={RESPONSE_TEXT}>{simulation.genericResponse}</p>
         </article>
 
         <article style={RESPONSE_CARD}>
-          <h3 style={RESPONSE_TITLE}>With your Passport</h3>
+          <h3 style={RESPONSE_TITLE}>With your Profile</h3>
           <p style={RESPONSE_TEXT}>{simulation.passportResponse}</p>
         </article>
       </div>
 
       <p style={SIMULATION_NOTE}>
-        Nothing is sent anywhere. This preview uses only your local Passport settings.
+        Nothing is sent anywhere. This preview uses only your local profile settings.
       </p>
 
       <div style={ACTIONS}>
         <button type="button" style={SECONDARY_BUTTON} onClick={onBack}>
-          Back to Passport
+          Back to Profile
         </button>
         <button type="button" style={SECONDARY_BUTTON} onClick={() => void handleTryInChatGPT()}>
           Try in ChatGPT
         </button>
         <button type="button" style={PRIMARY_BUTTON} onClick={() => void handleCopyPassport()}>
-          {copied ? 'Copied' : 'Copy Passport'}
+          {copied ? 'Copied' : 'Copy Profile'}
         </button>
       </div>
     </section>

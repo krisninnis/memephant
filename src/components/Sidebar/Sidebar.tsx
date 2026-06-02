@@ -260,15 +260,15 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             <div>
               <h2 className="sidebar-brand">Memephant</h2>
               <p className="sidebar-tagline">
-                Portable AI identity & continuity
+                Project context for every AI
               </p>
             </div>
           </div>
 
           <div
             style={{
-              background: "rgba(245,158,11,0.06)",
-              border: "1px solid rgba(245,158,11,0.13)",
+              background: "rgba(255,255,255,0.025)",
+              border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: "16px",
               padding: "0.9rem",
               display: "flex",
@@ -290,7 +290,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
                   fontWeight: 700,
                 }}
               >
-                Your AI Identity
+                Working Style
               </span>
 
               <span
@@ -300,13 +300,13 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
                   lineHeight: 1.5,
                 }}
               >
-                Teach AI tools how you work once — then carry it everywhere.
+                Teach AI tools your preferences when you need them.
               </span>
             </div>
 
             <div
               style={{
-                transform: "scale(1.04)",
+                transform: "scale(1)",
                 transformOrigin: "top left",
                 marginTop: "0.3rem",
               }}

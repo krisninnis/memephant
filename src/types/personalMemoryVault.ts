@@ -218,7 +218,7 @@ export function getMemephantPassportSummary(
     exportReadiness,
     fingerprint,
     copyText: [
-      `AI Passport: ${status}`,
+      `Working Style Profile: ${status}`,
       `Completion: ${completionPercentage}%`,
       `Fingerprint: ${fingerprint}`,
       `Language: ${languagePreference}`,

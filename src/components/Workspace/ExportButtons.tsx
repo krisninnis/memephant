@@ -804,7 +804,7 @@ export function ExportButtons() {
       </div>
 
       <div className="passport-attachment-nudge">
-        Attach your AI Passport to help the next AI understand how you like to work.
+        Attach your Working Style Profile to help the next AI understand how you like to work.
       </div>
 
       <button
@@ -1368,7 +1368,7 @@ export function ExportButtons() {
             >
               <div className="passport-attachment-panel__header">
                 <div>
-                  <h3 id="passport-attachment-title">AI Passport</h3>
+                  <h3 id="passport-attachment-title">Working Style Profile</h3>
                   <p>
                     {getPassportAttachmentExplanation(exportPreview.passportAttachmentStatus)}
                   </p>
