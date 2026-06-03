@@ -26,12 +26,18 @@ describe('cloud project save auth path', () => {
     expect(cloudSyncSource).toContain('writeSession.accessToken');
   });
 
-  it('keeps signed-out local saves from attempting cloud push', () => {
-    expect(tauriActionsSource).toContain(
-      'if (!latestStore.cloudUser || latestStore.cloudDisconnecting || !latestStore.settings.privacy.cloudSyncEnabled)',
-    );
+  it('keeps cloud-disabled saves local without showing pending sync', () => {
+    expect(tauriActionsSource).toContain('if (!latestStore.settings.privacy.cloudSyncEnabled)');
+    expect(tauriActionsSource).toContain("latestStore.setSyncStatus('saved_local');");
     expect(tauriActionsSource.indexOf('browserStore.save(localProject.id, data)')).toBeLessThan(
       tauriActionsSource.indexOf('setTimeout(() => {'),
+    );
+  });
+
+  it('attempts cloud push when sync is enabled even if store cloud user has not hydrated', () => {
+    expect(tauriActionsSource).not.toContain('if (!latestStore.cloudUser ||');
+    expect(tauriActionsSource).toContain(
+      'const result = await pushProject(localProject, latestStore.cloudUser?.id);',
     );
   });
 });

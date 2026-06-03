@@ -21,6 +21,7 @@ import { pushProject, deleteCloudProject } from './cloudSync';
 import { dequeue } from './syncQueue';
 import { suggestEmptyFields } from '../utils/autoSuggest';
 import type { ProjectTemplate } from '../utils/projectTemplates';
+import { track } from '../lib/analytics';
 
 // ————————————————————————————————————————————————————————————————————————————
 // Free tier limit
@@ -853,12 +854,18 @@ export async function saveToDisk(project: ProjectMemory): Promise<void> {
   setTimeout(() => {
     void (async () => {
       const latestStore = store();
-      if (!latestStore.cloudUser || latestStore.cloudDisconnecting || !latestStore.settings.privacy.cloudSyncEnabled) {
+      if (!latestStore.settings.privacy.cloudSyncEnabled) {
+        latestStore.setSyncStatus('saved_local');
+        return;
+      }
+
+      if (latestStore.cloudDisconnecting) {
+        latestStore.setSyncStatus('saved_local');
         return;
       }
 
       try {
-        const result = await pushProject(localProject, latestStore.cloudUser.id);
+        const result = await pushProject(localProject, latestStore.cloudUser?.id);
         if (result.status === 'pending') {
           latestStore.setSyncStatus('pending');
           if (latestStore.syncStatus !== 'pending') {
@@ -1023,6 +1030,7 @@ export async function createProject(name: string): Promise<void> {
     await saveToDisk(project);
     store().addProject(project);
     store().setActiveProject(project.id);
+    track('project_created');
     store().showToast(`"${project.name}" created.`);
   } catch (err) {
     console.error('Create failed:', err);
@@ -1066,6 +1074,7 @@ export async function createProjectFromTemplate(
     await saveToDisk(project);
     store().addProject(project);
     store().setActiveProject(project.id);
+    track('project_created');
     store().showToast(`"${project.name}" created from ${template.label} template.`);
   } catch (err) {
     console.error('Create from template failed:', err);
@@ -1136,6 +1145,7 @@ export async function createProjectFromFolder(): Promise<void> {
     await saveToDisk(project);
     store().addProject(project);
     store().setActiveProject(project.id);
+    track('project_created');
     store().showToast(`"${project.name}" created from folder.`);
   } catch (err) {
     console.error('Folder scan failed:', err);
@@ -1329,6 +1339,7 @@ export async function importProjectFromFile(file: File): Promise<void> {
     await saveToDisk(project);
     store().addProject(project);
     store().setActiveProject(project.id);
+    track('project_imported');
     store().showToast(`"${project.name}" imported.`);
   } catch (err) {
     console.error('Import failed:', err);
