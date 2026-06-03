@@ -53,6 +53,7 @@ type SyncReason = 'manual' | 'signin' | 'startup' | 'autosave' | 'unknown';
 
 const SUPABASE_WRITE_TIMEOUT_MS = 15000;
 const SUBSCRIPTION_FETCH_TIMEOUT_MS = 6000;
+const WRITE_SESSION_TIMEOUT_MS = 2500;
 
 // signOut() makes a live network call. Cap it so logout can never hang the UI.
 const LOGOUT_SIGNOUT_TIMEOUT_MS = 5000;
@@ -497,54 +498,61 @@ async function ensureSupabaseReachable(): Promise<void> {
 
 // ─── Direct REST write path for autosave ──────────────────────────────────────
 
-function getCachedSupabaseAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
+async function getAuthenticatedWriteSession(
+  knownUserId: string | undefined,
+  meta: SyncLogMeta = {},
+): Promise<{ userId: string; accessToken: string } | null> {
+  if (!supabase) return null;
 
-  const readFromStorage = (storage: Storage | undefined): string | null => {
-    if (!storage) return null;
+  try {
+    const { data, error } = await Promise.race([
+      supabase.auth.getSession(),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Write session lookup timed out')),
+          WRITE_SESSION_TIMEOUT_MS,
+        ),
+      ),
+    ]);
 
-    for (let i = 0; i < storage.length; i++) {
-      const key = storage.key(i);
-      if (!key) continue;
-
-      const looksLikeSupabaseAuthKey =
-        key.startsWith('sb-') ||
-        key.startsWith('supabase.auth.') ||
-        key.includes('auth-token') ||
-        key.includes('gotrue');
-
-      if (!looksLikeSupabaseAuthKey) continue;
-
-      const raw = storage.getItem(key);
-      if (!raw) continue;
-
-      try {
-        const parsed = JSON.parse(raw) as {
-          access_token?: unknown;
-          currentSession?: { access_token?: unknown };
-          session?: { access_token?: unknown };
-        };
-
-        if (typeof parsed.access_token === 'string') {
-          return parsed.access_token;
-        }
-
-        if (typeof parsed.currentSession?.access_token === 'string') {
-          return parsed.currentSession.access_token;
-        }
-
-        if (typeof parsed.session?.access_token === 'string') {
-          return parsed.session.access_token;
-        }
-      } catch {
-        // Ignore non-JSON storage values.
-      }
+    if (error) {
+      logSyncError('push', 'write_session_error', error, meta);
+      return null;
     }
 
-    return null;
-  };
+    const session = data.session;
+    const sessionUserId = session?.user?.id;
+    const accessToken = session?.access_token;
+    const expiresAt = session?.expires_at ?? 0;
+    const nowSec = Math.floor(Date.now() / 1000);
 
-  return readFromStorage(window.localStorage) ?? readFromStorage(window.sessionStorage);
+    if (!sessionUserId || !accessToken) {
+      logSync('push', 'write_session_missing', meta);
+      return null;
+    }
+
+    if (expiresAt > 0 && nowSec >= expiresAt) {
+      logSync('push', 'write_session_expired', {
+        ...meta,
+        expiredSecondsAgo: nowSec - expiresAt,
+      });
+      return null;
+    }
+
+    if (knownUserId && knownUserId !== sessionUserId) {
+      logSync('push', 'write_session_user_mismatch', {
+        ...meta,
+        knownUserId,
+        sessionUserId,
+      });
+      return null;
+    }
+
+    return { userId: sessionUserId, accessToken };
+  } catch (err) {
+    logSyncError('push', 'write_session_lookup_failed', err, meta);
+    return null;
+  }
 }
 
 function makeSupabaseRestError(
@@ -572,20 +580,16 @@ function makeSupabaseRestError(
 
 async function upsertProjectRowsDirect(
   rows: ProjectRow[],
+  accessToken: string,
   eventBase: 'request' | 'batch',
   meta: SyncLogMeta = {},
   timeoutMs = SUPABASE_WRITE_TIMEOUT_MS,
 ): Promise<void> {
   const projectUrl = cloudSyncEnv.VITE_SUPABASE_URL;
   const anonKey = cloudSyncEnv.VITE_SUPABASE_ANON_KEY;
-  const accessToken = getCachedSupabaseAccessToken();
 
   if (!projectUrl || !anonKey) {
     throw new Error('Supabase REST configuration is missing.');
-  }
-
-  if (!accessToken) {
-    throw new Error('Cloud access token unavailable. Will retry after session refresh.');
   }
 
   const endpoint = new URL(`${projectUrl}/rest/v1/${PROJECTS_TABLE}`);
@@ -1123,11 +1127,10 @@ export async function pushProject(
 
   const connectionGenerationAtStart = cloudConnectionGeneration;
 
-  let userId: string;
+  let userId = knownUserId;
   let requestId: string;
 
   if (knownUserId) {
-    userId = knownUserId;
     requestId = nextRequestId('push');
 
     logSync('push', 'auth_skipped_known_user', {
@@ -1158,6 +1161,31 @@ export async function pushProject(
   }
 
   try {
+    if (!userId) {
+      return {
+        status: 'pending',
+        message: 'Cloud session is missing. Saved locally and will retry after sign-in.',
+      };
+    }
+
+    const writeSession = await getAuthenticatedWriteSession(userId, {
+      reason: 'autosave',
+      requestId,
+      projectId: project.id,
+    });
+
+    if (!writeSession) {
+      if (userId) {
+        await enqueue(project, userId);
+      }
+      return {
+        status: 'pending',
+        message: 'Cloud session is not ready. Saved locally and will retry after sign-in.',
+      };
+    }
+
+    userId = writeSession.userId;
+
     const row: ProjectRow = {
       user_id: userId,
       project_id: project.id,
@@ -1197,6 +1225,7 @@ export async function pushProject(
 
       await upsertProjectRowsDirect(
         [row],
+        writeSession.accessToken,
         'request',
         {
           reason: 'autosave',
@@ -1273,7 +1302,9 @@ export async function pushProject(
         projectId: project.id,
       });
 
-      await enqueue(project, userId);
+      if (userId) {
+        await enqueue(project, userId);
+      }
     }
 
     return {
