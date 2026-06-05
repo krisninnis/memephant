@@ -124,10 +124,12 @@
 
     <h2>Crash reporting and telemetry</h2>
     <p>
-      Memephant does not use product analytics or ad-tracking code in the core app. Optional crash
-      reporting is disabled by default and controlled in Settings. The crash-reporting code is
-      designed to strip breadcrumbs and user-authored content where possible, but you should leave
-      it disabled if you do not want diagnostics sent to a third-party crash reporting provider.
+      The production web app may send anonymous product usage event names through PostHog when
+      product analytics are configured. These events are used to understand product usage and do not
+      include project content, project names, summaries, goals, changelog entries, Context Passport
+      contents, Memory Vault contents, file paths, prompts, AI responses, user email, or user ID.
+      Product analytics are disabled in Tauri desktop builds and local development. Optional crash
+      reporting is disabled by default and controlled in Settings.
     </p>
 
     <h2>Your controls</h2>

@@ -74,7 +74,7 @@ They reduce obvious mistakes, but they are not a substitute for reviewing export
 
 ### Telemetry and diagnostics
 
-Memephant collects no product analytics or ad-tracking data in the core app.
+The production web app may send anonymous product usage event names through PostHog when product analytics are configured. These events are designed to exclude project content, project names, Context Passport contents, Memory Vault contents, file paths, prompts, AI responses, user email, and user ID. Product analytics are disabled in Tauri desktop builds and local development.
 Crash reporting is optional, disabled by default, and controlled by the user in Settings.
 The clipboard watcher is opt-in only and is never active by default.
 

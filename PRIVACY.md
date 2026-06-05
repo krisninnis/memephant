@@ -40,7 +40,9 @@ Optional Local AI/Private Mode may call a local Ollama endpoint you configure on
 
 ## Crash reporting and telemetry
 
-Memephant does not use product analytics or ad-tracking code in the core app. Crash reporting is optional, disabled by default, and controlled in Settings. The crash-reporting path is designed to strip user-authored content where possible, but leave it disabled if you do not want diagnostics sent to a third-party crash reporting provider.
+The production web app may send anonymous product usage events through PostHog when product analytics are configured. These event names are used to understand product usage and do not include project content, project names, summaries, goals, changelog entries, Context Passport contents, Memory Vault contents, file paths, prompts, AI responses, user email, or user ID. Product analytics are disabled in Tauri desktop builds and local development.
+
+Crash reporting is optional, disabled by default, and controlled in Settings. The crash-reporting path is designed to strip user-authored content where possible, but leave it disabled if you do not want diagnostics sent to a third-party crash reporting provider.
 
 ## Your control
 
