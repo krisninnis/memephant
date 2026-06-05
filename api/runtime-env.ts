@@ -13,6 +13,8 @@ type RuntimeEnv = {
   VITE_SUPABASE_URL?: string;
   VITE_SUPABASE_ANON_KEY?: string;
   VITE_SENTRY_DSN?: string;
+  VITE_POSTHOG_KEY?: string;
+  VITE_POSTHOG_HOST?: string;
 };
 
 function requestOrigin(req: VercelRequest): string {
@@ -42,6 +44,8 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     VITE_SUPABASE_ANON_KEY:
       process.env.VITE_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? '',
     VITE_SENTRY_DSN: process.env.VITE_SENTRY_DSN ?? '',
+    VITE_POSTHOG_KEY: process.env.VITE_POSTHOG_KEY ?? '',
+    VITE_POSTHOG_HOST: process.env.VITE_POSTHOG_HOST ?? '',
   };
 
   res.setHeader('Content-Type', 'application/javascript; charset=utf-8');

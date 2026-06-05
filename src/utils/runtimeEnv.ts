@@ -4,6 +4,8 @@ type RuntimeEnv = {
   VITE_SUPABASE_URL?: string;
   VITE_SUPABASE_ANON_KEY?: string;
   VITE_SENTRY_DSN?: string;
+  VITE_POSTHOG_KEY?: string;
+  VITE_POSTHOG_HOST?: string;
 };
 
 declare global {
@@ -26,5 +28,7 @@ export function getRuntimeEnv(): RuntimeEnv {
     VITE_SUPABASE_ANON_KEY:
       windowEnv.VITE_SUPABASE_ANON_KEY ?? viteEnv.VITE_SUPABASE_ANON_KEY,
     VITE_SENTRY_DSN: windowEnv.VITE_SENTRY_DSN ?? viteEnv.VITE_SENTRY_DSN,
+    VITE_POSTHOG_KEY: windowEnv.VITE_POSTHOG_KEY ?? viteEnv.VITE_POSTHOG_KEY,
+    VITE_POSTHOG_HOST: windowEnv.VITE_POSTHOG_HOST ?? viteEnv.VITE_POSTHOG_HOST,
   };
 }

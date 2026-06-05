@@ -27,10 +27,11 @@ describe('cloud project save auth path', () => {
   });
 
   it('keeps cloud-disabled saves local without showing pending sync', () => {
-    expect(tauriActionsSource).toContain('if (!latestStore.settings.privacy.cloudSyncEnabled)');
+    expect(tauriActionsSource).toContain('const cloudSyncEnabled = latestStore.settings.privacy.cloudSyncEnabled;');
+    expect(tauriActionsSource).toContain('if (!cloudSyncEnabled)');
     expect(tauriActionsSource).toContain("latestStore.setSyncStatus('saved_local');");
     expect(tauriActionsSource.indexOf('browserStore.save(localProject.id, data)')).toBeLessThan(
-      tauriActionsSource.indexOf('setTimeout(() => {'),
+      tauriActionsSource.indexOf('void attemptCloudPushAfterLocalSave(localProject);'),
     );
   });
 
@@ -39,5 +40,18 @@ describe('cloud project save auth path', () => {
     expect(tauriActionsSource).toContain(
       'const result = await pushProject(localProject, latestStore.cloudUser?.id);',
     );
+    expect(tauriActionsSource).toContain('void attemptCloudPushAfterLocalSave(localProject);');
+  });
+
+  it('does not silently ignore unavailable cloud sync when sync is enabled', () => {
+    expect(tauriActionsSource).toContain("if (result.status === 'disabled')");
+    expect(tauriActionsSource).toContain("'Saved locally, but cloud sync is not available.'");
+  });
+
+  it('keeps cloud save debug logging gated and content-free', () => {
+    expect(tauriActionsSource).toContain("window.localStorage.getItem('mph_debug_cloud_save') !== '1'");
+    expect(tauriActionsSource).toContain("console.info('[cloud-save]', meta)");
+    expect(tauriActionsSource).not.toContain('debugCloudSave({ project');
+    expect(tauriActionsSource).not.toContain('debugCloudSave({ data');
   });
 });

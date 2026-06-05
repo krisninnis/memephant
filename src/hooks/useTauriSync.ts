@@ -10,9 +10,25 @@ import {
   replaceCloudHydrationAutosaveSkipIds,
 } from '../utils/cloudHydrationAutosave';
 import { devError, devWarn } from '../utils/devLogging';
+import { track } from '../lib/analytics';
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+}
+
+const OAUTH_SIGNIN_PENDING_KEY = 'mph_analytics_oauth_signin_pending';
+
+function consumeOAuthSignInPending(): boolean {
+  try {
+    if (window.sessionStorage.getItem(OAUTH_SIGNIN_PENDING_KEY) !== '1') {
+      return false;
+    }
+
+    window.sessionStorage.removeItem(OAUTH_SIGNIN_PENDING_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function withUiTimeout<T>(
@@ -178,6 +194,10 @@ export function useTauriSync() {
               event === 'INITIAL_SESSION' || event === 'SIGNED_IN';
 
             if (!shouldHydrateCloudProjects) return;
+
+            if (event === 'SIGNED_IN' && consumeOAuthSignInPending()) {
+              track('sign_in_completed');
+            }
 
             if (currentId === incomingUser.id) return;
 
