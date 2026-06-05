@@ -65,6 +65,7 @@ const gameProject: ProjectMemory = {
         status: 'Buggy after round 5',
         notes: 'Duplicates enemies after round 5.',
         codeSnippet: `local apiKey = "${FAKE_SECRET}"`,
+        includeInContextPassport: true,
       },
     ],
   },
@@ -132,6 +133,28 @@ describe('game project support', () => {
     expect(exportText).toContain('## Game Context');
     expect(exportText).toContain('NPCSpawner.lua');
     expect(exportText).not.toContain(FAKE_SECRET);
+  });
+
+  it('keeps Script Vault code snippets out of Context Passport until explicitly included', () => {
+    const optedOutProject: ProjectMemory = {
+      ...gameProject,
+      gameContext: {
+        ...gameProject.gameContext,
+        scriptVault: gameProject.gameContext?.scriptVault?.map((script) => ({
+          ...script,
+          includeInContextPassport: false,
+        })),
+      },
+    };
+
+    const passport = generateContextPassport(optedOutProject);
+
+    expect(passport.formats.markdown).toContain('NPCSpawner.lua');
+    expect(passport.formats.markdown).toContain('Platform/language: Luau');
+    expect(passport.formats.markdown).not.toContain('Code snippet:');
+    expect(passport.formats.markdown).not.toContain('local apiKey');
+    expect(passport.formats.claude).not.toContain('<code_snippet>');
+    expect(passport.formats.codex).not.toContain('CODE_SNIPPET:');
   });
 
   it('uses game-aware workflow guidance for game projects', () => {

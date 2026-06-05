@@ -86,7 +86,7 @@ export function formatGameContextMarkdown(project: ProjectMemory, clean: CleanTe
       if (script.relatedSystem) lines.push(`  - Related system: ${clean(script.relatedSystem)}`);
       if (script.status) lines.push(`  - Status: ${clean(script.status)}`);
       if (script.notes) lines.push(`  - Notes: ${clean(script.notes)}`);
-      if (script.codeSnippet) {
+      if (script.includeInContextPassport === true && script.codeSnippet) {
         lines.push('  - Code snippet:');
         lines.push('```');
         lines.push(clean(script.codeSnippet));
@@ -169,7 +169,9 @@ export function formatGameContextXml(project: ProjectMemory, clean: CleanText): 
       if (script.relatedSystem) lines.push(`        <related_system>${clean(script.relatedSystem)}</related_system>`);
       if (script.status) lines.push(`        <status>${clean(script.status)}</status>`);
       if (script.notes) lines.push(`        <notes>${clean(script.notes)}</notes>`);
-      if (script.codeSnippet) lines.push(`        <code_snippet>${clean(script.codeSnippet)}</code_snippet>`);
+      if (script.includeInContextPassport === true && script.codeSnippet) {
+        lines.push(`        <code_snippet>${clean(script.codeSnippet)}</code_snippet>`);
+      }
       lines.push('      </script>');
     });
     lines.push('    </script_vault>');
@@ -231,7 +233,9 @@ export function formatGameContextCodex(project: ProjectMemory, clean: CleanText)
       if (script.relatedSystem) lines.push(`      RELATED_SYSTEM: ${clean(script.relatedSystem)}`);
       if (script.status) lines.push(`      STATUS: ${clean(script.status)}`);
       if (script.notes) lines.push(`      NOTES: ${clean(script.notes)}`);
-      if (script.codeSnippet) lines.push(`      CODE_SNIPPET: ${clean(script.codeSnippet)}`);
+      if (script.includeInContextPassport === true && script.codeSnippet) {
+        lines.push(`      CODE_SNIPPET: ${clean(script.codeSnippet)}`);
+      }
     });
   }
 

@@ -241,6 +241,10 @@ function normalizeScriptVault(value: unknown): ScriptVaultEntry[] | undefined {
       status: normalizeOptionalString(item.status),
       notes: normalizeOptionalString(item.notes),
       codeSnippet: normalizeOptionalString(item.codeSnippet),
+      includeInContextPassport:
+        typeof item.includeInContextPassport === 'boolean'
+          ? item.includeInContextPassport
+          : undefined,
     }))
     .filter((script) => script.scriptName.trim().length > 0);
 

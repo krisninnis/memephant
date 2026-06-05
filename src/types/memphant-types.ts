@@ -215,6 +215,7 @@ export interface ScriptVaultEntry {
   status?: string;
   notes?: string;
   codeSnippet?: string;
+  includeInContextPassport?: boolean;
 }
 
 export interface GameProjectContext {
