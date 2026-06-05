@@ -1274,6 +1274,85 @@ select {
   margin-bottom: 12px;
 }
 
+.script-vault-section {
+  margin-top: 26px;
+}
+
+.script-vault-card {
+  padding: 16px;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 8px;
+  background: rgba(8, 18, 33, 0.5);
+}
+
+.script-vault-card__header,
+.script-record-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.script-vault-card__header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.script-vault-add-btn {
+  margin-top: 2px;
+}
+
+.script-vault-card__help {
+  margin: 10px 0 0;
+  color: #aab3c5;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.script-vault-card__help--roblox {
+  color: #93c5fd;
+}
+
+.script-vault-empty-state {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.script-vault-empty-state strong {
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+.script-vault-empty-state p {
+  margin: 6px 0 12px;
+  color: #8a8aa3;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.script-vault-record-list {
+  margin-top: 16px;
+}
+
+.script-record-card {
+  border-color: rgba(125, 211, 252, 0.16);
+}
+
+.script-record-card__name {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #8a8aa3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .game-code-snippet {
   min-height: 120px;
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;

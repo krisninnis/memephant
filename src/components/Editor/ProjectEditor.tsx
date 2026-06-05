@@ -777,88 +777,119 @@ export function ProjectEditor() {
             </div>
           </div>
 
-          <div className="game-context-section">
-            <div className="game-context-section__header">
-              <div className="field-label">Script Vault</div>
-              <button type="button" className="list-item-add-btn" onClick={addScriptVaultEntry}>
-                Add script
-              </button>
-            </div>
-            <div className="game-record-list">
-              {(activeGameContext.scriptVault ?? []).map((script, index) => (
-                <article className="game-record-card" key={script.id ?? index}>
-                  <div className="game-record-card__header">
-                    <input
-                      className="field-input"
-                      value={script.scriptName}
-                      onChange={(event) => updateScriptVaultEntry(index, { ...script, scriptName: event.target.value })}
-                      placeholder={activeGamePlatform === 'roblox' ? 'NPCSpawner.lua' : 'Script name'}
-                    />
-                    <button
-                      type="button"
-                      className="list-item-remove"
-                      onClick={() => removeScriptVaultEntry(index)}
-                      aria-label="Remove script"
-                    >
-                      x
-                    </button>
-                  </div>
-                  <div className="game-context-grid">
-                    <label>
-                      Platform/language
-                      <input
-                        className="field-input"
-                        value={script.platformLanguage ?? ''}
-                        onChange={(event) => updateScriptVaultEntry(index, { ...script, platformLanguage: event.target.value })}
-                        placeholder={activeGamePlatform === 'roblox' ? 'Luau' : 'Language'}
-                      />
-                    </label>
-                    <label>
-                      Related system
-                      <input
-                        className="field-input"
-                        value={script.relatedSystem ?? ''}
-                        onChange={(event) => updateScriptVaultEntry(index, { ...script, relatedSystem: event.target.value })}
-                        placeholder="Example: NPC waves"
-                      />
-                    </label>
-                    <label>
-                      Status
-                      <input
-                        className="field-input"
-                        value={script.status ?? ''}
-                        onChange={(event) => updateScriptVaultEntry(index, { ...script, status: event.target.value })}
-                        placeholder="Example: Working, buggy, planned"
-                      />
-                    </label>
-                    <label>
-                      Purpose
-                      <textarea
-                        className="field-textarea"
-                        value={script.purpose ?? ''}
-                        onChange={(event) => updateScriptVaultEntry(index, { ...script, purpose: event.target.value })}
-                      />
-                    </label>
-                    <label>
-                      Notes
-                      <textarea
-                        className="field-textarea"
-                        value={script.notes ?? ''}
-                        onChange={(event) => updateScriptVaultEntry(index, { ...script, notes: event.target.value })}
-                      />
-                    </label>
-                    <label>
-                      Optional code snippet
-                      <textarea
-                        className="field-textarea game-code-snippet"
-                        value={script.codeSnippet ?? ''}
-                        onChange={(event) => updateScriptVaultEntry(index, { ...script, codeSnippet: event.target.value })}
-                        spellCheck={false}
-                      />
-                    </label>
-                  </div>
-                </article>
-              ))}
+          <div className="game-context-section script-vault-section">
+            <div className="script-vault-card" role="region" aria-label="Script Vault">
+              <div className="script-vault-card__header">
+                <div>
+                  <div className="field-label">Script Vault</div>
+                  <h3>Important scripts</h3>
+                </div>
+                <button type="button" className="list-item-add-btn script-vault-add-btn" onClick={addScriptVaultEntry}>
+                  Add script
+                </button>
+              </div>
+              <p className="script-vault-card__help">
+                Store important scripts here as context. This is not an IDE or Git replacement.
+              </p>
+              {activeGamePlatform === 'roblox' && (
+                <p className="script-vault-card__help script-vault-card__help--roblox">
+                  For Roblox, track LocalScripts, ModuleScripts, ServerScriptService, ReplicatedStorage,
+                  RemoteEvents and DataStores.
+                </p>
+              )}
+
+              {(activeGameContext.scriptVault ?? []).length === 0 ? (
+                <div className="script-vault-empty-state">
+                  <strong>No scripts stored yet.</strong>
+                  <p>Add a lightweight record for scripts an AI should understand before helping with this game.</p>
+                  <button type="button" className="github-scan-btn" onClick={addScriptVaultEntry}>
+                    Add first script
+                  </button>
+                </div>
+              ) : (
+                <div className="game-record-list script-vault-record-list">
+                  {(activeGameContext.scriptVault ?? []).map((script, index) => (
+                    <article className="game-record-card script-record-card" key={script.id ?? index}>
+                      <div className="game-record-card__header script-record-card__header">
+                        <label className="script-record-card__name">
+                          Script name
+                          <input
+                            className="field-input"
+                            value={script.scriptName}
+                            onChange={(event) => updateScriptVaultEntry(index, { ...script, scriptName: event.target.value })}
+                            placeholder={activeGamePlatform === 'roblox' ? 'NPCSpawner.lua' : 'Script name'}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="list-item-remove"
+                          onClick={() => removeScriptVaultEntry(index)}
+                          aria-label="Remove script"
+                        >
+                          x
+                        </button>
+                      </div>
+                      <div className="game-context-grid">
+                        <label>
+                          Platform/language
+                          <input
+                            className="field-input"
+                            value={script.platformLanguage ?? ''}
+                            onChange={(event) => updateScriptVaultEntry(index, { ...script, platformLanguage: event.target.value })}
+                            placeholder={activeGamePlatform === 'roblox' ? 'Luau' : 'Language'}
+                          />
+                        </label>
+                        <label>
+                          Purpose
+                          <textarea
+                            className="field-textarea"
+                            value={script.purpose ?? ''}
+                            onChange={(event) => updateScriptVaultEntry(index, { ...script, purpose: event.target.value })}
+                            placeholder="Example: Spawns enemy waves"
+                          />
+                        </label>
+                        <label>
+                          Related system
+                          <input
+                            className="field-input"
+                            value={script.relatedSystem ?? ''}
+                            onChange={(event) => updateScriptVaultEntry(index, { ...script, relatedSystem: event.target.value })}
+                            placeholder="Example: NPC waves"
+                          />
+                        </label>
+                        <label>
+                          Status
+                          <input
+                            className="field-input"
+                            value={script.status ?? ''}
+                            onChange={(event) => updateScriptVaultEntry(index, { ...script, status: event.target.value })}
+                            placeholder="Example: Working, buggy, planned"
+                          />
+                        </label>
+                        <label>
+                          Notes
+                          <textarea
+                            className="field-textarea"
+                            value={script.notes ?? ''}
+                            onChange={(event) => updateScriptVaultEntry(index, { ...script, notes: event.target.value })}
+                            placeholder="Known issues, assumptions, or handoff notes"
+                          />
+                        </label>
+                        <label>
+                          Optional code snippet
+                          <textarea
+                            className="field-textarea game-code-snippet"
+                            value={script.codeSnippet ?? ''}
+                            onChange={(event) => updateScriptVaultEntry(index, { ...script, codeSnippet: event.target.value })}
+                            placeholder="Paste a small snippet only if it is useful context"
+                            spellCheck={false}
+                          />
+                        </label>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>
