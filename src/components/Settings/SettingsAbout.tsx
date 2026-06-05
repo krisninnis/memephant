@@ -21,7 +21,7 @@ function isTauri(): boolean {
 }
 
 const PRIVACY_SUMMARY = `Memephant stores your project memory on your device first.
-Cloud backup is optional. The core app does not use product analytics or ad tracking.
+Cloud backup is optional. Production web may use anonymous product usage event names when configured; desktop and local development stay analytics-off.
 
 When you click "Copy for [Platform]", text goes to your clipboard only.
 Memephant does not intentionally connect to hosted AI services for core exports.

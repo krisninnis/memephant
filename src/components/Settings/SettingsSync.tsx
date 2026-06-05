@@ -15,6 +15,7 @@ import { replaceCloudHydrationAutosaveSkipIds } from '../../utils/cloudHydration
 import { devError, devWarn } from '../../utils/devLogging';
 import { getAuthCallbackUrl } from '../../utils/authCallbackUrl';
 import { getRuntimeEnv } from '../../utils/runtimeEnv';
+import { track } from '../../lib/analytics';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,24 @@ function clearAuthUrlState(): void {
   cleanUrl.search = '';
   cleanUrl.hash = '';
   window.history.replaceState({}, document.title, cleanUrl.toString());
+}
+
+const OAUTH_SIGNIN_PENDING_KEY = 'mph_analytics_oauth_signin_pending';
+
+function markOAuthSignInPending(): void {
+  try {
+    window.sessionStorage.setItem(OAUTH_SIGNIN_PENDING_KEY, '1');
+  } catch {
+    // sessionStorage may be unavailable in embedded contexts.
+  }
+}
+
+function clearOAuthSignInPending(): void {
+  try {
+    window.sessionStorage.removeItem(OAUTH_SIGNIN_PENDING_KEY);
+  } catch {
+    // sessionStorage may be unavailable in embedded contexts.
+  }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -712,13 +731,16 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
           'Sign-in is taking longer than expected. Please wait a moment and try again.',
           'settings.signin_submit',
         );
+        track('sign_in_completed');
       } else {
+        track('sign_up_started');
         await withUiTimeout(
           signUp(email.trim(), password),
           20000,
           'Account creation is taking longer than expected. Please wait a moment and try again.',
           'settings.signup_submit',
         );
+        track('sign_up_completed');
         setSentToEmail(email.trim());
         setMode('emailSent');
         return;
@@ -989,6 +1011,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
       if (error) throw new Error(error.message);
       if (!data.url) throw new Error('No OAuth URL returned.');
 
+      markOAuthSignInPending();
+
       updateSettings({
         privacy: {
           ...settings.privacy,
@@ -1025,6 +1049,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
       }
       const cloudUserObj = { id: user.id, email: user.email };
       setCloudUser(cloudUserObj);
+      track('sign_in_completed');
+      clearOAuthSignInPending();
       await finishCloudSignIn(cloudUserObj);
     } catch {
       setFormError('Could not detect session. Try again.');

@@ -114,24 +114,24 @@ export function IntroModal({ onStartTour }: IntroModalProps) {
         </h1>
 
         <p className="intro-subtext">
-          Memephant keeps your project in sync across ChatGPT, Claude, Grok and more.
-          Start once. Continue anywhere.
+          Describe your project once. Generate a Context Passport. Paste it into any AI —
+          ChatGPT, Claude, Gemini, Grok — and it picks up exactly where you left off.
         </p>
 
         <div className="intro-steps">
           <div className="intro-step">
             <span className="intro-step__icon">✏️</span>
-            <span className="intro-step__label">Fill in your project once</span>
+            <span className="intro-step__label">Describe once</span>
+          </div>
+          <div className="intro-step-arrow">→</div>
+          <div className="intro-step">
+            <span className="intro-step__icon">🗺️</span>
+            <span className="intro-step__label">Generate a Context Passport</span>
           </div>
           <div className="intro-step-arrow">→</div>
           <div className="intro-step">
             <span className="intro-step__icon">📋</span>
-            <span className="intro-step__label">Copy to any AI</span>
-          </div>
-          <div className="intro-step-arrow">→</div>
-          <div className="intro-step">
-            <span className="intro-step__icon">🔄</span>
-            <span className="intro-step__label">Paste back to sync</span>
+            <span className="intro-step__label">Paste into any AI</span>
           </div>
         </div>
 
