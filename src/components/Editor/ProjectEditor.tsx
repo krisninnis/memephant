@@ -29,6 +29,7 @@ import type {
   GameProjectContext,
   GameSystemKey,
   KnownGameBug,
+  ProjectMemory,
   ProjectCategory,
   ScriptVaultEntry,
 } from '../../types/memphant-types';
@@ -249,6 +250,181 @@ function mergeGameContextDefaults(
 
 function nextRecordId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}`;
+}
+
+type ScanScriptKind = 'LocalScript' | 'ModuleScript' | 'Server Script' | 'Unknown script';
+
+type ScriptScanSuggestion = {
+  fileName: string;
+  relativePath: string;
+  scriptKind: ScanScriptKind;
+  relatedSystem: string;
+};
+
+type FolderScanSummary = {
+  projectType: string;
+  filesAnalysed: number;
+  importantFiles: string[];
+  scripts: ScriptScanSuggestion[];
+  suggestions: ScriptScanSuggestion[];
+};
+
+function fileNameFromPath(value: string): string {
+  const normalized = value.replace(/\\/g, '/');
+  return normalized.split('/').filter(Boolean).pop() ?? normalized;
+}
+
+function looksLikeAbsoluteLocalPath(value: string): boolean {
+  return (
+    /^[A-Za-z]:[\\/]/.test(value) ||
+    /^\\\\/.test(value) ||
+    /^\/(?:Users|home|var|tmp|private|Volumes)\//i.test(value)
+  );
+}
+
+function safeScanAssetLabel(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const normalized = trimmed.replace(/\\/g, '/').replace(/^\.\/+/, '');
+  if (looksLikeAbsoluteLocalPath(trimmed)) {
+    return fileNameFromPath(trimmed);
+  }
+
+  return normalized;
+}
+
+function uniqueSafeScanAssets(assets: string[]): string[] {
+  const seen = new Set<string>();
+  const safeAssets: string[] = [];
+
+  for (const asset of assets) {
+    const label = safeScanAssetLabel(asset);
+    if (!label) continue;
+
+    const key = label.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    safeAssets.push(label);
+  }
+
+  return safeAssets;
+}
+
+function isLuauScriptFile(path: string): boolean {
+  return /\.(lua|luau)$/i.test(path);
+}
+
+function classifyScriptByName(fileName: string): ScanScriptKind {
+  const lower = fileName.toLowerCase();
+  if (lower.includes('module')) return 'ModuleScript';
+  if (lower.includes('localscript') || lower.includes('local') || lower.includes('client')) {
+    return 'LocalScript';
+  }
+  if (lower.includes('serverscript') || lower.includes('server')) return 'Server Script';
+  return 'Unknown script';
+}
+
+function inferRelatedSystemFromScriptName(fileName: string): string {
+  const lower = fileName.toLowerCase();
+  if (/(npc|enemy|spawn)/.test(lower)) return 'NPCs';
+  if (/door/.test(lower)) return 'Door Interaction';
+  if (/(remote|event)/.test(lower)) return 'RemoteEvents';
+  if (/(datastore|data-store|save|profile)/.test(lower)) return 'DataStores';
+  if (/(move|movement|walk|sprint|jump)/.test(lower)) return 'Movement';
+  if (/(combat|weapon|damage|hit)/.test(lower)) return 'Combat';
+  if (/(inventory|item|bag)/.test(lower)) return 'Inventory';
+  if (/(economy|currency|coin|shop)/.test(lower)) return 'Economy';
+  if (/quest/.test(lower)) return 'Quests';
+  if (/(ui|hud|menu|screen)/.test(lower)) return 'UI';
+  if (/(multi|network|matchmaking|team)/.test(lower)) return 'Multiplayer';
+  if (/(gamepass|developerproduct|product|monetis)/.test(lower)) return 'Monetisation';
+  return 'Unknown';
+}
+
+function scriptVaultNameKey(scriptName: string): string {
+  return fileNameFromPath(scriptName).trim().toLowerCase();
+}
+
+function detectFolderProjectType(
+  project: ProjectMemory,
+  activeGamePlatform: GamePlatform,
+  activeProjectCategory: ProjectCategory,
+  safeAssets: string[],
+): string {
+  const stack = (project.detectedStack ?? []).map((item) => item.toLowerCase());
+  const platformTarget = project.gameContext?.overview?.platformTarget?.toLowerCase() ?? '';
+  const isGameContext = activeProjectCategory === 'game' || Boolean(project.gamePlatform || project.gameContext);
+
+  if (
+    (isGameContext && activeGamePlatform === 'roblox') ||
+    project.gamePlatform === 'roblox' ||
+    platformTarget.includes('roblox') ||
+    stack.some((item) => item.includes('roblox') || item.includes('luau')) ||
+    (activeProjectCategory === 'game' && safeAssets.some(isLuauScriptFile))
+  ) {
+    return 'Roblox';
+  }
+
+  if (activeProjectCategory === 'game') {
+    const platform = GAME_PLATFORM_OPTIONS.find((option) => option.value === activeGamePlatform);
+    return platform?.label ?? 'Game';
+  }
+
+  if (project.detectedStack && project.detectedStack.length > 0) {
+    return project.detectedStack.slice(0, 3).join(', ');
+  }
+
+  return 'Project folder';
+}
+
+function buildFolderScanSummary(
+  project: ProjectMemory,
+  activeGamePlatform: GamePlatform,
+  activeProjectCategory: ProjectCategory,
+  scriptVault: ScriptVaultEntry[],
+): FolderScanSummary {
+  const safeAssets = uniqueSafeScanAssets(project.importantAssets ?? []);
+  const existingScriptNames = new Set(
+    scriptVault
+      .map((script) => scriptVaultNameKey(script.scriptName))
+      .filter(Boolean),
+  );
+  const scripts = safeAssets
+    .filter(isLuauScriptFile)
+    .map((relativePath) => {
+      const fileName = fileNameFromPath(relativePath);
+      return {
+        fileName,
+        relativePath,
+        scriptKind: classifyScriptByName(fileName),
+        relatedSystem: inferRelatedSystemFromScriptName(fileName),
+      };
+    });
+
+  return {
+    projectType: detectFolderProjectType(project, activeGamePlatform, activeProjectCategory, safeAssets),
+    filesAnalysed: safeAssets.length,
+    importantFiles: safeAssets.slice(0, 8),
+    scripts,
+    suggestions: scripts.filter((script) => !existingScriptNames.has(scriptVaultNameKey(script.fileName))),
+  };
+}
+
+function scriptVaultEntryFromSuggestion(
+  suggestion: ScriptScanSuggestion,
+  id: string,
+): ScriptVaultEntry {
+  return {
+    id,
+    scriptName: suggestion.fileName,
+    platformLanguage: 'Luau',
+    purpose: '',
+    relatedSystem: suggestion.relatedSystem,
+    status: 'Planned',
+    notes: 'Suggested from linked folder scan',
+    codeSnippet: '',
+  };
 }
 
 function formatRestorePointTime(isoString: string): string {
@@ -501,6 +677,15 @@ export function ProjectEditor() {
   const activePlatformLinks = GAME_PLATFORM_LINKS[activeGamePlatform] ?? [];
   const folderActionLabel = getFolderActionLabel();
   const hasLinkedFolder = Boolean(activeProject.linkedFolder?.path);
+  const folderScanSummary = useMemo(
+    () => buildFolderScanSummary(
+      activeProject,
+      activeGamePlatform,
+      activeProjectCategory,
+      activeGameContext.scriptVault ?? [],
+    ),
+    [activeProject, activeGamePlatform, activeProjectCategory, activeGameContext.scriptVault],
+  );
 
   const updateGameContext = (next: GameProjectContext) => {
     update('gameContext', next);
@@ -577,6 +762,58 @@ export function ProjectEditor() {
           platformLanguage: activeGamePlatform === 'roblox' ? 'Luau' : '',
           status: 'Planned',
         },
+      ],
+    });
+  };
+
+  const addScriptVaultSuggestion = (suggestion: ScriptScanSuggestion) => {
+    const currentScripts = activeGameContext.scriptVault ?? [];
+    const existingScriptNames = new Set(
+      currentScripts
+        .map((script) => scriptVaultNameKey(script.scriptName))
+        .filter(Boolean),
+    );
+
+    if (existingScriptNames.has(scriptVaultNameKey(suggestion.fileName))) {
+      showToast('That script is already in the Script Vault.', 'info');
+      return;
+    }
+
+    updateGameContext({
+      ...activeGameContext,
+      scriptVault: [
+        ...currentScripts,
+        scriptVaultEntryFromSuggestion(suggestion, nextRecordId('script')),
+      ],
+    });
+  };
+
+  const addAllScriptVaultSuggestions = () => {
+    const currentScripts = activeGameContext.scriptVault ?? [];
+    const existingScriptNames = new Set(
+      currentScripts
+        .map((script) => scriptVaultNameKey(script.scriptName))
+        .filter(Boolean),
+    );
+    const additions = folderScanSummary.suggestions.filter((suggestion) => {
+      const key = scriptVaultNameKey(suggestion.fileName);
+      if (!key || existingScriptNames.has(key)) return false;
+      existingScriptNames.add(key);
+      return true;
+    });
+
+    if (additions.length === 0) {
+      showToast('No new script suggestions to add.', 'info');
+      return;
+    }
+
+    updateGameContext({
+      ...activeGameContext,
+      scriptVault: [
+        ...currentScripts,
+        ...additions.map((suggestion, index) =>
+          scriptVaultEntryFromSuggestion(suggestion, `${nextRecordId('script')}-${index}`),
+        ),
       ],
     });
   };
@@ -807,6 +1044,115 @@ export function ProjectEditor() {
           )}
         </div>
       </section>
+
+      {hasLinkedFolder && (
+        <section className="folder-scan-results-card" role="region" aria-label="Scan Results">
+          <div className="folder-scan-results-card__header">
+            <div>
+              <div className="field-label">Scan Results</div>
+              <h3>I found your project context.</h3>
+            </div>
+            <span className="folder-scan-results-card__badge">
+              {folderScanSummary.projectType}
+            </span>
+          </div>
+
+          {folderScanSummary.filesAnalysed === 0 ? (
+            <div className="folder-scan-results-card__empty">
+              <strong>No useful project files found yet.</strong>
+              <p>Try selecting the root folder of your project.</p>
+              <span>Last Scan: {formatLinkedFolderTime(activeProject.linkedFolder?.lastScannedAt)}</span>
+            </div>
+          ) : (
+            <>
+              <div className="folder-scan-results-card__stats" aria-label="Folder scan summary">
+                <span>Detected Project Type: <strong>{folderScanSummary.projectType}</strong></span>
+                <span>Files Analysed: <strong>{folderScanSummary.filesAnalysed}</strong></span>
+                <span>Scripts Found: <strong>{folderScanSummary.scripts.length}</strong></span>
+                <span>Last Scan: <strong>{formatLinkedFolderTime(activeProject.linkedFolder?.lastScannedAt)}</strong></span>
+              </div>
+
+              <div className="folder-scan-results-card__section">
+                <div className="folder-scan-results-card__section-title">Important Files</div>
+                <ul className="folder-scan-results-card__file-list">
+                  {folderScanSummary.importantFiles.map((file) => (
+                    <li key={file}>{file}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {folderScanSummary.scripts.length > 0 && (
+                <div className="folder-scan-results-card__section">
+                  <div className="folder-scan-results-card__section-title">Scripts Found</div>
+                  <ul className="folder-scan-results-card__script-list">
+                    {folderScanSummary.scripts.map((script) => (
+                      <li key={script.relativePath}>
+                        <span>{script.fileName}</span>
+                        <small>{script.scriptKind}</small>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {folderScanSummary.scripts.length > 0 && (
+                <div
+                  className="folder-scan-results-card__suggestions"
+                  role="region"
+                  aria-label="Suggested Script Vault entries"
+                >
+                  <div className="folder-scan-results-card__suggestions-header">
+                    <div>
+                      <div className="folder-scan-results-card__section-title">
+                        Suggested Script Vault entries
+                      </div>
+                      <p>Turn detected scripts into portable AI context without importing code.</p>
+                    </div>
+                    {folderScanSummary.suggestions.length > 0 && (
+                      <button
+                        type="button"
+                        className="github-scan-btn"
+                        onClick={addAllScriptVaultSuggestions}
+                      >
+                        Add all to Script Vault
+                      </button>
+                    )}
+                  </div>
+
+                  {folderScanSummary.suggestions.length > 0 ? (
+                    <ul className="folder-scan-results-card__suggestion-list">
+                      {folderScanSummary.suggestions.map((suggestion) => (
+                        <li key={suggestion.relativePath}>
+                          <div>
+                            <strong>{suggestion.fileName}</strong>
+                            <small>
+                              Luau - {suggestion.relatedSystem === 'Unknown'
+                                ? 'Related system unknown'
+                                : suggestion.relatedSystem}
+                            </small>
+                          </div>
+                          <button
+                            type="button"
+                            className="memory-cleanup-preview__ghost-btn"
+                            onClick={() => addScriptVaultSuggestion(suggestion)}
+                            aria-label={`Add ${suggestion.fileName} to Script Vault`}
+                          >
+                            Add individually
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="folder-scan-results-card__all-added">
+                      All detected scripts are already in the Script Vault.
+                    </p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
 
       <div className="field-group">
         <div className="field-label">Project Category</div>

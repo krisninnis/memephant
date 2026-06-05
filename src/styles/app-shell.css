@@ -1594,6 +1594,153 @@ select {
   font-weight: 600;
 }
 
+.folder-scan-results-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: -6px 0 18px;
+  padding: 14px;
+  border: 1px solid rgba(16, 185, 129, 0.24);
+  border-radius: 8px;
+  background: rgba(8, 19, 27, 0.78);
+}
+
+.folder-scan-results-card__header,
+.folder-scan-results-card__suggestions-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.folder-scan-results-card__header h3 {
+  margin: 4px 0 0;
+  color: #f8fafc;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.folder-scan-results-card__badge {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 999px;
+  color: #86efac;
+  background: rgba(16, 185, 129, 0.12);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.folder-scan-results-card__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.folder-scan-results-card__stats span {
+  padding: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 7px;
+  color: #aeb6c8;
+  background: rgba(15, 23, 42, 0.62);
+  font-size: 12px;
+}
+
+.folder-scan-results-card__stats strong {
+  color: #f8fafc;
+}
+
+.folder-scan-results-card__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.folder-scan-results-card__section-title {
+  color: #d8e3f8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.folder-scan-results-card__file-list,
+.folder-scan-results-card__script-list,
+.folder-scan-results-card__suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.folder-scan-results-card__file-list li,
+.folder-scan-results-card__script-list li,
+.folder-scan-results-card__suggestion-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 7px;
+  color: #d8e3f8;
+  background: rgba(15, 23, 42, 0.48);
+  font-size: 12px;
+}
+
+.folder-scan-results-card__file-list li {
+  justify-content: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.folder-scan-results-card__script-list span,
+.folder-scan-results-card__suggestion-list strong {
+  overflow-wrap: anywhere;
+}
+
+.folder-scan-results-card__script-list small,
+.folder-scan-results-card__suggestion-list small {
+  display: block;
+  margin-top: 2px;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.folder-scan-results-card__suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.54);
+}
+
+.folder-scan-results-card__suggestions-header p,
+.folder-scan-results-card__all-added,
+.folder-scan-results-card__empty p {
+  margin: 4px 0 0;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.folder-scan-results-card__empty {
+  padding: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  color: #d8e3f8;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.folder-scan-results-card__empty span {
+  display: block;
+  margin-top: 8px;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
 /* ── GitHub Scan button ───────────────────────────────────────────────────── */
 
 .github-scan-badge {

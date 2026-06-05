@@ -185,4 +185,141 @@ describe('ProjectEditor Script Vault', () => {
     expect(within(panel).getByRole('button', { name: 'Unlink Folder' })).toBeInTheDocument();
     expect(panel).not.toHaveTextContent('C:\\Users\\thoma\\repos\\private-roblox-game');
   });
+
+  it('renders scan results from linked folder assets without exposing local paths', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: [
+          'README.md',
+          'ServerScriptService/NPCSpawner.lua',
+          'ReplicatedStorage/DoorController.luau',
+          'C:\\Users\\thoma\\repos\\private-roblox-game\\SecretServer.lua',
+        ],
+        linkedFolder: {
+          path: 'C:\\Users\\thoma\\repos\\private-roblox-game',
+          scanHash: 'scan-roblox',
+          lastScannedAt: '2026-06-05T14:27:00.000Z',
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const scanResults = screen.getByRole('region', { name: 'Scan Results' });
+    expect(within(scanResults).getByText(/Detected Project Type:/)).toHaveTextContent('Roblox');
+    expect(within(scanResults).getByText(/Files Analysed:/)).toHaveTextContent('4');
+    expect(within(scanResults).getByText(/Scripts Found:/)).toHaveTextContent('3');
+    expect(within(scanResults).getByText('README.md')).toBeInTheDocument();
+    expect(within(scanResults).getAllByText('NPCSpawner.lua').length).toBeGreaterThan(0);
+    expect(within(scanResults).getAllByText('DoorController.luau').length).toBeGreaterThan(0);
+    expect(within(scanResults).getAllByText('SecretServer.lua').length).toBeGreaterThan(0);
+    expect(scanResults).not.toHaveTextContent('C:\\Users\\thoma');
+    expect(scanResults).not.toHaveTextContent('private-roblox-game');
+  });
+
+  it('shows a safe empty scan result state when no useful files were stored', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: [],
+        linkedFolder: {
+          path: 'C:\\Users\\thoma\\repos\\empty-game',
+          scanHash: 'scan-empty',
+          lastScannedAt: '2026-06-05T14:27:00.000Z',
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const scanResults = screen.getByRole('region', { name: 'Scan Results' });
+    expect(within(scanResults).getByText('No useful project files found yet.')).toBeInTheDocument();
+    expect(within(scanResults).getByText('Try selecting the root folder of your project.')).toBeInTheDocument();
+    expect(scanResults).not.toHaveTextContent('C:\\Users\\thoma');
+  });
+
+  it('shows Luau Script Vault suggestions and adds one suggested script', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: [
+          'ServerScriptService/NPCSpawner.lua',
+          'StarterPlayer/StarterPlayerScripts/ClientInput.luau',
+        ],
+        linkedFolder: {
+          path: 'C:\\Users\\thoma\\repos\\roblox-game',
+          scanHash: 'scan-scripts',
+          lastScannedAt: '2026-06-05T14:27:00.000Z',
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const scanResults = screen.getByRole('region', { name: 'Scan Results' });
+    expect(within(scanResults).getByRole('region', { name: 'Suggested Script Vault entries' })).toBeInTheDocument();
+    expect(within(scanResults).getAllByText('NPCSpawner.lua').length).toBeGreaterThan(0);
+    expect(within(scanResults).getAllByText('ClientInput.luau').length).toBeGreaterThan(0);
+    expect(within(scanResults).getByText('LocalScript')).toBeInTheDocument();
+
+    fireEvent.click(within(scanResults).getByRole('button', { name: 'Add NPCSpawner.lua to Script Vault' }));
+
+    const project = useProjectStore.getState().projects[0];
+    expect(project.gameContext?.scriptVault).toEqual([
+      expect.objectContaining({
+        scriptName: 'NPCSpawner.lua',
+        platformLanguage: 'Luau',
+        relatedSystem: 'NPCs',
+        status: 'Planned',
+        notes: 'Suggested from linked folder scan',
+        codeSnippet: '',
+      }),
+    ]);
+  });
+
+  it('adds all new script suggestions without duplicating existing Script Vault records', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: [
+          'ServerScriptService/NPCSpawner.lua',
+          'ReplicatedStorage/DoorController.lua',
+        ],
+        linkedFolder: {
+          path: 'C:\\Users\\thoma\\repos\\roblox-game',
+          scanHash: 'scan-add-all',
+          lastScannedAt: '2026-06-05T14:27:00.000Z',
+        },
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            {
+              id: 'existing-door',
+              scriptName: 'DoorController.lua',
+              platformLanguage: 'Luau',
+              relatedSystem: 'Door Interaction',
+              status: 'Working',
+            },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const scanResults = screen.getByRole('region', { name: 'Scan Results' });
+    fireEvent.click(within(scanResults).getByRole('button', { name: 'Add all to Script Vault' }));
+
+    const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
+    expect(scripts.map((script) => script.scriptName)).toEqual([
+      'DoorController.lua',
+      'NPCSpawner.lua',
+    ]);
+    expect(scripts.filter((script) => script.scriptName === 'DoorController.lua')).toHaveLength(1);
+  });
 });
