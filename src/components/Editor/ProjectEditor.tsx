@@ -279,9 +279,19 @@ type FolderScanSummary = {
   suggestions: ScriptScanSuggestion[];
 };
 
+type PendingScriptDuplicateConfirmation = {
+  existingName: string;
+  onConfirm: () => void;
+};
+
 function fileNameFromPath(value: string): string {
   const normalized = value.replace(/\\/g, '/');
   return normalized.split('/').filter(Boolean).pop() ?? normalized;
+}
+
+function scriptBaseName(value: string): string {
+  const fileName = fileNameFromPath(value).trim();
+  return fileName.replace(/\.[^.]+$/, '').trim();
 }
 
 function looksLikeAbsoluteLocalPath(value: string): boolean {
@@ -353,7 +363,38 @@ function inferRelatedSystemFromScriptName(fileName: string): string {
 }
 
 function scriptVaultNameKey(scriptName: string): string {
-  return fileNameFromPath(scriptName).trim().toLowerCase();
+  const baseName = scriptBaseName(scriptName);
+  return (baseName || 'Untitled script').toLowerCase();
+}
+
+function scriptVaultDisplayName(scriptName: string): string {
+  return fileNameFromPath(scriptName).trim() || 'Untitled script';
+}
+
+function findDuplicateScript(
+  scripts: ScriptVaultEntry[],
+  scriptName: string,
+  ignoreIndex?: number,
+): ScriptVaultEntry | undefined {
+  const key = scriptVaultNameKey(scriptName);
+  return scripts.find((script, index) => index !== ignoreIndex && scriptVaultNameKey(script.scriptName) === key);
+}
+
+function makeScriptCopyName(scriptName: string, existingScripts: ScriptVaultEntry[]): string {
+  const displayName = scriptVaultDisplayName(scriptName);
+  const dotIndex = displayName.lastIndexOf('.');
+  const hasExtension = dotIndex > 0;
+  const stem = hasExtension ? displayName.slice(0, dotIndex) : displayName;
+  const extension = hasExtension ? displayName.slice(dotIndex) : '';
+  const existingNames = new Set(existingScripts.map((script) => scriptVaultDisplayName(script.scriptName).toLowerCase()));
+
+  for (let copyNumber = 1; copyNumber < 1000; copyNumber += 1) {
+    const suffix = copyNumber === 1 ? ' copy' : ` copy ${copyNumber}`;
+    const candidate = `${stem}${suffix}${extension}`;
+    if (!existingNames.has(candidate.toLowerCase())) return candidate;
+  }
+
+  return `${stem} copy ${Date.now().toString(36)}${extension}`;
 }
 
 function detectFolderProjectType(
@@ -521,6 +562,8 @@ export function ProjectEditor() {
   const [cleanupPreview, setCleanupPreview] = useState<ProjectMemoryCleanupPreview | null>(null);
   const [scriptWorkspaceOpen, setScriptWorkspaceOpen] = useState(false);
   const [selectedScriptIndex, setSelectedScriptIndex] = useState(0);
+  const [pendingScriptDuplicateConfirmation, setPendingScriptDuplicateConfirmation] =
+    useState<PendingScriptDuplicateConfirmation | null>(null);
 
   const project = activeProject;
 
@@ -814,6 +857,40 @@ export function ProjectEditor() {
     updateGameContext({ ...activeGameContext, scriptVault: scripts });
   };
 
+  const requestScriptDuplicateConfirmation = (
+    duplicateOf: ScriptVaultEntry,
+    onConfirm: () => void,
+  ) => {
+    setPendingScriptDuplicateConfirmation({
+      existingName: scriptVaultDisplayName(duplicateOf.scriptName),
+      onConfirm,
+    });
+  };
+
+  const confirmScriptDuplicate = () => {
+    const confirmation = pendingScriptDuplicateConfirmation;
+    if (!confirmation) return;
+
+    setPendingScriptDuplicateConfirmation(null);
+    confirmation.onConfirm();
+  };
+
+  const cancelScriptDuplicate = () => {
+    setPendingScriptDuplicateConfirmation(null);
+  };
+
+  const updateScriptVaultEntryWithDuplicateGuard = (index: number, value: ScriptVaultEntry) => {
+    const currentScripts = activeGameContext.scriptVault ?? [];
+    const duplicate = findDuplicateScript(currentScripts, value.scriptName, index);
+
+    if (duplicate) {
+      requestScriptDuplicateConfirmation(duplicate, () => updateScriptVaultEntry(index, value));
+      return;
+    }
+
+    updateScriptVaultEntry(index, value);
+  };
+
   const removeScriptVaultEntry = (index: number) => {
     updateGameContext({
       ...activeGameContext,
@@ -821,22 +898,56 @@ export function ProjectEditor() {
     });
   };
 
-  const addScriptVaultEntry = () => {
+  const addScriptVaultEntry = (allowDuplicate = false) => {
     const currentScripts = activeGameContext.scriptVault ?? [];
-    updateGameContext({
-      ...activeGameContext,
-      scriptVault: [
-        ...currentScripts,
-        {
-          id: nextRecordId('script'),
-          scriptName: '',
-          platformLanguage: activeGamePlatform === 'roblox' ? 'Luau' : '',
-          status: 'Planned',
-          includeInContextPassport: false,
-        },
-      ],
-    });
-    setSelectedScriptIndex(currentScripts.length);
+    const nextScript: ScriptVaultEntry = {
+      id: nextRecordId('script'),
+      scriptName: '',
+      platformLanguage: activeGamePlatform === 'roblox' ? 'Luau' : '',
+      status: 'Planned',
+      includeInContextPassport: false,
+    };
+    const duplicate = findDuplicateScript(currentScripts, nextScript.scriptName);
+
+    const addScript = () => {
+      updateGameContext({
+        ...activeGameContext,
+        scriptVault: [
+          ...currentScripts,
+          nextScript,
+        ],
+      });
+      setSelectedScriptIndex(currentScripts.length);
+    };
+
+    if (duplicate && !allowDuplicate) {
+      requestScriptDuplicateConfirmation(duplicate, addScript);
+      return;
+    }
+
+    addScript();
+  };
+
+  const addScriptVaultEntryFromSuggestion = (suggestion: ScriptScanSuggestion, allowDuplicate = false) => {
+    const currentScripts = activeGameContext.scriptVault ?? [];
+    const duplicate = findDuplicateScript(currentScripts, suggestion.fileName);
+
+    const addSuggestion = () => {
+      updateGameContext({
+        ...activeGameContext,
+        scriptVault: [
+          ...currentScripts,
+          scriptVaultEntryFromSuggestion(suggestion, nextRecordId('script')),
+        ],
+      });
+    };
+
+    if (duplicate && !allowDuplicate) {
+      requestScriptDuplicateConfirmation(duplicate, addSuggestion);
+      return;
+    }
+
+    addSuggestion();
   };
 
   const openScriptWorkspace = () => {
@@ -865,9 +976,7 @@ export function ProjectEditor() {
     const duplicate: ScriptVaultEntry = {
       ...selectedScript,
       id: nextRecordId('script'),
-      scriptName: selectedScript.scriptName
-        ? `${selectedScript.scriptName} copy`
-        : 'Untitled script copy',
+      scriptName: makeScriptCopyName(selectedScript.scriptName, currentScripts),
     };
 
     updateGameContext({
@@ -883,7 +992,13 @@ export function ProjectEditor() {
 
   const updateSelectedScript = (patch: Partial<ScriptVaultEntry>) => {
     if (!selectedScript) return;
-    updateScriptVaultEntry(safeSelectedScriptIndex, { ...selectedScript, ...patch });
+    const nextScript = { ...selectedScript, ...patch };
+    if (Object.prototype.hasOwnProperty.call(patch, 'scriptName')) {
+      updateScriptVaultEntryWithDuplicateGuard(safeSelectedScriptIndex, nextScript);
+      return;
+    }
+
+    updateScriptVaultEntry(safeSelectedScriptIndex, nextScript);
   };
 
   const copyScriptWorkspaceText = async (
@@ -921,25 +1036,7 @@ export function ProjectEditor() {
   };
 
   const addScriptVaultSuggestion = (suggestion: ScriptScanSuggestion) => {
-    const currentScripts = activeGameContext.scriptVault ?? [];
-    const existingScriptNames = new Set(
-      currentScripts
-        .map((script) => scriptVaultNameKey(script.scriptName))
-        .filter(Boolean),
-    );
-
-    if (existingScriptNames.has(scriptVaultNameKey(suggestion.fileName))) {
-      showToast('That script is already in the Script Vault.', 'info');
-      return;
-    }
-
-    updateGameContext({
-      ...activeGameContext,
-      scriptVault: [
-        ...currentScripts,
-        scriptVaultEntryFromSuggestion(suggestion, nextRecordId('script')),
-      ],
-    });
+    addScriptVaultEntryFromSuggestion(suggestion);
   };
 
   const addAllScriptVaultSuggestions = () => {
@@ -1526,7 +1623,7 @@ export function ProjectEditor() {
                   <button type="button" className="github-scan-btn" onClick={openScriptWorkspace}>
                     Open Script Workspace
                   </button>
-                  <button type="button" className="list-item-add-btn script-vault-add-btn" onClick={addScriptVaultEntry}>
+                  <button type="button" className="list-item-add-btn script-vault-add-btn" onClick={() => addScriptVaultEntry()}>
                     Add script
                   </button>
                 </div>
@@ -1545,7 +1642,7 @@ export function ProjectEditor() {
                 <div className="script-vault-empty-state">
                   <strong>No scripts stored yet.</strong>
                   <p>Add a lightweight record for scripts an AI should understand before helping with this game.</p>
-                  <button type="button" className="github-scan-btn" onClick={addScriptVaultEntry}>
+                  <button type="button" className="github-scan-btn" onClick={() => addScriptVaultEntry()}>
                     Add first script
                   </button>
                 </div>
@@ -1559,7 +1656,7 @@ export function ProjectEditor() {
                           <input
                             className="field-input"
                             value={script.scriptName}
-                            onChange={(event) => updateScriptVaultEntry(index, { ...script, scriptName: event.target.value })}
+                            onChange={(event) => updateScriptVaultEntryWithDuplicateGuard(index, { ...script, scriptName: event.target.value })}
                             placeholder={activeGamePlatform === 'roblox' ? 'NPCSpawner.lua' : 'Script name'}
                           />
                         </label>
@@ -1814,6 +1911,39 @@ export function ProjectEditor() {
                   </div>
                 )}
               </aside>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {pendingScriptDuplicateConfirmation && (
+        <div className="script-duplicate-confirmation-backdrop" role="presentation">
+          <section
+            className="script-duplicate-confirmation"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Duplicate script confirmation"
+          >
+            <h2>Duplicate script name</h2>
+            <p>
+              A script named {pendingScriptDuplicateConfirmation.existingName} already exists.
+            </p>
+            <p>Do you want to create another copy anyway?</p>
+            <div className="script-duplicate-confirmation__actions">
+              <button
+                type="button"
+                className="memory-cleanup-preview__ghost-btn"
+                onClick={cancelScriptDuplicate}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="github-scan-btn"
+                onClick={confirmScriptDuplicate}
+              >
+                Create duplicate
+              </button>
             </div>
           </section>
         </div>

@@ -198,9 +198,118 @@ describe('ProjectEditor Script Vault', () => {
       codeSnippet: 'local door = workspace.Door',
     }));
     expect(scripts[2]).toEqual(expect.objectContaining({
-      scriptName: 'DoorController.lua copy',
+      scriptName: 'DoorController copy.lua',
       codeSnippet: 'local door = workspace.Door',
     }));
+  });
+
+  it('prompts before adding duplicate placeholder scripts and cancel prevents the duplicate', () => {
+    render(<ProjectEditor />);
+
+    const vault = screen.getByRole('region', { name: 'Script Vault' });
+    fireEvent.click(within(vault).getByRole('button', { name: 'Add first script' }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Script Vault' })).getByRole('button', { name: 'Add script' }));
+
+    const confirmation = screen.getByRole('dialog', { name: 'Duplicate script confirmation' });
+    expect(within(confirmation).getByText('A script named Untitled script already exists.')).toBeInTheDocument();
+
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Cancel' }));
+
+    const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
+    expect(scripts).toHaveLength(1);
+  });
+
+  it('allows a duplicate placeholder script only after confirmation', () => {
+    render(<ProjectEditor />);
+
+    fireEvent.click(within(screen.getByRole('region', { name: 'Script Vault' })).getByRole('button', { name: 'Add first script' }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Script Vault' })).getByRole('button', { name: 'Add script' }));
+
+    const confirmation = screen.getByRole('dialog', { name: 'Duplicate script confirmation' });
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Create duplicate' }));
+
+    const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
+    expect(scripts).toHaveLength(2);
+    expect(scripts.map((script) => script.scriptName)).toEqual(['', '']);
+  });
+
+  it('prompts when renaming a script to a duplicate and cancel keeps the original name', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            { id: 'script-1', scriptName: 'NPCSpawner.lua', platformLanguage: 'Luau' },
+            { id: 'script-2', scriptName: 'DoorController.lua', platformLanguage: 'Luau' },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const vault = screen.getByRole('region', { name: 'Script Vault' });
+    const nameInputs = within(vault).getAllByLabelText('Script name');
+    fireEvent.change(nameInputs[1], { target: { value: 'npcspawner.lua' } });
+
+    const confirmation = screen.getByRole('dialog', { name: 'Duplicate script confirmation' });
+    expect(within(confirmation).getByText('A script named NPCSpawner.lua already exists.')).toBeInTheDocument();
+
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Cancel' }));
+
+    const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
+    expect(scripts.map((script) => script.scriptName)).toEqual(['NPCSpawner.lua', 'DoorController.lua']);
+  });
+
+  it('allows renaming to a duplicate only after confirmation', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            { id: 'script-1', scriptName: 'NPCSpawner.lua', platformLanguage: 'Luau' },
+            { id: 'script-2', scriptName: 'DoorController.lua', platformLanguage: 'Luau' },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const nameInputs = within(screen.getByRole('region', { name: 'Script Vault' })).getAllByLabelText('Script name');
+    fireEvent.change(nameInputs[1], { target: { value: 'npcspawner.lua' } });
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Duplicate script confirmation' })).getByRole('button', { name: 'Create duplicate' }));
+
+    const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
+    expect(scripts.map((script) => script.scriptName)).toEqual(['NPCSpawner.lua', 'npcspawner.lua']);
+  });
+
+  it('detects path and basename duplicates when renaming scripts', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            { id: 'script-1', scriptName: 'NPCSpawner', platformLanguage: 'Luau' },
+            { id: 'script-2', scriptName: 'DoorController.lua', platformLanguage: 'Luau' },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const nameInputs = within(screen.getByRole('region', { name: 'Script Vault' })).getAllByLabelText('Script name');
+    fireEvent.change(nameInputs[1], { target: { value: 'scripts/npcspawner.lua' } });
+
+    const confirmation = screen.getByRole('dialog', { name: 'Duplicate script confirmation' });
+    expect(within(confirmation).getByText('A script named NPCSpawner already exists.')).toBeInTheDocument();
   });
 
   it('copies scripts and AI help prompts from Script Workspace without execution', async () => {
@@ -518,5 +627,47 @@ describe('ProjectEditor Script Vault', () => {
       'NPCSpawner.lua',
     ]);
     expect(scripts.filter((script) => script.scriptName === 'DoorController.lua')).toHaveLength(1);
+  });
+
+  it('treats case-insensitive basename script suggestions as already added', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: [
+          'ServerScriptService/npcspawner.lua',
+          'StarterPlayer/StarterPlayerScripts/ClientInput.luau',
+        ],
+        linkedFolder: {
+          path: 'C:\\Users\\thoma\\repos\\roblox-game',
+          scanHash: 'scan-basename-dupes',
+          lastScannedAt: '2026-06-05T14:27:00.000Z',
+        },
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            {
+              id: 'existing-npc',
+              scriptName: 'NPCSpawner',
+              platformLanguage: 'Luau',
+              relatedSystem: 'NPCs',
+              status: 'Working',
+            },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const scanResults = screen.getByRole('region', { name: 'Scan Results' });
+    const suggestions = within(scanResults).getByRole('region', { name: 'Suggested Script Vault entries' });
+    expect(within(suggestions).queryByRole('button', { name: 'Add npcspawner.lua to Script Vault' })).not.toBeInTheDocument();
+    expect(within(suggestions).getByRole('button', { name: 'Add ClientInput.luau to Script Vault' })).toBeInTheDocument();
+
+    fireEvent.click(within(scanResults).getByRole('button', { name: 'Add all to Script Vault' }));
+
+    const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
+    expect(scripts.map((script) => script.scriptName)).toEqual(['NPCSpawner', 'ClientInput.luau']);
   });
 });

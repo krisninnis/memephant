@@ -1617,6 +1617,49 @@ select {
   font-size: 13px;
 }
 
+.script-duplicate-confirmation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1360;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.script-duplicate-confirmation {
+  width: min(420px, 100%);
+  padding: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 8px;
+  background: #0f172a;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+}
+
+.script-duplicate-confirmation h2 {
+  margin: 0 0 10px;
+  color: #f8fafc;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.script-duplicate-confirmation p {
+  margin: 8px 0 0;
+  color: rgba(203, 213, 225, 0.78);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.script-duplicate-confirmation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
 /* ── GitHub Repository field ──────────────────────────────────────────────── */
 
 .github-repo-field {
