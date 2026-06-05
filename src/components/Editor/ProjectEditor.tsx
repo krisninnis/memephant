@@ -147,6 +147,16 @@ const BUG_STATUS_PRESETS = [
   'Needs retest',
 ];
 
+const SCRIPT_LANGUAGE_PRESETS = [
+  'Luau',
+  'Lua',
+  'TypeScript',
+  'JavaScript',
+  'C#',
+  'GDScript',
+  'Python',
+];
+
 interface GuidedPresetFieldProps {
   label: string;
   value: string;
@@ -424,7 +434,58 @@ function scriptVaultEntryFromSuggestion(
     status: 'Planned',
     notes: 'Suggested from linked folder scan',
     codeSnippet: '',
+    includeInContextPassport: false,
   };
+}
+
+function buildScriptAiHelpPrompt(script: ScriptVaultEntry, activeGamePlatform: GamePlatform): string {
+  const language = script.platformLanguage?.trim() || (activeGamePlatform === 'roblox' ? 'Luau' : 'the project language');
+  const projectLabel = activeGamePlatform === 'roblox' || /luau|lua/i.test(language)
+    ? 'Roblox/Luau'
+    : language;
+  const codeFenceLanguage = /luau|lua/i.test(language) ? 'lua' : '';
+
+  return [
+    `I am working on this ${projectLabel} script.`,
+    '',
+    'Script name:',
+    script.scriptName?.trim() || '(unnamed script)',
+    '',
+    'Purpose:',
+    script.purpose?.trim() || '(not specified)',
+    '',
+    'Related system:',
+    script.relatedSystem?.trim() || '(not specified)',
+    '',
+    'Status:',
+    script.status?.trim() || '(not specified)',
+    '',
+    'Known notes:',
+    script.notes?.trim() || '(none)',
+    '',
+    'Please help me understand, debug or improve this script. Explain changes clearly and do not assume missing project details.',
+    '',
+    'Script:',
+    `\`\`\`${codeFenceLanguage}`,
+    script.codeSnippet ?? '',
+    '```',
+  ].join('\n');
+}
+
+function buildScriptContextText(script: ScriptVaultEntry): string {
+  return [
+    'Script context',
+    '',
+    `Script name: ${script.scriptName?.trim() || '(unnamed script)'}`,
+    `Platform/language: ${script.platformLanguage?.trim() || '(not specified)'}`,
+    `Related system: ${script.relatedSystem?.trim() || '(not specified)'}`,
+    `Status: ${script.status?.trim() || '(not specified)'}`,
+    `Purpose: ${script.purpose?.trim() || '(not specified)'}`,
+    `Notes: ${script.notes?.trim() || '(none)'}`,
+    '',
+    'Script:',
+    script.codeSnippet ?? '',
+  ].join('\n');
 }
 
 function formatRestorePointTime(isoString: string): string {
@@ -458,6 +519,8 @@ export function ProjectEditor() {
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [restoreHistoryOpen, setRestoreHistoryOpen] = useState(false);
   const [cleanupPreview, setCleanupPreview] = useState<ProjectMemoryCleanupPreview | null>(null);
+  const [scriptWorkspaceOpen, setScriptWorkspaceOpen] = useState(false);
+  const [selectedScriptIndex, setSelectedScriptIndex] = useState(0);
 
   const project = activeProject;
 
@@ -686,6 +749,13 @@ export function ProjectEditor() {
     ),
     [activeProject, activeGamePlatform, activeProjectCategory, activeGameContext.scriptVault],
   );
+  const scriptVaultEntries = activeGameContext.scriptVault ?? [];
+  const safeSelectedScriptIndex =
+    scriptVaultEntries.length === 0
+      ? 0
+      : Math.min(selectedScriptIndex, scriptVaultEntries.length - 1);
+  const selectedScript = scriptVaultEntries[safeSelectedScriptIndex];
+  const showScriptWorkspace = scriptWorkspaceOpen && activeProjectCategory === 'game';
 
   const updateGameContext = (next: GameProjectContext) => {
     update('gameContext', next);
@@ -752,18 +822,102 @@ export function ProjectEditor() {
   };
 
   const addScriptVaultEntry = () => {
+    const currentScripts = activeGameContext.scriptVault ?? [];
     updateGameContext({
       ...activeGameContext,
       scriptVault: [
-        ...(activeGameContext.scriptVault ?? []),
+        ...currentScripts,
         {
           id: nextRecordId('script'),
           scriptName: '',
           platformLanguage: activeGamePlatform === 'roblox' ? 'Luau' : '',
           status: 'Planned',
+          includeInContextPassport: false,
         },
       ],
     });
+    setSelectedScriptIndex(currentScripts.length);
+  };
+
+  const openScriptWorkspace = () => {
+    const currentScripts = activeGameContext.scriptVault ?? [];
+    if (currentScripts.length === 0) {
+      addScriptVaultEntry();
+    } else {
+      setSelectedScriptIndex(Math.min(selectedScriptIndex, currentScripts.length - 1));
+    }
+    setScriptWorkspaceOpen(true);
+  };
+
+  const addScriptFromWorkspace = () => {
+    addScriptVaultEntry();
+  };
+
+  const deleteScriptFromWorkspace = () => {
+    if (!selectedScript) return;
+    removeScriptVaultEntry(safeSelectedScriptIndex);
+    setSelectedScriptIndex(Math.max(0, safeSelectedScriptIndex - 1));
+  };
+
+  const duplicateScriptFromWorkspace = () => {
+    if (!selectedScript) return;
+    const currentScripts = activeGameContext.scriptVault ?? [];
+    const duplicate: ScriptVaultEntry = {
+      ...selectedScript,
+      id: nextRecordId('script'),
+      scriptName: selectedScript.scriptName
+        ? `${selectedScript.scriptName} copy`
+        : 'Untitled script copy',
+    };
+
+    updateGameContext({
+      ...activeGameContext,
+      scriptVault: [
+        ...currentScripts.slice(0, safeSelectedScriptIndex + 1),
+        duplicate,
+        ...currentScripts.slice(safeSelectedScriptIndex + 1),
+      ],
+    });
+    setSelectedScriptIndex(safeSelectedScriptIndex + 1);
+  };
+
+  const updateSelectedScript = (patch: Partial<ScriptVaultEntry>) => {
+    if (!selectedScript) return;
+    updateScriptVaultEntry(safeSelectedScriptIndex, { ...selectedScript, ...patch });
+  };
+
+  const copyScriptWorkspaceText = async (
+    text: string,
+    successMessage: string,
+    errorMessage = 'Could not copy to clipboard.',
+  ) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast(successMessage, 'info');
+    } catch {
+      showToast(errorMessage, 'error');
+    }
+  };
+
+  const copySelectedScript = () => {
+    if (!selectedScript) return;
+    void copyScriptWorkspaceText(selectedScript.codeSnippet ?? '', 'Script copied.');
+  };
+
+  const copySelectedScriptAiPrompt = () => {
+    if (!selectedScript) return;
+    void copyScriptWorkspaceText(
+      buildScriptAiHelpPrompt(selectedScript, activeGamePlatform),
+      'AI help prompt copied.',
+    );
+  };
+
+  const copySelectedScriptContext = () => {
+    if (!selectedScript) return;
+    void copyScriptWorkspaceText(
+      buildScriptContextText(selectedScript),
+      'Script context copied.',
+    );
   };
 
   const addScriptVaultSuggestion = (suggestion: ScriptScanSuggestion) => {
@@ -1368,9 +1522,14 @@ export function ProjectEditor() {
                   <div className="field-label">Script Vault</div>
                   <h3>Important scripts</h3>
                 </div>
-                <button type="button" className="list-item-add-btn script-vault-add-btn" onClick={addScriptVaultEntry}>
-                  Add script
-                </button>
+                <div className="script-vault-card__actions">
+                  <button type="button" className="github-scan-btn" onClick={openScriptWorkspace}>
+                    Open Script Workspace
+                  </button>
+                  <button type="button" className="list-item-add-btn script-vault-add-btn" onClick={addScriptVaultEntry}>
+                    Add script
+                  </button>
+                </div>
               </div>
               <p className="script-vault-card__help">
                 Store important scripts here as context. This is not an IDE or Git replacement.
@@ -1414,15 +1573,14 @@ export function ProjectEditor() {
                         </button>
                       </div>
                       <div className="game-context-grid">
-                        <label>
-                          Platform/language
-                          <input
-                            className="field-input"
-                            value={script.platformLanguage ?? ''}
-                            onChange={(event) => updateScriptVaultEntry(index, { ...script, platformLanguage: event.target.value })}
-                            placeholder={activeGamePlatform === 'roblox' ? 'Luau' : 'Language'}
-                          />
-                        </label>
+                        <GuidedPresetField
+                          label="Platform/language"
+                          value={script.platformLanguage ?? ''}
+                          presets={SCRIPT_LANGUAGE_PRESETS}
+                          onChange={(value) => updateScriptVaultEntry(index, { ...script, platformLanguage: value })}
+                          placeholder="Choose language..."
+                          customPlaceholder="Example: Roblox Lua variant"
+                        />
                         <label>
                           Purpose
                           <textarea
@@ -1473,6 +1631,192 @@ export function ProjectEditor() {
             </div>
           </div>
         </section>
+      )}
+
+      {showScriptWorkspace && (
+        <div className="script-workspace-backdrop" role="presentation">
+          <section className="script-workspace" role="dialog" aria-modal="true" aria-label="Script Workspace">
+            <div className="script-workspace__header">
+              <div>
+                <div className="field-label">Script Workspace</div>
+                <h2>Script context workspace</h2>
+                {activeGamePlatform === 'roblox' && (
+                  <p>
+                    Useful for LocalScripts, ModuleScripts, ServerScriptService scripts,
+                    RemoteEvent handlers and DataStore logic.
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                className="script-workspace__close"
+                onClick={() => setScriptWorkspaceOpen(false)}
+                aria-label="Close Script Workspace"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="script-workspace__body">
+              <aside className="script-workspace__list" aria-label="Script list">
+                <div className="script-workspace__list-header">
+                  <span>Scripts</span>
+                  <button type="button" className="list-item-add-btn" onClick={addScriptFromWorkspace}>
+                    Add script
+                  </button>
+                </div>
+
+                {scriptVaultEntries.length === 0 ? (
+                  <div className="script-workspace__empty">
+                    <strong>No scripts yet.</strong>
+                    <p>Add a script record to paste and preserve context.</p>
+                  </div>
+                ) : (
+                  <div className="script-workspace__script-list">
+                    {scriptVaultEntries.map((script, index) => (
+                      <button
+                        key={script.id ?? `${script.scriptName}-${index}`}
+                        type="button"
+                        className={`script-workspace__script-item${index === safeSelectedScriptIndex ? ' script-workspace__script-item--active' : ''}`}
+                        onClick={() => setSelectedScriptIndex(index)}
+                        aria-label={`Select script ${script.scriptName || 'Untitled script'}`}
+                      >
+                        <span>{script.scriptName || 'Untitled script'}</span>
+                        <small>{script.status || 'No status'} / {script.relatedSystem || 'No system'}</small>
+                        <em>{script.includeInContextPassport ? 'Snippet included' : 'Snippet excluded'}</em>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="script-workspace__list-actions">
+                  <button type="button" className="memory-cleanup-preview__ghost-btn" onClick={duplicateScriptFromWorkspace} disabled={!selectedScript}>
+                    Duplicate script
+                  </button>
+                  <button type="button" className="memory-cleanup-preview__ghost-btn" onClick={deleteScriptFromWorkspace} disabled={!selectedScript}>
+                    Delete script
+                  </button>
+                </div>
+              </aside>
+
+              <main className="script-workspace__editor">
+                <label>
+                  Script content
+                  <textarea
+                    className="script-workspace__code"
+                    value={selectedScript?.codeSnippet ?? ''}
+                    onChange={(event) => updateSelectedScript({ codeSnippet: event.target.value })}
+                    placeholder="Paste a Roblox Studio, VS Code, Cursor, or AI-generated script snippet here."
+                    spellCheck={false}
+                    disabled={!selectedScript}
+                  />
+                </label>
+              </main>
+
+              <aside className="script-workspace__details" aria-label="Script details">
+                {selectedScript ? (
+                  <>
+                    <label>
+                      Script name
+                      <input
+                        className="field-input"
+                        value={selectedScript.scriptName}
+                        onChange={(event) => updateSelectedScript({ scriptName: event.target.value })}
+                        placeholder="NPCSpawner.lua"
+                      />
+                    </label>
+
+                    <GuidedPresetField
+                      label="Platform/language"
+                      value={selectedScript.platformLanguage ?? ''}
+                      presets={SCRIPT_LANGUAGE_PRESETS}
+                      onChange={(value) => updateSelectedScript({ platformLanguage: value })}
+                      placeholder="Choose language..."
+                      customPlaceholder="Example: Roblox Lua variant"
+                    />
+
+                    <GuidedPresetField
+                      label="Related system"
+                      value={selectedScript.relatedSystem ?? ''}
+                      presets={RELATED_SYSTEM_PRESETS}
+                      onChange={(value) => updateSelectedScript({ relatedSystem: value })}
+                      customPlaceholder="Example: NPC waves"
+                    />
+
+                    <GuidedPresetField
+                      label="Status"
+                      value={selectedScript.status ?? ''}
+                      presets={SCRIPT_STATUS_PRESETS}
+                      onChange={(value) => updateSelectedScript({ status: value })}
+                      customPlaceholder="Example: Works locally, not multiplayer-safe"
+                    />
+
+                    <label>
+                      Purpose
+                      <textarea
+                        className="field-textarea"
+                        value={selectedScript.purpose ?? ''}
+                        onChange={(event) => updateSelectedScript({ purpose: event.target.value })}
+                        placeholder="What this script is responsible for"
+                      />
+                    </label>
+
+                    <label>
+                      Notes
+                      <textarea
+                        className="field-textarea"
+                        value={selectedScript.notes ?? ''}
+                        onChange={(event) => updateSelectedScript({ notes: event.target.value })}
+                        placeholder="Known issues, assumptions, handoff notes"
+                      />
+                    </label>
+
+                    <label className="script-workspace__toggle">
+                      <input
+                        type="checkbox"
+                        aria-label="Include full snippet in Context Passport"
+                        checked={selectedScript.includeInContextPassport === true}
+                        onChange={(event) => updateSelectedScript({ includeInContextPassport: event.target.checked })}
+                      />
+                      <span>
+                        Include full snippet in Context Passport
+                        <small>Metadata stays available; full code is opt-in.</small>
+                      </span>
+                    </label>
+
+                    <div className="script-workspace__copy-actions">
+                      <button type="button" className="github-scan-btn" onClick={copySelectedScript}>
+                        Copy script
+                      </button>
+                      <button type="button" className="github-scan-btn" onClick={copySelectedScriptAiPrompt}>
+                        Copy AI help prompt
+                      </button>
+                      <button type="button" className="github-scan-btn" onClick={copySelectedScriptContext}>
+                        Copy script context
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="script-workspace__done"
+                      onClick={() => setScriptWorkspaceOpen(false)}
+                    >
+                      Done
+                    </button>
+                  </>
+                ) : (
+                  <div className="script-workspace__empty">
+                    <strong>No script selected.</strong>
+                    <p>Add a script to start preserving script context.</p>
+                    <button type="button" className="github-scan-btn" onClick={addScriptFromWorkspace}>
+                      Add script
+                    </button>
+                  </div>
+                )}
+              </aside>
+            </div>
+          </section>
+        </div>
       )}
 
       <EditableField

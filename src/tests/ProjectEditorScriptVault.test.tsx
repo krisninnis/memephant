@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ProjectEditor from '../components/Editor/ProjectEditor';
 import { useProjectStore } from '../store/projectStore';
 import type { ProjectMemory } from '../types/memphant-types';
+import { generateContextPassport } from '../utils/passportGenerator';
 
 jest.mock('../services/tauriActions', () => ({
   getFolderActionLabel: jest.fn(() => 'Select Folder'),
@@ -41,10 +42,26 @@ const baseProject: ProjectMemory = {
 };
 
 describe('ProjectEditor Script Vault', () => {
+  const clipboardWriteText = jest.fn(async () => undefined);
+  const originalClipboard = navigator.clipboard;
+
   beforeEach(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteText },
+    });
+    clipboardWriteText.mockClear();
+
     useProjectStore.setState({
       projects: [baseProject],
       activeProjectId: baseProject.id,
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: originalClipboard,
     });
   });
 
@@ -69,6 +86,20 @@ describe('ProjectEditor Script Vault', () => {
     expect(within(updatedVault).getByLabelText('Status')).toHaveValue('Planned');
     expect(within(updatedVault).getByLabelText('Notes')).toBeInTheDocument();
     expect(within(updatedVault).getByLabelText('Optional code snippet')).toBeInTheDocument();
+  });
+
+  it('opens Script Workspace from Script Vault and creates a selected script when empty', () => {
+    render(<ProjectEditor />);
+
+    const vault = screen.getByRole('region', { name: 'Script Vault' });
+    fireEvent.click(within(vault).getByRole('button', { name: 'Open Script Workspace' }));
+
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+    expect(within(workspace).getByText('Script context workspace')).toBeInTheDocument();
+    expect(within(workspace).getByText(/LocalScripts, ModuleScripts, ServerScriptService/i)).toBeInTheDocument();
+    expect(within(workspace).getByRole('button', { name: 'Select script Untitled script' })).toBeInTheDocument();
+    expect(within(workspace).getByLabelText('Script content')).toBeInTheDocument();
+    expect(within(workspace).getByLabelText('Platform/language')).toHaveValue('Luau');
   });
 
   it('renders existing script records as editable fields', () => {
@@ -104,6 +135,172 @@ describe('ProjectEditor Script Vault', () => {
     expect(within(vault).getByLabelText('Status')).toHaveValue('Buggy');
     expect(within(vault).getByLabelText('Notes')).toHaveValue('Door pivots upward instead of sideways.');
     expect(within(vault).getByLabelText('Optional code snippet')).toHaveValue('local door = script.Parent');
+  });
+
+  it('lists, selects, edits and duplicates existing scripts in Script Workspace', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            {
+              id: 'script-1',
+              scriptName: 'NPCSpawner.lua',
+              platformLanguage: 'Luau',
+              purpose: 'Spawns enemy waves',
+              relatedSystem: 'NPCs',
+              status: 'Buggy',
+              notes: 'Needs round cap.',
+              codeSnippet: 'local spawnCount = 5',
+            },
+            {
+              id: 'script-2',
+              scriptName: 'DoorController.lua',
+              platformLanguage: 'Roblox Lua custom',
+              purpose: 'Handles doors',
+              relatedSystem: 'Door Interaction',
+              status: 'Working',
+              notes: 'Keep hinge side-mounted.',
+              codeSnippet: 'local door = script.Parent',
+            },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Script Workspace' }));
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+
+    expect(within(workspace).getByRole('button', { name: 'Select script NPCSpawner.lua' })).toBeInTheDocument();
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Select script DoorController.lua' }));
+
+    expect(within(workspace).getByLabelText('Script content')).toHaveValue('local door = script.Parent');
+    expect(within(workspace).getByLabelText('Script name')).toHaveValue('DoorController.lua');
+    expect(within(workspace).getByLabelText('Platform/language')).toHaveDisplayValue('Other');
+    expect(within(workspace).getByLabelText('Custom Platform/language')).toHaveValue('Roblox Lua custom');
+
+    fireEvent.change(within(workspace).getByLabelText('Script content'), {
+      target: { value: 'local door = workspace.Door' },
+    });
+    fireEvent.change(within(workspace).getByLabelText('Purpose'), {
+      target: { value: 'Controls every interactive door' },
+    });
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Duplicate script' }));
+
+    const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
+    expect(scripts[1]).toEqual(expect.objectContaining({
+      scriptName: 'DoorController.lua',
+      purpose: 'Controls every interactive door',
+      codeSnippet: 'local door = workspace.Door',
+    }));
+    expect(scripts[2]).toEqual(expect.objectContaining({
+      scriptName: 'DoorController.lua copy',
+      codeSnippet: 'local door = workspace.Door',
+    }));
+  });
+
+  it('copies scripts and AI help prompts from Script Workspace without execution', async () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            {
+              id: 'script-copy',
+              scriptName: 'NPCSpawner.lua',
+              platformLanguage: 'Luau',
+              purpose: 'Spawns enemy waves',
+              relatedSystem: 'NPCs',
+              status: 'Buggy',
+              notes: 'Duplicates enemies after round 5.',
+              codeSnippet: 'local enemy = Instance.new("Model")',
+            },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Script Workspace' }));
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Copy script' }));
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenLastCalledWith('local enemy = Instance.new("Model")'));
+
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Copy AI help prompt' }));
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenLastCalledWith(expect.stringContaining('Script name:\nNPCSpawner.lua')));
+    expect(clipboardWriteText).toHaveBeenLastCalledWith(expect.stringContaining('Purpose:\nSpawns enemy waves'));
+    expect(clipboardWriteText).toHaveBeenLastCalledWith(expect.stringContaining('```lua\nlocal enemy = Instance.new("Model")\n```'));
+
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Copy script context' }));
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenLastCalledWith(expect.stringContaining('Script context')));
+    expect(clipboardWriteText).toHaveBeenLastCalledWith(expect.stringContaining('Related system: NPCs'));
+  });
+
+  it('uses the workspace include toggle before adding full snippets to Context Passport', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            {
+              id: 'script-passport',
+              scriptName: 'SaveService.lua',
+              platformLanguage: 'Luau',
+              purpose: 'Saves player stats',
+              relatedSystem: 'DataStores',
+              status: 'Working',
+              notes: 'Uses profile service later.',
+              codeSnippet: 'local DataStoreService = game:GetService("DataStoreService")',
+              includeInContextPassport: false,
+            },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    let project = useProjectStore.getState().projects[0];
+    let passport = generateContextPassport(project);
+    expect(passport.formats.markdown).toContain('SaveService.lua');
+    expect(passport.formats.markdown).not.toContain('local DataStoreService');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Script Workspace' }));
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+    fireEvent.click(within(workspace).getByLabelText('Include full snippet in Context Passport'));
+
+    project = useProjectStore.getState().projects[0];
+    passport = generateContextPassport(project);
+    expect(project.gameContext?.scriptVault?.[0]?.includeInContextPassport).toBe(true);
+    expect(passport.formats.markdown).toContain('local DataStoreService');
+  });
+
+  it('does not show Script Workspace for non-game projects', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        id: 'general-project',
+        projectCategory: undefined,
+        gamePlatform: undefined,
+        gameContext: undefined,
+      }],
+      activeProjectId: 'general-project',
+    });
+
+    render(<ProjectEditor />);
+
+    expect(screen.queryByRole('button', { name: 'Open Script Workspace' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Script Workspace' })).not.toBeInTheDocument();
   });
 
   it('stores guided preset selections as the final game overview value', () => {
