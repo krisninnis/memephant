@@ -397,6 +397,16 @@ function makeScriptCopyName(scriptName: string, existingScripts: ScriptVaultEntr
   return `${stem} copy ${Date.now().toString(36)}${extension}`;
 }
 
+function scriptSummaryLabel(script: ScriptVaultEntry, index: number, scripts: ScriptVaultEntry[]): string {
+  const displayName = scriptVaultDisplayName(script.scriptName);
+  const key = scriptVaultNameKey(script.scriptName);
+  const matchingScripts = scripts.filter((item) => scriptVaultNameKey(item.scriptName) === key);
+  if (matchingScripts.length <= 1) return displayName;
+
+  const occurrence = scripts.slice(0, index + 1).filter((item) => scriptVaultNameKey(item.scriptName) === key).length;
+  return occurrence === 1 ? displayName : `${displayName} copy ${occurrence}`;
+}
+
 function detectFolderProjectType(
   project: ProjectMemory,
   activeGamePlatform: GamePlatform,
@@ -898,7 +908,7 @@ export function ProjectEditor() {
     });
   };
 
-  const addScriptVaultEntry = (allowDuplicate = false) => {
+  const addScriptVaultEntry = (allowDuplicate = false, openAfterCreate = false) => {
     const currentScripts = activeGameContext.scriptVault ?? [];
     const nextScript: ScriptVaultEntry = {
       id: nextRecordId('script'),
@@ -918,6 +928,7 @@ export function ProjectEditor() {
         ],
       });
       setSelectedScriptIndex(currentScripts.length);
+      if (openAfterCreate) setScriptWorkspaceOpen(true);
     };
 
     if (duplicate && !allowDuplicate) {
@@ -953,10 +964,15 @@ export function ProjectEditor() {
   const openScriptWorkspace = () => {
     const currentScripts = activeGameContext.scriptVault ?? [];
     if (currentScripts.length === 0) {
-      addScriptVaultEntry();
+      addScriptVaultEntry(false, true);
     } else {
       setSelectedScriptIndex(Math.min(selectedScriptIndex, currentScripts.length - 1));
+      setScriptWorkspaceOpen(true);
     }
+  };
+
+  const openScriptWorkspaceForScript = (index: number) => {
+    setSelectedScriptIndex(index);
     setScriptWorkspaceOpen(true);
   };
 
@@ -1623,7 +1639,7 @@ export function ProjectEditor() {
                   <button type="button" className="github-scan-btn" onClick={openScriptWorkspace}>
                     Open Script Workspace
                   </button>
-                  <button type="button" className="list-item-add-btn script-vault-add-btn" onClick={() => addScriptVaultEntry()}>
+                  <button type="button" className="list-item-add-btn script-vault-add-btn" onClick={() => addScriptVaultEntry(false, true)}>
                     Add script
                   </button>
                 </div>
@@ -1642,87 +1658,30 @@ export function ProjectEditor() {
                 <div className="script-vault-empty-state">
                   <strong>No scripts stored yet.</strong>
                   <p>Add a lightweight record for scripts an AI should understand before helping with this game.</p>
-                  <button type="button" className="github-scan-btn" onClick={() => addScriptVaultEntry()}>
+                  <button type="button" className="github-scan-btn" onClick={() => addScriptVaultEntry(false, true)}>
                     Add first script
                   </button>
                 </div>
               ) : (
-                <div className="game-record-list script-vault-record-list">
-                  {(activeGameContext.scriptVault ?? []).map((script, index) => (
-                    <article className="game-record-card script-record-card" key={script.id ?? index}>
-                      <div className="game-record-card__header script-record-card__header">
-                        <label className="script-record-card__name">
-                          Script name
-                          <input
-                            className="field-input"
-                            value={script.scriptName}
-                            onChange={(event) => updateScriptVaultEntryWithDuplicateGuard(index, { ...script, scriptName: event.target.value })}
-                            placeholder={activeGamePlatform === 'roblox' ? 'NPCSpawner.lua' : 'Script name'}
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className="list-item-remove"
-                          onClick={() => removeScriptVaultEntry(index)}
-                          aria-label="Remove script"
-                        >
-                          x
-                        </button>
-                      </div>
-                      <div className="game-context-grid">
-                        <GuidedPresetField
-                          label="Platform/language"
-                          value={script.platformLanguage ?? ''}
-                          presets={SCRIPT_LANGUAGE_PRESETS}
-                          onChange={(value) => updateScriptVaultEntry(index, { ...script, platformLanguage: value })}
-                          placeholder="Choose language..."
-                          customPlaceholder="Example: Roblox Lua variant"
-                        />
-                        <label>
-                          Purpose
-                          <textarea
-                            className="field-textarea"
-                            value={script.purpose ?? ''}
-                            onChange={(event) => updateScriptVaultEntry(index, { ...script, purpose: event.target.value })}
-                            placeholder="Example: Spawns enemy waves"
-                          />
-                        </label>
-                        <GuidedPresetField
-                          label="Related system"
-                          value={script.relatedSystem ?? ''}
-                          presets={RELATED_SYSTEM_PRESETS}
-                          onChange={(value) => updateScriptVaultEntry(index, { ...script, relatedSystem: value })}
-                          customPlaceholder="Example: NPC waves"
-                        />
-                        <GuidedPresetField
-                          label="Status"
-                          value={script.status ?? ''}
-                          presets={SCRIPT_STATUS_PRESETS}
-                          onChange={(value) => updateScriptVaultEntry(index, { ...script, status: value })}
-                          customPlaceholder="Example: Works locally, not multiplayer-safe"
-                        />
-                        <label>
-                          Notes
-                          <textarea
-                            className="field-textarea"
-                            value={script.notes ?? ''}
-                            onChange={(event) => updateScriptVaultEntry(index, { ...script, notes: event.target.value })}
-                            placeholder="Known issues, assumptions, or handoff notes"
-                          />
-                        </label>
-                        <label>
-                          Optional code snippet
-                          <textarea
-                            className="field-textarea game-code-snippet"
-                            value={script.codeSnippet ?? ''}
-                            onChange={(event) => updateScriptVaultEntry(index, { ...script, codeSnippet: event.target.value })}
-                            placeholder="Paste a small snippet only if it is useful context"
-                            spellCheck={false}
-                          />
-                        </label>
-                      </div>
-                    </article>
-                  ))}
+                <div className="script-vault-summary">
+                  <div className="script-vault-summary__meta">
+                    <strong>{scriptVaultEntries.length}</strong>
+                    <span>{scriptVaultEntries.length === 1 ? 'script stored' : 'scripts stored'}</span>
+                  </div>
+                  <div className="script-vault-summary__list" aria-label="Stored scripts">
+                    {scriptVaultEntries.map((script, index) => (
+                      <button
+                        key={script.id ?? index}
+                        type="button"
+                        className="script-vault-summary__item"
+                        onClick={() => openScriptWorkspaceForScript(index)}
+                        aria-label={`Open ${scriptSummaryLabel(script, index, scriptVaultEntries)} in Script Workspace`}
+                      >
+                        <span>{scriptSummaryLabel(script, index, scriptVaultEntries)}</span>
+                        <small>{script.status || 'No status'} / {script.relatedSystem || 'No system'}</small>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -1776,9 +1735,9 @@ export function ProjectEditor() {
                         type="button"
                         className={`script-workspace__script-item${index === safeSelectedScriptIndex ? ' script-workspace__script-item--active' : ''}`}
                         onClick={() => setSelectedScriptIndex(index)}
-                        aria-label={`Select script ${script.scriptName || 'Untitled script'}`}
+                        aria-label={`Select script ${scriptSummaryLabel(script, index, scriptVaultEntries)}`}
                       >
-                        <span>{script.scriptName || 'Untitled script'}</span>
+                        <span>{scriptSummaryLabel(script, index, scriptVaultEntries)}</span>
                         <small>{script.status || 'No status'} / {script.relatedSystem || 'No system'}</small>
                         <em>{script.includeInContextPassport ? 'Snippet included' : 'Snippet excluded'}</em>
                       </button>

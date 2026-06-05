@@ -65,7 +65,7 @@ describe('ProjectEditor Script Vault', () => {
     });
   });
 
-  it('renders a clear empty state and creates an editable script record', () => {
+  it('renders a compact empty summary and creates an editable script record in Script Workspace', () => {
     render(<ProjectEditor />);
 
     const vault = screen.getByRole('region', { name: 'Script Vault' });
@@ -78,14 +78,14 @@ describe('ProjectEditor Script Vault', () => {
 
     fireEvent.click(within(vault).getByRole('button', { name: 'Add first script' }));
 
-    const updatedVault = screen.getByRole('region', { name: 'Script Vault' });
-    expect(within(updatedVault).getByLabelText('Script name')).toBeInTheDocument();
-    expect(within(updatedVault).getByLabelText('Platform/language')).toHaveValue('Luau');
-    expect(within(updatedVault).getByLabelText('Purpose')).toBeInTheDocument();
-    expect(within(updatedVault).getByLabelText('Related system')).toBeInTheDocument();
-    expect(within(updatedVault).getByLabelText('Status')).toHaveValue('Planned');
-    expect(within(updatedVault).getByLabelText('Notes')).toBeInTheDocument();
-    expect(within(updatedVault).getByLabelText('Optional code snippet')).toBeInTheDocument();
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+    expect(within(workspace).getByLabelText('Script name')).toBeInTheDocument();
+    expect(within(workspace).getByLabelText('Platform/language')).toHaveValue('Luau');
+    expect(within(workspace).getByLabelText('Purpose')).toBeInTheDocument();
+    expect(within(workspace).getByLabelText('Related system')).toBeInTheDocument();
+    expect(within(workspace).getByLabelText('Status')).toHaveValue('Planned');
+    expect(within(workspace).getByLabelText('Notes')).toBeInTheDocument();
+    expect(within(workspace).getByLabelText('Script content')).toBeInTheDocument();
   });
 
   it('opens Script Workspace from Script Vault and creates a selected script when empty', () => {
@@ -102,7 +102,7 @@ describe('ProjectEditor Script Vault', () => {
     expect(within(workspace).getByLabelText('Platform/language')).toHaveValue('Luau');
   });
 
-  it('renders existing script records as editable fields', () => {
+  it('renders existing script records as a compact summary and opens clicked scripts in Script Workspace', () => {
     useProjectStore.setState({
       projects: [{
         ...baseProject,
@@ -128,13 +128,23 @@ describe('ProjectEditor Script Vault', () => {
     render(<ProjectEditor />);
 
     const vault = screen.getByRole('region', { name: 'Script Vault' });
-    expect(within(vault).getByLabelText('Script name')).toHaveValue('DoorController.lua');
-    expect(within(vault).getByLabelText('Purpose')).toHaveValue('Handles hinge interaction');
-    expect(within(vault).getByLabelText('Related system')).toHaveDisplayValue('Other');
-    expect(within(vault).getByLabelText('Custom Related system')).toHaveValue('Door interaction');
-    expect(within(vault).getByLabelText('Status')).toHaveValue('Buggy');
-    expect(within(vault).getByLabelText('Notes')).toHaveValue('Door pivots upward instead of sideways.');
-    expect(within(vault).getByLabelText('Optional code snippet')).toHaveValue('local door = script.Parent');
+    expect(within(vault).getByText('1')).toBeInTheDocument();
+    expect(within(vault).getByText('script stored')).toBeInTheDocument();
+    expect(within(vault).getByRole('button', { name: 'Open DoorController.lua in Script Workspace' })).toBeInTheDocument();
+    expect(within(vault).queryByLabelText('Script name')).not.toBeInTheDocument();
+    expect(within(vault).queryByLabelText('Purpose')).not.toBeInTheDocument();
+    expect(within(vault).queryByLabelText('Optional code snippet')).not.toBeInTheDocument();
+
+    fireEvent.click(within(vault).getByRole('button', { name: 'Open DoorController.lua in Script Workspace' }));
+
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+    expect(within(workspace).getByLabelText('Script name')).toHaveValue('DoorController.lua');
+    expect(within(workspace).getByLabelText('Purpose')).toHaveValue('Handles hinge interaction');
+    expect(within(workspace).getByLabelText('Related system')).toHaveDisplayValue('Other');
+    expect(within(workspace).getByLabelText('Custom Related system')).toHaveValue('Door interaction');
+    expect(within(workspace).getByLabelText('Status')).toHaveValue('Buggy');
+    expect(within(workspace).getByLabelText('Notes')).toHaveValue('Door pivots upward instead of sideways.');
+    expect(within(workspace).getByLabelText('Script content')).toHaveValue('local door = script.Parent');
   });
 
   it('lists, selects, edits and duplicates existing scripts in Script Workspace', () => {
@@ -250,9 +260,10 @@ describe('ProjectEditor Script Vault', () => {
 
     render(<ProjectEditor />);
 
-    const vault = screen.getByRole('region', { name: 'Script Vault' });
-    const nameInputs = within(vault).getAllByLabelText('Script name');
-    fireEvent.change(nameInputs[1], { target: { value: 'npcspawner.lua' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open Script Workspace' }));
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Select script DoorController.lua' }));
+    fireEvent.change(within(workspace).getByLabelText('Script name'), { target: { value: 'npcspawner.lua' } });
 
     const confirmation = screen.getByRole('dialog', { name: 'Duplicate script confirmation' });
     expect(within(confirmation).getByText('A script named NPCSpawner.lua already exists.')).toBeInTheDocument();
@@ -280,8 +291,10 @@ describe('ProjectEditor Script Vault', () => {
 
     render(<ProjectEditor />);
 
-    const nameInputs = within(screen.getByRole('region', { name: 'Script Vault' })).getAllByLabelText('Script name');
-    fireEvent.change(nameInputs[1], { target: { value: 'npcspawner.lua' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open Script Workspace' }));
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Select script DoorController.lua' }));
+    fireEvent.change(within(workspace).getByLabelText('Script name'), { target: { value: 'npcspawner.lua' } });
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Duplicate script confirmation' })).getByRole('button', { name: 'Create duplicate' }));
 
     const scripts = useProjectStore.getState().projects[0].gameContext?.scriptVault ?? [];
@@ -305,11 +318,35 @@ describe('ProjectEditor Script Vault', () => {
 
     render(<ProjectEditor />);
 
-    const nameInputs = within(screen.getByRole('region', { name: 'Script Vault' })).getAllByLabelText('Script name');
-    fireEvent.change(nameInputs[1], { target: { value: 'scripts/npcspawner.lua' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open Script Workspace' }));
+    const workspace = screen.getByRole('dialog', { name: 'Script Workspace' });
+    fireEvent.click(within(workspace).getByRole('button', { name: 'Select script DoorController.lua' }));
+    fireEvent.change(within(workspace).getByLabelText('Script name'), { target: { value: 'scripts/npcspawner.lua' } });
 
     const confirmation = screen.getByRole('dialog', { name: 'Duplicate script confirmation' });
     expect(within(confirmation).getByText('A script named NPCSpawner already exists.')).toBeInTheDocument();
+  });
+
+  it('shows duplicate script names distinctly in the compact summary list', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            { id: 'script-1', scriptName: 'NPCSpawner.lua', platformLanguage: 'Luau', status: 'Working' },
+            { id: 'script-2', scriptName: 'npcspawner.lua', platformLanguage: 'Luau', status: 'Buggy' },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const vault = screen.getByRole('region', { name: 'Script Vault' });
+    expect(within(vault).getByRole('button', { name: 'Open NPCSpawner.lua in Script Workspace' })).toBeInTheDocument();
+    expect(within(vault).getByRole('button', { name: 'Open npcspawner.lua copy 2 in Script Workspace' })).toBeInTheDocument();
   });
 
   it('copies scripts and AI help prompts from Script Workspace without execution', async () => {
