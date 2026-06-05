@@ -17,6 +17,7 @@ import TourOverlay from '../Tour/TourOverlay';
 import { CommandPalette } from '../CommandPalette/CommandPalette';
 import { PWAInstallButton } from '../PWAInstallButton';
 import { PassportPage } from '../../features/passport/components/PassportPage';
+import JobHuntPage from '../../features/jobHunt/components/JobHuntPage';
 
 export function AppShell() {
   useTauriSync();
@@ -140,6 +141,8 @@ export function AppShell() {
           <PassportPage />
         ) : currentView === 'launch-studio' ? (
           <LaunchStudio />
+        ) : currentView === 'job-hunt' ? (
+          <JobHuntPage />
         ) : showWelcome ? (
           <WelcomeScreen />
         ) : (
@@ -229,7 +232,8 @@ export function AppShell() {
       {(currentView === 'settings' ||
         currentView === 'memory-vault' ||
         currentView === 'passport' ||
-        currentView === 'launch-studio') && (
+        currentView === 'launch-studio' ||
+        currentView === 'job-hunt') && (
         <button
           type="button"
           className="mobile-projects-fab"

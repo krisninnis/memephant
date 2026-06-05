@@ -366,6 +366,19 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
         >
           🚀 Launch Studio
         </button>
+
+        <button
+          type="button"
+          className={`sidebar-secondary-nav-btn${currentView === "job-hunt" ? " sidebar-secondary-nav-btn--active" : ""}`}
+          aria-current={currentView === "job-hunt" ? "page" : undefined}
+          onClick={() => {
+            setCurrentView("job-hunt");
+            onNavigate?.();
+          }}
+          title="Open Job Hunt Passport"
+        >
+          Job Hunt Passport
+        </button>
       </div>
 
       <div className="sidebar-actions">
