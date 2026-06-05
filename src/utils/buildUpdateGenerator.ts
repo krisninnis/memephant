@@ -7,7 +7,8 @@ import {
 } from './contextQuality';
 import { getContentQualityWarning } from './contentReadiness';
 import { getPublicPostContext } from './publicPostQuality';
-import { getWorkflowModeConfig } from './workflowModes';
+import { getWorkflowModeConfigForProject } from './workflowModes';
+import { getGamePlatformLabel, isGameProject } from './gameProjectTypes';
 
 export type BuildUpdateSectionId =
   | 'xUpdate'
@@ -19,7 +20,9 @@ export type BuildUpdateSectionId =
   | 'feedbackRequest'
   | 'shippedThisWeek'
   | 'founderReflection'
-  | 'demoCaption';
+  | 'demoCaption'
+  | 'gameplayProgress'
+  | 'playtestUpdate';
 
 export type BuildUpdateSection = {
   id: BuildUpdateSectionId;
@@ -84,7 +87,7 @@ export function generateBuildUpdate(
   const openQuestions = cleanList(project.openQuestions);
   const assets = cleanList(project.importantAssets).map(publicAssetName);
   const publicPost = getPublicPostContext(project, 5);
-  const workflowMode = getWorkflowModeConfig(project.workflowMode);
+  const workflowMode = getWorkflowModeConfigForProject(project.workflowMode, project);
   const qualityWarning = getContentQualityWarning(project);
   const progressWarning = publicPost.recentProgressWarning;
   const positioningSummary = publicPost.positioningSummary || summary;
@@ -102,6 +105,13 @@ export function generateBuildUpdate(
     : bulletList([NO_RECENT_TITLE, NO_RECENT_HELP, RECENT_CHANGE_EXAMPLE]);
   const hasRecentProgress = shippedItems.length > 0;
   const shareDisabledReason = hasRecentProgress ? undefined : NO_RECENT_HELP;
+  const isGame = isGameProject(project);
+  const gameOverview = project.gameContext?.overview ?? {};
+  const gamePlatform = getGamePlatformLabel(project.gamePlatform, project.gamePlatformOther);
+  const gameCoreLoop = cleanText(gameOverview.coreLoop, positioningSummary);
+  const playableState = cleanText(gameOverview.currentPlayableState, currentState);
+  const scriptNames = cleanList(project.gameContext?.scriptVault?.map((script) => script.scriptName), []);
+  const knownBugTitles = cleanList(project.gameContext?.knownBugs?.map((bug) => bug.title), []);
 
   const sections: BuildUpdateSection[] = [
     {
@@ -266,6 +276,45 @@ export function generateBuildUpdate(
       shareable: hasRecentProgress,
       shareDisabledReason,
     },
+    ...(isGame ? [
+      {
+        id: 'gameplayProgress' as const,
+        title: 'Gameplay progress update',
+        bestFor: 'Devlog',
+        content: [
+          `Gameplay update for ${name} (${gamePlatform}):`,
+          '',
+          `Core loop: ${gameCoreLoop}`,
+          `Playable state: ${playableState}`,
+          scriptNames.length > 0 ? `Scripts in focus: ${sentenceList(firstItems(scriptNames, 3))}` : '',
+          knownBugTitles.length > 0 ? `Known bug in focus: ${knownBugTitles[0]}` : '',
+          '',
+          `Next: ${primaryNextStep}`,
+        ].filter(Boolean).join('\n'),
+        shareable: hasRecentProgress,
+        shareDisabledReason,
+      },
+      {
+        id: 'playtestUpdate' as const,
+        title: 'Playtest update',
+        bestFor: 'Playtesters',
+        content: [
+          `I am testing ${name} on ${gamePlatform}.`,
+          '',
+          `Please try this loop: ${gameCoreLoop}`,
+          `Current build state: ${playableState}`,
+          '',
+          'Feedback wanted:',
+          bulletList([
+            'what felt fun or confusing',
+            'bugs, broken scripts, event issues, or saving problems',
+            'what made you want to keep playing or stop',
+          ]),
+        ].join('\n'),
+        shareable: hasRecentProgress,
+        shareDisabledReason,
+      },
+    ] satisfies BuildUpdateSection[] : []),
   ];
 
   const markdown = [

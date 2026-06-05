@@ -9,6 +9,10 @@ import type {
   ProjectMemory,
 } from '../types/memphant-types';
 import { SCHEMA_VERSION } from '../types/memphant-types';
+import {
+  createDefaultGameContext,
+  getGamePlatformLabel,
+} from './gameProjectTypes';
 
 const PROJECT_TYPE_LABELS: Record<ProjectBlueprintProjectType, string> = {
   saas: 'SaaS',
@@ -47,6 +51,7 @@ const DEFAULT_INPUT: ProjectBlueprintInput = {
   targetAudience: '',
   desiredOutcome: '',
   projectType: 'saas',
+  gamePlatform: 'roblox',
   quality: 'beginner-friendly',
   preferredStack: '',
   localFirst: 'unsure',
@@ -92,6 +97,10 @@ function labelProjectType(input: ProjectBlueprintInput): string {
   return PROJECT_TYPE_LABELS[input.projectType];
 }
 
+function labelGamePlatform(input: ProjectBlueprintInput): string {
+  return getGamePlatformLabel(input.gamePlatform, input.otherGamePlatform);
+}
+
 function labelPrimaryAI(input: ProjectBlueprintInput): string {
   if (input.primaryAI === 'other') {
     return clean(input.otherPrimaryAI, 'Other');
@@ -133,7 +142,7 @@ function typeSpecificScope(projectType: ProjectBlueprintProjectType): string {
     case 'internal-tool':
       return 'A private tool that makes one repeated internal workflow faster or less error-prone.';
     case 'game':
-      return 'A playable loop with one level, one core mechanic, and a clear win or progress state.';
+      return 'A playable game loop with one map or level, one core mechanic, and a clear win or progress state.';
     case 'content-business':
       return 'A repeatable content production and publishing workflow with one clear audience promise.';
     case 'saas':
@@ -158,7 +167,7 @@ function typeSpecificStack(input: ProjectBlueprintInput): string {
     case 'internal-tool':
       return 'Simple authenticated UI, audit-friendly actions, and conservative data access.';
     case 'game':
-      return 'Game loop, scene/state management, asset pipeline, and local save state.';
+      return 'Game loop, scripts, map/scene structure, UI prompts, progression, playtest notes, and local save state.';
     case 'content-business':
       return 'Content database or spreadsheet, publishing checklist, and lightweight analytics later.';
     case 'saas':
@@ -228,7 +237,7 @@ function folderStructure(input: ProjectBlueprintInput): string {
 
 function buildAiInstructions(input: ProjectBlueprintInput): string {
   const ai = labelPrimaryAI(input);
-  return [
+  const lines = [
     `You are helping build ${clean(input.projectName, 'this project')} from a Project Blueprint.`,
     `Primary AI workflow: ${ai}.`,
     `Project type: ${labelProjectType(input)}.`,
@@ -237,7 +246,17 @@ function buildAiInstructions(input: ProjectBlueprintInput): string {
     `Do not generate application code unless the user explicitly asks for code.`,
     `Keep recommendations grounded in the stated problem: ${clean(input.problem, 'the user problem is still being clarified')}.`,
     `Preserve local-first and user-approved decisions when they appear in the project memory.`,
-  ].join('\n');
+  ];
+
+  if (input.projectType === 'game') {
+    lines.push(`Game platform: ${labelGamePlatform(input)}.`);
+    lines.push('Preserve gameplay loop, systems, scripts, bugs, maps, progression, monetisation, and playtest context across AI handoffs.');
+    if (input.gamePlatform === 'roblox') {
+      lines.push('For Roblox, track Roblox Studio hierarchy, Luau scripts, LocalScripts, ModuleScripts, RemoteEvents, DataStores, StarterGui, Workspace, ServerScriptService, ReplicatedStorage, gamepasses, and thumbnails/icons.');
+    }
+  }
+
+  return lines.join('\n');
 }
 
 function buildContextPassportSeed(input: ProjectBlueprintInput): string {
@@ -259,6 +278,11 @@ function buildContextPassportSeed(input: ProjectBlueprintInput): string {
     `## Project Type`,
     labelProjectType(input),
     '',
+    ...(input.projectType === 'game' ? [
+      '## Game Platform',
+      labelGamePlatform(input),
+      '',
+    ] : []),
     `## Technical Preferences`,
     `- Quality level: ${input.quality}`,
     `- Preferred stack: ${clean(input.preferredStack, 'Not decided yet')}`,
@@ -340,6 +364,12 @@ export function generateProjectBlueprint(
     desiredOutcome: clean(rawInput.desiredOutcome, 'The desired outcome still needs to be clarified.'),
     preferredStack: clean(rawInput.preferredStack),
     otherProjectType: clean(rawInput.otherProjectType),
+    gamePlatform: rawInput.projectType === 'game'
+      ? rawInput.gamePlatform ?? DEFAULT_INPUT.gamePlatform
+      : undefined,
+    otherGamePlatform: rawInput.projectType === 'game'
+      ? clean(rawInput.otherGamePlatform)
+      : undefined,
     otherPrimaryAI: clean(rawInput.otherPrimaryAI),
   };
   const name = input.projectName;
@@ -359,11 +389,17 @@ export function generateProjectBlueprint(
         typeSpecificScope(input.projectType),
         `Make the core outcome obvious: ${input.desiredOutcome}`,
         `Create enough context for ${labelPrimaryAI(input)} to continue without re-explaining the project.`,
+        ...(input.projectType === 'game'
+          ? [`Capture the game loop, key systems, important scripts, known bugs, and playtest plan for ${labelGamePlatform(input)}.`]
+          : []),
       ],
       nonGoals: [
         'Do not generate application code from the blueprint itself.',
         'Do not add automation, payments, or integrations before the MVP path is clear.',
         'Do not optimize for scale before the first complete user workflow exists.',
+        ...(input.projectType === 'game'
+          ? ['Do not add game engine plugins, parsers, platform APIs, or publishing automation from the blueprint.']
+          : []),
       ],
       risks: [
         `The audience may still be too broad: ${input.targetAudience}`,
@@ -380,6 +416,9 @@ export function generateProjectBlueprint(
         'Confirm the target user and the painful workflow.',
         'Write the simplest product promise in one sentence.',
         'Build or sketch the smallest workflow that proves the outcome.',
+        ...(input.projectType === 'game'
+          ? ['Define the core gameplay loop, key systems, playable state, and first playtest target.']
+          : []),
       ],
       phase2: [
         'Add persistence for the core workflow.',
@@ -396,7 +435,9 @@ export function generateProjectBlueprint(
       'Rewrite the idea as a one-sentence promise.',
       'Describe the target user in plain English.',
       'Write the top three pain points this project should remove.',
-      'Choose the single workflow the MVP must prove.',
+      input.projectType === 'game'
+        ? 'Choose the single gameplay loop the MVP must prove.'
+        : 'Choose the single workflow the MVP must prove.',
       'List the inputs and outputs for that workflow.',
       'Decide what data must be stored locally or remotely.',
       'Create a rough folder plan before adding files.',
@@ -407,9 +448,15 @@ export function generateProjectBlueprint(
     aiInstructions: buildAiInstructions(input),
     contextPassportSeed: buildContextPassportSeed(input),
     launchChecklist: [
-      'Write the public problem statement in plain English.',
-      'Prepare a short demo of the core workflow.',
-      'Ask for feedback from the target audience before broad launch.',
+      input.projectType === 'game'
+        ? 'Write the public game description in plain English.'
+        : 'Write the public problem statement in plain English.',
+      input.projectType === 'game'
+        ? 'Prepare a short playtest clip of the core loop.'
+        : 'Prepare a short demo of the core workflow.',
+      input.projectType === 'game'
+        ? 'Ask playtesters about fun, confusion, retention, bugs, and monetisation fit before broad launch.'
+        : 'Ask for feedback from the target audience before broad launch.',
       'Track what changed recently so Launch Studio can generate specific updates.',
       'Keep launch content tied to real shipped progress.',
     ],
@@ -431,6 +478,16 @@ export function createProjectFromBlueprint(
     {
       decision: `Project type: ${labelProjectType(blueprint.input)}.`,
       rationale: 'Selected in Project Blueprint before implementation.',
+      source: 'project-blueprint',
+      timestamp: generatedAt,
+    },
+    {
+      decision: blueprint.input.projectType === 'game'
+        ? `Game platform: ${labelGamePlatform(blueprint.input)}.`
+        : `Project category: ${labelProjectType(blueprint.input)}.`,
+      rationale: blueprint.input.projectType === 'game'
+        ? 'Selected so game-specific context fields and exports can stay aligned.'
+        : 'Selected in Project Blueprint before implementation.',
       source: 'project-blueprint',
       timestamp: generatedAt,
     },
@@ -491,5 +548,22 @@ export function createProjectFromBlueprint(
     ],
     platformState: {},
     workflowMode: 'build',
+    projectCategory:
+      blueprint.input.projectType === 'game'
+        ? 'game'
+        : blueprint.input.projectType === 'saas'
+          ? 'saas'
+          : blueprint.input.projectType === 'desktop-app'
+            ? 'desktop-app'
+            : blueprint.input.projectType === 'mobile-app'
+              ? 'mobile-app'
+              : blueprint.input.projectType === 'content-business'
+                ? 'content-project'
+                : 'general-software',
+    gamePlatform: blueprint.input.projectType === 'game' ? blueprint.input.gamePlatform : undefined,
+    gamePlatformOther: blueprint.input.projectType === 'game' ? blueprint.input.otherGamePlatform : undefined,
+    gameContext: blueprint.input.projectType === 'game'
+      ? createDefaultGameContext(blueprint.input.gamePlatform ?? 'roblox')
+      : undefined,
   };
 }

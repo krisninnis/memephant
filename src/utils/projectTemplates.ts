@@ -4,6 +4,7 @@
  */
 
 import type { ProjectMemory } from '../types/memphant-types';
+import { createDefaultGameContext } from './gameProjectTypes';
 
 export interface ProjectTemplate {
   id: string;
@@ -14,6 +15,53 @@ export interface ProjectTemplate {
 }
 
 export const PROJECT_TEMPLATES: ProjectTemplate[] = [
+  {
+    id: 'roblox-game',
+    label: 'Roblox Game',
+    emoji: 'GAME',
+    description: 'Track gameplay, scripts, bugs, and playtests',
+    build: (name) => ({
+      schema_version: 1,
+      name,
+      summary: 'A Roblox game project with portable gameplay, systems, script, bug, and launch context.',
+      goals: [
+        'Define the core gameplay loop',
+        'Build a playable first map or level',
+        'Run a small playtest and save feedback',
+      ],
+      rules: [
+        'Keep script context lightweight and review snippets before export',
+        'Track client/server responsibilities for Roblox scripts',
+        'Do not add platform APIs or publishing automation before the core loop works',
+      ],
+      decisions: [
+        {
+          decision: 'Use Roblox as the first game platform.',
+          rationale: 'Roblox creators often need Luau script, Studio hierarchy, playtest, and launch context to travel between AI tools.',
+        },
+      ],
+      currentState: 'Early game concept. Core loop, map, scripts, and playtest plan still need to be filled in.',
+      nextSteps: [
+        'Write the core loop in one sentence',
+        'List the key Roblox systems and scripts',
+        'Add known bugs and reproduction notes',
+        'Prepare first playtest feedback questions',
+      ],
+      openQuestions: [
+        'What should the player do in the first 30 seconds?',
+        'Which scripts are most important to preserve as context?',
+        'What progression or reward makes players return?',
+      ],
+      importantAssets: [],
+      projectCharter: '',
+      aiInstructions:
+        'Help me preserve Roblox game context across AI tools. Track gameplay loop, Studio hierarchy, Luau scripts, LocalScripts, ModuleScripts, RemoteEvents, DataStores, StarterGui, Workspace, progression, monetisation, playtesting feedback, and known bugs.',
+      workflowMode: 'build',
+      projectCategory: 'game',
+      gamePlatform: 'roblox',
+      gameContext: createDefaultGameContext('roblox'),
+    }),
+  },
   {
     id: 'saas',
     label: 'SaaS Product',

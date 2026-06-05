@@ -1197,6 +1197,88 @@ select {
   color: #fff;
 }
 
+.game-context-panel {
+  margin: 0 0 24px;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.game-context-section {
+  margin-top: 20px;
+}
+
+.game-context-section__header,
+.game-record-card__header,
+.game-platform-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.game-context-section__header,
+.game-record-card__header {
+  justify-content: space-between;
+}
+
+.game-context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.game-context-grid label,
+.game-context-wide-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #8a8aa3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.game-context-wide-field {
+  margin-top: 12px;
+}
+
+.game-platform-links {
+  flex-wrap: wrap;
+  margin: -8px 0 18px;
+}
+
+.game-platform-links a {
+  color: #7dd3fc;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.game-platform-links a:hover {
+  text-decoration: underline;
+}
+
+.game-record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-record-card {
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.22);
+}
+
+.game-record-card__header {
+  margin-bottom: 12px;
+}
+
+.game-code-snippet {
+  min-height: 120px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
 /* ── GitHub Repository field ──────────────────────────────────────────────── */
 
 .github-repo-field {

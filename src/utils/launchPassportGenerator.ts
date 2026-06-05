@@ -7,7 +7,11 @@ import {
 } from './contextQuality';
 import { getContentQualityWarning } from './contentReadiness';
 import { getPublicPostContext } from './publicPostQuality';
-import { getWorkflowModeConfig } from './workflowModes';
+import { getWorkflowModeConfigForProject } from './workflowModes';
+import {
+  getGamePlatformLabel,
+  isGameProject,
+} from './gameProjectTypes';
 
 export type LaunchPassportSectionId =
   | 'positioning'
@@ -19,7 +23,16 @@ export type LaunchPassportSectionId =
   | 'demoVideo'
   | 'screenshotChecklist'
   | 'launchChecklist'
-  | 'feedbackRequest';
+  | 'feedbackRequest'
+  | 'gameDescription'
+  | 'gameUpdateLog'
+  | 'gamePlaytestRequest'
+  | 'gameDevlogPost'
+  | 'gameDiscordAnnouncement'
+  | 'gameThumbnailChecklist'
+  | 'gameFeedbackQuestions'
+  | 'gameMonetisationChecklist'
+  | 'gameRetentionQuestions';
 
 export type LaunchPassportSection = {
   id: LaunchPassportSectionId;
@@ -89,7 +102,7 @@ export function generateLaunchPassport(
   const openQuestions = cleanList(project.openQuestions);
   const assets = cleanList(project.importantAssets).map(publicAssetName);
   const instructions = cleanText(project.aiInstructions);
-  const workflowMode = getWorkflowModeConfig(project.workflowMode);
+  const workflowMode = getWorkflowModeConfigForProject(project.workflowMode, project);
   const qualityWarning = getContentQualityWarning(project);
   const publicPost = getPublicPostContext(project, 5);
   const publicDecisions = filterPublicDecisions(project.decisions, 2)
@@ -108,6 +121,17 @@ export function generateLaunchPassport(
     ...inProgress.map((item) => `In progress: ${item}`),
     ...nextSteps.map((step) => `Next: ${step}`),
   ], 5);
+  const gameContext = project.gameContext;
+  const gameOverview = gameContext?.overview ?? {};
+  const isGame = isGameProject(project);
+  const gamePlatform = getGamePlatformLabel(project.gamePlatform, project.gamePlatformOther);
+  const gameGenre = cleanText(gameOverview.genre, 'game');
+  const gameCoreLoop = cleanText(gameOverview.coreLoop, positioningSummary);
+  const playableState = cleanText(gameOverview.currentPlayableState, currentState);
+  const monetisationPlan = cleanText(gameOverview.monetisationPlan, 'Review monetisation after playtest feedback');
+  const scriptNames = cleanList(gameContext?.scriptVault?.map((script) => script.scriptName), []);
+  const knownBugTitles = cleanList(gameContext?.knownBugs?.map((bug) => bug.title), []);
+  const isRobloxGame = project.gamePlatform === 'roblox';
 
   const sections: LaunchPassportSection[] = [
     {
@@ -239,6 +263,130 @@ export function generateLaunchPassport(
         `If you try it, I would love one specific note: where did the value become clear, and where did it feel confusing?`,
       ].join('\n'),
     },
+    ...(isGame ? [
+      {
+        id: 'gameDescription' as const,
+        title: isRobloxGame ? 'Roblox game description' : 'Game description',
+        content: [
+          `${name} is a ${gameGenre} for ${gamePlatform}.`,
+          '',
+          `Core loop: ${gameCoreLoop}`,
+          `Playable state: ${playableState}`,
+          `Target player: ${cleanText(gameOverview.targetPlayer, 'players who enjoy the core loop')}`,
+          `Art style: ${cleanText(gameOverview.artStyle, 'still being refined')}`,
+        ].join('\n'),
+      },
+      {
+        id: 'gameUpdateLog' as const,
+        title: 'Update log',
+        content: bulletList([
+          ...firstItems(recentHighlights, 4),
+          ...firstItems(nextSteps, 3).map((step) => `Next: ${step}`),
+          ...(knownBugTitles.length > 0 ? firstItems(knownBugTitles, 3).map((bug) => `Known issue: ${bug}`) : []),
+        ].length > 0
+          ? [
+              ...firstItems(recentHighlights, 4),
+              ...firstItems(nextSteps, 3).map((step) => `Next: ${step}`),
+              ...(knownBugTitles.length > 0 ? firstItems(knownBugTitles, 3).map((bug) => `Known issue: ${bug}`) : []),
+            ]
+          : ['Document the next playable update before posting.']),
+      },
+      {
+        id: 'gamePlaytestRequest' as const,
+        title: 'Playtest request',
+        content: [
+          `I am looking for playtesters for ${name}.`,
+          '',
+          `Platform: ${gamePlatform}`,
+          `Current playable state: ${playableState}`,
+          `Please focus on whether this loop is clear and fun: ${gameCoreLoop}`,
+          '',
+          'Useful feedback:',
+          bulletList([
+            'Where did you understand what to do?',
+            'Where did you get stuck or bored?',
+            'Did any script, UI, saving, event, or progression issue appear?',
+            'What would make you play another round?',
+          ]),
+        ].join('\n'),
+      },
+      {
+        id: 'gameDevlogPost' as const,
+        title: 'X/Twitter devlog post',
+        content: [
+          `Devlog for ${name}:`,
+          '',
+          `Core loop: ${gameCoreLoop}`,
+          `Current state: ${playableState}`,
+          scriptNames.length > 0 ? `Scripts in focus: ${sentenceList(firstItems(scriptNames, 3))}` : '',
+          knownBugTitles.length > 0 ? `Known bug I am chasing: ${knownBugTitles[0]}` : '',
+          '',
+          'Playtest feedback welcome.',
+        ].filter(Boolean).join('\n'),
+      },
+      {
+        id: 'gameDiscordAnnouncement' as const,
+        title: 'Discord announcement',
+        content: [
+          `New ${name} playtest/update is ready.`,
+          '',
+          `What to try: ${gameCoreLoop}`,
+          `Current state: ${playableState}`,
+          '',
+          'Please share:',
+          bulletList([
+            'first confusing moment',
+            'best/funniest moment',
+            'bugs or broken scripts',
+            'what you wanted to do next',
+          ]),
+        ].join('\n'),
+      },
+      {
+        id: 'gameThumbnailChecklist' as const,
+        title: isRobloxGame ? 'Thumbnail/icon checklist' : 'Game visual checklist',
+        content: bulletList([
+          isRobloxGame ? 'Roblox icon clearly shows the main fantasy or mechanic' : 'Store/header image clearly shows the main fantasy or mechanic',
+          'Thumbnail shows the player goal, obstacle, or reward',
+          'Image reads clearly on mobile',
+          'Title text is short enough to scan',
+          'Screenshots show live gameplay, UI, and progress/reward state',
+        ]),
+      },
+      {
+        id: 'gameFeedbackQuestions' as const,
+        title: 'Feedback questions',
+        content: bulletList([
+          'What did you think the goal was in the first 30 seconds?',
+          'What felt fun enough to repeat?',
+          'What felt confusing, slow, unfair, or broken?',
+          'Which system should be improved next?',
+          'Would the monetisation feel optional and fair?',
+        ]),
+      },
+      {
+        id: 'gameMonetisationChecklist' as const,
+        title: 'Monetisation checklist',
+        content: bulletList([
+          `Current plan: ${monetisationPlan}`,
+          isRobloxGame ? 'Gamepasses or developer products support the fun instead of blocking it' : 'Paid items support the fun instead of blocking it',
+          'No paid item is required to understand the core loop',
+          'Prices and rewards are understandable before purchase',
+          'Playtesters can explain what feels worth paying for',
+        ]),
+      },
+      {
+        id: 'gameRetentionQuestions' as const,
+        title: 'Retention questions',
+        content: bulletList([
+          'What makes a player start a second round/session?',
+          'What progress persists between sessions?',
+          'What unlock, quest, collection, or social goal pulls players back?',
+          'Where does the game become repetitive?',
+          'Which bug would most damage trust if left unfixed?',
+        ]),
+      },
+    ] satisfies LaunchPassportSection[] : []),
   ];
 
   const markdown = [

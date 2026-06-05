@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import type {
   ProjectBlueprintInput,
+  GamePlatform,
   ProjectBlueprintPreference,
   ProjectBlueprintPrimaryAI,
   ProjectBlueprintProjectType,
@@ -15,6 +16,8 @@ import {
 } from '../../utils/projectBlueprintGenerator';
 import { saveToDisk } from '../../services/tauriActions';
 import { BlueprintPreview } from './BlueprintPreview';
+import { track } from '../../lib/analytics';
+import { GAME_PLATFORM_OPTIONS } from '../../utils/gameProjectTypes';
 import './BlueprintWizard.css';
 
 type BlueprintStep = 'basics' | 'type' | 'technical' | 'workflow' | 'preview';
@@ -152,6 +155,8 @@ export function BlueprintWizard({ onClose, onProjectCreated }: BlueprintWizardPr
       addProject(project);
       setActiveProject(project.id);
       setCurrentView('projects');
+      track('project_created');
+      track('project_blueprint_created');
       showToast(`"${project.name}" created from Project Blueprint.`);
       onProjectCreated?.();
       onClose();
@@ -273,6 +278,33 @@ export function BlueprintWizard({ onClose, onProjectCreated }: BlueprintWizardPr
                     placeholder="Example: developer education product"
                   />
                 </label>
+              )}
+
+              {input.projectType === 'game' && (
+                <>
+                  <label>
+                    Game platform
+                    <select
+                      value={input.gamePlatform ?? 'roblox'}
+                      onChange={(event) => update('gamePlatform', event.target.value as GamePlatform)}
+                    >
+                      {GAME_PLATFORM_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {input.gamePlatform === 'other' && (
+                    <label>
+                      Describe the game platform
+                      <input
+                        value={input.otherGamePlatform ?? ''}
+                        onChange={(event) => update('otherGamePlatform', event.target.value)}
+                        placeholder="Example: custom web game engine"
+                      />
+                    </label>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -19,6 +19,40 @@ export type Platform = string;
 export type ExportMode = 'quick' | 'full' | 'delta' | 'specialist' | 'smart';
 export type PlatformCategory = 'chat' | 'dev' | 'local' | 'custom';
 export type AIWorkflowMode = 'build' | 'debug' | 'launch' | 'research' | 'investor';
+export type ProjectCategory =
+  | 'general-software'
+  | 'website'
+  | 'saas'
+  | 'desktop-app'
+  | 'mobile-app'
+  | 'game'
+  | 'content-project'
+  | 'other';
+export type GamePlatform =
+  | 'roblox'
+  | 'unity'
+  | 'unreal'
+  | 'godot'
+  | 'gamemaker'
+  | 'construct'
+  | 'rpg-maker'
+  | 'uefn'
+  | 'core'
+  | 'sbox'
+  | 'defold'
+  | 'other';
+export type GameSystemKey =
+  | 'movement'
+  | 'combat'
+  | 'inventory'
+  | 'economy'
+  | 'quests'
+  | 'npcs'
+  | 'ui'
+  | 'multiplayer'
+  | 'savingProgression'
+  | 'monetisation'
+  | 'analyticsPlaytesting';
 export type ProjectBlueprintProjectType =
   | 'saas'
   | 'desktop-app'
@@ -153,6 +187,43 @@ export interface GitCommit {
   author: string;
 }
 
+export interface GameOverview {
+  genre?: string;
+  coreLoop?: string;
+  targetPlayer?: string;
+  artStyle?: string;
+  platformTarget?: string;
+  monetisationPlan?: string;
+  currentPlayableState?: string;
+}
+
+export interface KnownGameBug {
+  id?: string;
+  title: string;
+  systemAffected?: string;
+  reproductionNotes?: string;
+  currentTheory?: string;
+  status?: string;
+}
+
+export interface ScriptVaultEntry {
+  id?: string;
+  scriptName: string;
+  platformLanguage?: string;
+  purpose?: string;
+  relatedSystem?: string;
+  status?: string;
+  notes?: string;
+  codeSnippet?: string;
+}
+
+export interface GameProjectContext {
+  overview?: GameOverview;
+  systems?: Partial<Record<GameSystemKey, string>>;
+  knownBugs?: KnownGameBug[];
+  scriptVault?: ScriptVaultEntry[];
+}
+
 export interface ProjectBlueprintInput {
   projectName: string;
   idea: string;
@@ -161,6 +232,8 @@ export interface ProjectBlueprintInput {
   desiredOutcome: string;
   projectType: ProjectBlueprintProjectType;
   otherProjectType?: string;
+  gamePlatform?: GamePlatform;
+  otherGamePlatform?: string;
   quality: ProjectBlueprintQuality;
   preferredStack?: string;
   localFirst: ProjectBlueprintPreference;
@@ -250,6 +323,16 @@ export interface ProjectCheckpointSnapshot {
   lastAiSession?: LastAiSession;
   /** Lightweight context preset for how the next AI should think about the project. */
   workflowMode?: AIWorkflowMode;
+  /** Broad project classification used to unlock context-specific fields. */
+  projectCategory?: ProjectCategory;
+  /** Free-text label when the project category is Other. */
+  projectCategoryOther?: string;
+  /** Game engine/platform metadata for game projects. */
+  gamePlatform?: GamePlatform;
+  /** Free-text label when the game platform is Other. */
+  gamePlatformOther?: string;
+  /** Optional game-specific portable context. */
+  gameContext?: GameProjectContext;
 }
 
 export interface ProjectCheckpoint {
@@ -461,6 +544,13 @@ export function cloneCheckpointSnapshot(project: ProjectCheckpointSnapshot): Pro
       : undefined,
     lastAiSession: project.lastAiSession ? { ...project.lastAiSession } : undefined,
     workflowMode: project.workflowMode,
+    projectCategory: project.projectCategory,
+    projectCategoryOther: project.projectCategoryOther,
+    gamePlatform: project.gamePlatform,
+    gamePlatformOther: project.gamePlatformOther,
+    gameContext: project.gameContext
+      ? JSON.parse(JSON.stringify(project.gameContext)) as GameProjectContext
+      : undefined,
   };
 }
 
@@ -479,6 +569,11 @@ export function hashProjectState(project: ProjectCheckpointSnapshot): string {
     project.projectReason ?? '',
     project.recentProgressNote ?? '',
     project.projectBlueprint ? JSON.stringify(project.projectBlueprint) : '',
+    project.projectCategory ?? '',
+    project.projectCategoryOther ?? '',
+    project.gamePlatform ?? '',
+    project.gamePlatformOther ?? '',
+    project.gameContext ? JSON.stringify(project.gameContext) : '',
   ].join('::');
 
   let hash = 5381;

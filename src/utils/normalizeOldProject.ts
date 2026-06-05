@@ -8,8 +8,18 @@ import type {
   ProjectMemory,
   ProjectNextIds,
   ProjectRestorePoint,
+  GameProjectContext,
+  GameSystemKey,
+  KnownGameBug,
+  ScriptVaultEntry,
 } from '../types/memphant-types';
 import { SCHEMA_VERSION } from '../types/memphant-types';
+import {
+  GAME_SYSTEM_OPTIONS,
+  createDefaultGameContext,
+  isGamePlatform,
+  isProjectCategory,
+} from './gameProjectTypes';
 import { isAIWorkflowMode } from './workflowModes';
 
 type LegacyProject = Partial<ProjectMemory> & Record<string, unknown>;
@@ -181,7 +191,101 @@ function normalizeProjectBlueprint(value: unknown): ProjectMemory['projectBluepr
   return candidate.version === '1.0' ? (candidate as ProjectMemory['projectBlueprint']) : undefined;
 }
 
+function normalizeOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
+}
+
+function normalizeGameSystems(value: unknown): GameProjectContext['systems'] | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+
+  const source = value as Record<string, unknown>;
+  const systems: Partial<Record<GameSystemKey, string>> = {};
+
+  for (const option of GAME_SYSTEM_OPTIONS) {
+    const normalized = normalizeOptionalString(source[option.value]);
+    if (normalized) systems[option.value] = normalized;
+  }
+
+  return Object.keys(systems).length > 0 ? systems : undefined;
+}
+
+function normalizeKnownGameBugs(value: unknown): KnownGameBug[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const bugs = value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .map((item): KnownGameBug => ({
+      id: normalizeOptionalString(item.id),
+      title: normalizeOptionalString(item.title) ?? '',
+      systemAffected: normalizeOptionalString(item.systemAffected),
+      reproductionNotes: normalizeOptionalString(item.reproductionNotes),
+      currentTheory: normalizeOptionalString(item.currentTheory),
+      status: normalizeOptionalString(item.status),
+    }))
+    .filter((bug) => bug.title.trim().length > 0);
+
+  return bugs.length > 0 ? bugs : undefined;
+}
+
+function normalizeScriptVault(value: unknown): ScriptVaultEntry[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const scripts = value
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object')
+    .map((item): ScriptVaultEntry => ({
+      id: normalizeOptionalString(item.id),
+      scriptName: normalizeOptionalString(item.scriptName) ?? '',
+      platformLanguage: normalizeOptionalString(item.platformLanguage),
+      purpose: normalizeOptionalString(item.purpose),
+      relatedSystem: normalizeOptionalString(item.relatedSystem),
+      status: normalizeOptionalString(item.status),
+      notes: normalizeOptionalString(item.notes),
+      codeSnippet: normalizeOptionalString(item.codeSnippet),
+    }))
+    .filter((script) => script.scriptName.trim().length > 0);
+
+  return scripts.length > 0 ? scripts : undefined;
+}
+
+function normalizeGameContext(value: unknown, platform: ProjectMemory['gamePlatform']): GameProjectContext | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return platform ? createDefaultGameContext(platform) : undefined;
+  }
+
+  const source = value as Record<string, unknown>;
+  const overviewSource =
+    source.overview && typeof source.overview === 'object' && !Array.isArray(source.overview)
+      ? source.overview as Record<string, unknown>
+      : {};
+
+  const overview = {
+    genre: normalizeOptionalString(overviewSource.genre),
+    coreLoop: normalizeOptionalString(overviewSource.coreLoop),
+    targetPlayer: normalizeOptionalString(overviewSource.targetPlayer),
+    artStyle: normalizeOptionalString(overviewSource.artStyle),
+    platformTarget: normalizeOptionalString(overviewSource.platformTarget),
+    monetisationPlan: normalizeOptionalString(overviewSource.monetisationPlan),
+    currentPlayableState: normalizeOptionalString(overviewSource.currentPlayableState),
+  };
+  const cleanOverview = Object.fromEntries(
+    Object.entries(overview).filter(([, field]) => typeof field === 'string' && field.trim().length > 0),
+  ) as GameProjectContext['overview'];
+
+  const normalized: GameProjectContext = {
+    overview: cleanOverview && Object.keys(cleanOverview).length > 0 ? cleanOverview : undefined,
+    systems: normalizeGameSystems(source.systems),
+    knownBugs: normalizeKnownGameBugs(source.knownBugs),
+    scriptVault: normalizeScriptVault(source.scriptVault),
+  };
+
+  return Object.values(normalized).some(Boolean) ? normalized : undefined;
+}
+
 export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
+  const projectCategory = isProjectCategory(raw.projectCategory) ? raw.projectCategory : undefined;
+  const gamePlatform = isGamePlatform(raw.gamePlatform) ? raw.gamePlatform : undefined;
+  const gameContext = normalizeGameContext(raw.gameContext, gamePlatform);
+
   return {
     schema_version: SCHEMA_VERSION,
     id: typeof raw.id === 'string' && raw.id.trim().length > 0 ? raw.id : crypto.randomUUID(),
@@ -228,6 +332,11 @@ export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
         : undefined,
     projectBlueprint: normalizeProjectBlueprint(raw.projectBlueprint),
     workflowMode: isAIWorkflowMode(raw.workflowMode) ? raw.workflowMode : undefined,
+    projectCategory,
+    projectCategoryOther: normalizeOptionalString(raw.projectCategoryOther),
+    gamePlatform,
+    gamePlatformOther: normalizeOptionalString(raw.gamePlatformOther),
+    gameContext,
     nextIds: normalizeNextIds(raw.nextIds),
     checkpoints: normalizeCheckpoints(raw.checkpoints),
     restorePoints: normalizeRestorePoints(raw.restorePoints),

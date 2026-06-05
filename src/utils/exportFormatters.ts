@@ -14,6 +14,7 @@ import type {
 import { getPlatformConfig } from './platformRegistry';
 import { isMemphantPlaceholderValue } from './memphantPlaceholders';
 import { getWorkflowModeExportBlock } from './workflowModes';
+import { formatGameContextMarkdown } from './gameContextFormatter';
 
 const STANDARD_PATTERNS = [
   // OpenAI
@@ -1292,11 +1293,14 @@ export function formatForPlatform(
   recentActivity?: string,
   frontalLobeBlock?: string,
 ): string {
-  if (mode === 'quick') return appendFrontalLobe(appendWorkflowMode(formatQuickStart(project, task), project), frontalLobeBlock);
-  if (mode === 'delta') return appendFrontalLobe(appendWorkflowMode(formatDelta(project, task), project), frontalLobeBlock);
-  if (mode === 'specialist') return appendFrontalLobe(appendWorkflowMode(formatSpecialist(project, task), project), frontalLobeBlock);
+  if (mode === 'quick') return appendFrontalLobe(appendGameContext(appendWorkflowMode(formatQuickStart(project, task), project), project), frontalLobeBlock);
+  if (mode === 'delta') return appendFrontalLobe(appendGameContext(appendWorkflowMode(formatDelta(project, task), project), project), frontalLobeBlock);
+  if (mode === 'specialist') return appendFrontalLobe(appendGameContext(appendWorkflowMode(formatSpecialist(project, task), project), project), frontalLobeBlock);
   if (mode === 'smart') return appendFrontalLobe(
-    appendWorkflowMode(formatSmartExport(project, platform, task, platformConfig, recentActivity), project),
+    appendGameContext(
+      appendWorkflowMode(formatSmartExport(project, platform, task, platformConfig, recentActivity), project),
+      project,
+    ),
     frontalLobeBlock,
   );
 
@@ -1328,7 +1332,7 @@ export function formatForPlatform(
       output = formatGenericForPlatform(project, platform, task, platformConfig);
   }
 
-  return appendFrontalLobe(appendWorkflowMode(output, project), frontalLobeBlock);
+  return appendFrontalLobe(appendGameContext(appendWorkflowMode(output, project), project), frontalLobeBlock);
 }
 
 /**
@@ -1343,7 +1347,15 @@ function appendFrontalLobe(base: string, block?: string): string {
 }
 
 function appendWorkflowMode(base: string, project: ProjectMemory): string {
-  const block = getWorkflowModeExportBlock(project.workflowMode);
+  const block = getWorkflowModeExportBlock(project.workflowMode, project);
   if (!block || /^# AI Workflow Mode\s*$/m.test(base)) return base;
   return `${base}\n\n${sanitize(block)}`;
+}
+
+function appendGameContext(base: string, project: ProjectMemory): string {
+  const block = formatGameContextMarkdown(project, (value) =>
+    redactProjectLinkedFolderPath(project, sanitize(value)),
+  );
+  if (!block || /^## Game Context\s*$/m.test(base)) return base;
+  return `${base}\n\n${block}`;
 }

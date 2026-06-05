@@ -17,8 +17,47 @@ import { scanGitHubRepo, mergeScanResult, parseGitHubUrl } from '../../services/
 import { restoreProjectFromHistory } from '../../services/tauriActions';
 import { RecentActivityBlock } from '../RecentActivityBlock';
 import type { GitHubScanResult } from '../../services/githubScanner';
+import type {
+  GameOverview,
+  GamePlatform,
+  GameProjectContext,
+  GameSystemKey,
+  KnownGameBug,
+  ProjectCategory,
+  ScriptVaultEntry,
+} from '../../types/memphant-types';
+import {
+  GAME_PLATFORM_LINKS,
+  GAME_PLATFORM_OPTIONS,
+  GAME_SYSTEM_OPTIONS,
+  PROJECT_CATEGORY_OPTIONS,
+  createDefaultGameContext,
+} from '../../utils/gameProjectTypes';
 
 type ScanState = 'idle' | 'scanning' | 'preview' | 'error';
+
+function mergeGameContextDefaults(
+  current: GameProjectContext | undefined,
+  platform: GamePlatform,
+): GameProjectContext {
+  const defaults = createDefaultGameContext(platform);
+  return {
+    overview: {
+      ...defaults.overview,
+      ...current?.overview,
+    },
+    systems: {
+      ...defaults.systems,
+      ...current?.systems,
+    },
+    knownBugs: current?.knownBugs ?? defaults.knownBugs ?? [],
+    scriptVault: current?.scriptVault ?? defaults.scriptVault ?? [],
+  };
+}
+
+function nextRecordId(prefix: string): string {
+  return `${prefix}-${Date.now().toString(36)}`;
+}
 
 function formatRestorePointTime(isoString: string): string {
   return new Date(isoString).toLocaleString('en-GB', {
@@ -253,6 +292,110 @@ export function ProjectEditor() {
     );
   }
 
+  const activeGamePlatform = activeProject.gamePlatform ?? 'roblox';
+  const activeGameContext = activeProject.gameContext ?? createDefaultGameContext(activeGamePlatform);
+  const activeProjectCategory = activeProject.projectCategory ?? 'general-software';
+  const activePlatformLinks = GAME_PLATFORM_LINKS[activeGamePlatform] ?? [];
+
+  const updateGameContext = (next: GameProjectContext) => {
+    update('gameContext', next);
+  };
+
+  const updateGameOverview = (field: keyof GameOverview, value: string) => {
+    updateGameContext({
+      ...activeGameContext,
+      overview: {
+        ...activeGameContext.overview,
+        [field]: value,
+      },
+    });
+  };
+
+  const updateGameSystem = (field: GameSystemKey, value: string) => {
+    updateGameContext({
+      ...activeGameContext,
+      systems: {
+        ...activeGameContext.systems,
+        [field]: value,
+      },
+    });
+  };
+
+  const updateKnownBug = (index: number, value: KnownGameBug) => {
+    const bugs = [...(activeGameContext.knownBugs ?? [])];
+    bugs[index] = value;
+    updateGameContext({ ...activeGameContext, knownBugs: bugs });
+  };
+
+  const removeKnownBug = (index: number) => {
+    updateGameContext({
+      ...activeGameContext,
+      knownBugs: (activeGameContext.knownBugs ?? []).filter((_, itemIndex) => itemIndex !== index),
+    });
+  };
+
+  const addKnownBug = () => {
+    updateGameContext({
+      ...activeGameContext,
+      knownBugs: [
+        ...(activeGameContext.knownBugs ?? []),
+        {
+          id: nextRecordId('bug'),
+          title: '',
+          status: 'Open',
+        },
+      ],
+    });
+  };
+
+  const updateScriptVaultEntry = (index: number, value: ScriptVaultEntry) => {
+    const scripts = [...(activeGameContext.scriptVault ?? [])];
+    scripts[index] = value;
+    updateGameContext({ ...activeGameContext, scriptVault: scripts });
+  };
+
+  const removeScriptVaultEntry = (index: number) => {
+    updateGameContext({
+      ...activeGameContext,
+      scriptVault: (activeGameContext.scriptVault ?? []).filter((_, itemIndex) => itemIndex !== index),
+    });
+  };
+
+  const addScriptVaultEntry = () => {
+    updateGameContext({
+      ...activeGameContext,
+      scriptVault: [
+        ...(activeGameContext.scriptVault ?? []),
+        {
+          id: nextRecordId('script'),
+          scriptName: '',
+          platformLanguage: activeGamePlatform === 'roblox' ? 'Luau' : '',
+          status: 'Active',
+        },
+      ],
+    });
+  };
+
+  const handleProjectCategoryChange = (category: ProjectCategory) => {
+    if (category !== 'game') {
+      update('projectCategory', category);
+      return;
+    }
+
+    updateProject(activeProject.id, {
+      projectCategory: 'game',
+      gamePlatform: activeGamePlatform,
+      gameContext: mergeGameContextDefaults(activeProject.gameContext, activeGamePlatform),
+    } as Parameters<typeof updateProject>[1]);
+  };
+
+  const handleGamePlatformChange = (platform: GamePlatform) => {
+    updateProject(activeProject.id, {
+      gamePlatform: platform,
+      gameContext: mergeGameContextDefaults(activeProject.gameContext, platform),
+    } as Parameters<typeof updateProject>[1]);
+  };
+
   return (
     <div className="project-editor" data-tour="editor">
       {recentRestorePoints.length > 0 && (
@@ -418,6 +561,308 @@ export function ProjectEditor() {
             </div>
           </div>
         )}
+
+      <div className="field-group">
+        <div className="field-label">Project Category</div>
+        <select
+          className="field-input"
+          value={activeProjectCategory}
+          onChange={(event) => handleProjectCategoryChange(event.target.value as ProjectCategory)}
+        >
+          {PROJECT_CATEGORY_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {activeProjectCategory === 'other' && (
+        <div className="field-group">
+          <div className="field-label">Other Category</div>
+          <input
+            className="field-input"
+            type="text"
+            value={activeProject.projectCategoryOther ?? ''}
+            onChange={(event) => update('projectCategoryOther', event.target.value)}
+            placeholder="Describe this project category"
+          />
+        </div>
+      )}
+
+      {activeProjectCategory === 'game' && (
+        <section className="game-context-panel" aria-label="Game project context">
+          <div className="field-group">
+            <div className="field-label">Game Platform</div>
+            <select
+              className="field-input"
+              value={activeGamePlatform}
+              onChange={(event) => handleGamePlatformChange(event.target.value as GamePlatform)}
+            >
+              {GAME_PLATFORM_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {activeGamePlatform === 'other' && (
+            <div className="field-group">
+              <div className="field-label">Other Game Platform</div>
+              <input
+                className="field-input"
+                type="text"
+                value={activeProject.gamePlatformOther ?? ''}
+                onChange={(event) => update('gamePlatformOther', event.target.value)}
+                placeholder="Example: custom web game engine"
+              />
+            </div>
+          )}
+
+          {activePlatformLinks.length > 0 && (
+            <div className="game-platform-links" aria-label="Game platform links">
+              {activePlatformLinks.map((link) => (
+                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer">
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          )}
+
+          <div className="game-context-section">
+            <div className="field-label">Game Overview</div>
+            <div className="game-context-grid">
+              <label>
+                Genre
+                <input
+                  className="field-input"
+                  value={activeGameContext.overview?.genre ?? ''}
+                  onChange={(event) => updateGameOverview('genre', event.target.value)}
+                  placeholder="Example: Survival tycoon"
+                />
+              </label>
+              <label>
+                Target player
+                <input
+                  className="field-input"
+                  value={activeGameContext.overview?.targetPlayer ?? ''}
+                  onChange={(event) => updateGameOverview('targetPlayer', event.target.value)}
+                  placeholder="Example: Casual Roblox players"
+                />
+              </label>
+              <label>
+                Art style
+                <input
+                  className="field-input"
+                  value={activeGameContext.overview?.artStyle ?? ''}
+                  onChange={(event) => updateGameOverview('artStyle', event.target.value)}
+                  placeholder="Example: Bright low-poly"
+                />
+              </label>
+              <label>
+                Platform target
+                <input
+                  className="field-input"
+                  value={activeGameContext.overview?.platformTarget ?? ''}
+                  onChange={(event) => updateGameOverview('platformTarget', event.target.value)}
+                  placeholder="Example: Roblox mobile and desktop"
+                />
+              </label>
+              <label>
+                Monetisation plan
+                <textarea
+                  className="field-textarea"
+                  value={activeGameContext.overview?.monetisationPlan ?? ''}
+                  onChange={(event) => updateGameOverview('monetisationPlan', event.target.value)}
+                  placeholder="Example: Optional gamepasses, cosmetics, and boosts"
+                />
+              </label>
+              <label>
+                Current playable state
+                <textarea
+                  className="field-textarea"
+                  value={activeGameContext.overview?.currentPlayableState ?? ''}
+                  onChange={(event) => updateGameOverview('currentPlayableState', event.target.value)}
+                  placeholder="Example: Basic map, doors, currency, and one wave working"
+                />
+              </label>
+            </div>
+            <label className="game-context-wide-field">
+              Core gameplay loop
+              <textarea
+                className="field-textarea"
+                value={activeGameContext.overview?.coreLoop ?? ''}
+                onChange={(event) => updateGameOverview('coreLoop', event.target.value)}
+                placeholder="Example: Build base, defend waves, earn currency, upgrade systems"
+              />
+            </label>
+          </div>
+
+          <div className="game-context-section">
+            <div className="field-label">Game Systems</div>
+            <div className="game-context-grid">
+              {GAME_SYSTEM_OPTIONS.map((system) => (
+                <label key={system.value}>
+                  {system.label}
+                  <textarea
+                    className="field-textarea"
+                    value={activeGameContext.systems?.[system.value] ?? ''}
+                    onChange={(event) => updateGameSystem(system.value, event.target.value)}
+                    placeholder={`Notes for ${system.label.toLowerCase()}`}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="game-context-section">
+            <div className="game-context-section__header">
+              <div className="field-label">Known Bugs</div>
+              <button type="button" className="list-item-add-btn" onClick={addKnownBug}>
+                Add bug
+              </button>
+            </div>
+            <div className="game-record-list">
+              {(activeGameContext.knownBugs ?? []).map((bug, index) => (
+                <article className="game-record-card" key={bug.id ?? index}>
+                  <div className="game-record-card__header">
+                    <input
+                      className="field-input"
+                      value={bug.title}
+                      onChange={(event) => updateKnownBug(index, { ...bug, title: event.target.value })}
+                      placeholder="Bug title"
+                    />
+                    <button
+                      type="button"
+                      className="list-item-remove"
+                      onClick={() => removeKnownBug(index)}
+                      aria-label="Remove bug"
+                    >
+                      x
+                    </button>
+                  </div>
+                  <div className="game-context-grid">
+                    <label>
+                      System affected
+                      <input
+                        className="field-input"
+                        value={bug.systemAffected ?? ''}
+                        onChange={(event) => updateKnownBug(index, { ...bug, systemAffected: event.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Status
+                      <input
+                        className="field-input"
+                        value={bug.status ?? ''}
+                        onChange={(event) => updateKnownBug(index, { ...bug, status: event.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Reproduction notes
+                      <textarea
+                        className="field-textarea"
+                        value={bug.reproductionNotes ?? ''}
+                        onChange={(event) => updateKnownBug(index, { ...bug, reproductionNotes: event.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Current theory
+                      <textarea
+                        className="field-textarea"
+                        value={bug.currentTheory ?? ''}
+                        onChange={(event) => updateKnownBug(index, { ...bug, currentTheory: event.target.value })}
+                      />
+                    </label>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="game-context-section">
+            <div className="game-context-section__header">
+              <div className="field-label">Script Vault</div>
+              <button type="button" className="list-item-add-btn" onClick={addScriptVaultEntry}>
+                Add script
+              </button>
+            </div>
+            <div className="game-record-list">
+              {(activeGameContext.scriptVault ?? []).map((script, index) => (
+                <article className="game-record-card" key={script.id ?? index}>
+                  <div className="game-record-card__header">
+                    <input
+                      className="field-input"
+                      value={script.scriptName}
+                      onChange={(event) => updateScriptVaultEntry(index, { ...script, scriptName: event.target.value })}
+                      placeholder={activeGamePlatform === 'roblox' ? 'NPCSpawner.lua' : 'Script name'}
+                    />
+                    <button
+                      type="button"
+                      className="list-item-remove"
+                      onClick={() => removeScriptVaultEntry(index)}
+                      aria-label="Remove script"
+                    >
+                      x
+                    </button>
+                  </div>
+                  <div className="game-context-grid">
+                    <label>
+                      Platform/language
+                      <input
+                        className="field-input"
+                        value={script.platformLanguage ?? ''}
+                        onChange={(event) => updateScriptVaultEntry(index, { ...script, platformLanguage: event.target.value })}
+                        placeholder={activeGamePlatform === 'roblox' ? 'Luau' : 'Language'}
+                      />
+                    </label>
+                    <label>
+                      Related system
+                      <input
+                        className="field-input"
+                        value={script.relatedSystem ?? ''}
+                        onChange={(event) => updateScriptVaultEntry(index, { ...script, relatedSystem: event.target.value })}
+                        placeholder="Example: NPC waves"
+                      />
+                    </label>
+                    <label>
+                      Status
+                      <input
+                        className="field-input"
+                        value={script.status ?? ''}
+                        onChange={(event) => updateScriptVaultEntry(index, { ...script, status: event.target.value })}
+                        placeholder="Example: Working, buggy, planned"
+                      />
+                    </label>
+                    <label>
+                      Purpose
+                      <textarea
+                        className="field-textarea"
+                        value={script.purpose ?? ''}
+                        onChange={(event) => updateScriptVaultEntry(index, { ...script, purpose: event.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Notes
+                      <textarea
+                        className="field-textarea"
+                        value={script.notes ?? ''}
+                        onChange={(event) => updateScriptVaultEntry(index, { ...script, notes: event.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Optional code snippet
+                      <textarea
+                        className="field-textarea game-code-snippet"
+                        value={script.codeSnippet ?? ''}
+                        onChange={(event) => updateScriptVaultEntry(index, { ...script, codeSnippet: event.target.value })}
+                        spellCheck={false}
+                      />
+                    </label>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <EditableField
         label="Summary"
