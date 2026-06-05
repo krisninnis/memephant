@@ -1229,6 +1229,7 @@ select {
 }
 
 .game-context-grid label,
+.guided-preset-field,
 .game-context-wide-field {
   display: flex;
   flex-direction: column;
@@ -1240,6 +1241,17 @@ select {
 
 .game-context-wide-field {
   margin-top: 12px;
+}
+
+.guided-preset-field {
+  width: 100%;
+}
+
+.guided-preset-field > label,
+.guided-preset-field__custom-label {
+  color: #8a8aa3;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .game-platform-links {

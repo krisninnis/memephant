@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useId } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { useActiveProject } from '../../hooks/useActiveProject';
 import { useRecentActivity } from '../../hooks/useRecentActivity';
@@ -35,6 +35,192 @@ import {
 } from '../../utils/gameProjectTypes';
 
 type ScanState = 'idle' | 'scanning' | 'preview' | 'error';
+
+const OTHER_PRESET_VALUE = '__other__';
+
+const GAME_GENRE_PRESETS = [
+  'Obby',
+  'Tycoon',
+  'Simulator',
+  'Survival',
+  'RPG',
+  'Tower Defense',
+  'Horror',
+  'Roleplay',
+  'Adventure',
+  'Puzzle',
+  'Sandbox',
+];
+
+const TARGET_PLAYER_PRESETS = [
+  'Casual Roblox players',
+  'Younger players',
+  'Teen players',
+  'Competitive players',
+  'Co-op players',
+  'Solo players',
+  'Friends playing together',
+];
+
+const ART_STYLE_PRESETS = [
+  'Bright low-poly',
+  'Cartoony',
+  'Realistic',
+  'Pixel art',
+  'Horror/dark',
+  'Sci-fi',
+  'Fantasy',
+  'Minimalist',
+];
+
+const MONETISATION_PRESETS = [
+  'None yet',
+  'Gamepasses',
+  'Developer products',
+  'Cosmetics',
+  'Boosts',
+  'Premium payouts',
+  'Private servers',
+  'Ads/sponsorship later',
+];
+
+const PLAYABLE_STATE_PRESETS = [
+  'Idea only',
+  'Prototype',
+  'Basic map built',
+  'One mechanic working',
+  'First playable loop working',
+  'Playtesting',
+  'Soft launch',
+  'Live game',
+];
+
+const CORE_LOOP_PRESETS = [
+  'Complete obby stages, earn rewards, unlock harder levels',
+  'Build base, earn currency, upgrade systems',
+  'Collect items/pets, upgrade, unlock new areas',
+  'Survive waves, earn rewards, improve equipment',
+  'Complete quests, level up, unlock abilities',
+  'Explore world, discover secrets, progress story',
+];
+
+const SCRIPT_STATUS_PRESETS = [
+  'Planned',
+  'In progress',
+  'Working',
+  'Buggy',
+  'Needs refactor',
+  'Deprecated',
+];
+
+const RELATED_SYSTEM_PRESETS = [
+  'Movement',
+  'Combat',
+  'Inventory',
+  'Economy',
+  'Quests',
+  'NPCs',
+  'UI',
+  'Multiplayer',
+  'Saving/progression',
+  'Monetisation',
+  'Analytics/playtesting',
+  'Door Interaction',
+  'RemoteEvents',
+  'DataStores',
+];
+
+const BUG_STATUS_PRESETS = [
+  'Open',
+  'Investigating',
+  'Reproduced',
+  'Fix planned',
+  'Fixed',
+  'Won\'t fix',
+  'Needs retest',
+];
+
+interface GuidedPresetFieldProps {
+  label: string;
+  value: string;
+  presets: string[];
+  onChange: (value: string) => void;
+  placeholder?: string;
+  customPlaceholder?: string;
+  multilineCustom?: boolean;
+}
+
+function GuidedPresetField({
+  label,
+  value,
+  presets,
+  onChange,
+  placeholder = 'Choose a preset...',
+  customPlaceholder = 'Type a custom value',
+  multilineCustom = false,
+}: GuidedPresetFieldProps) {
+  const selectId = useId();
+  const customId = useId();
+  const isPreset = presets.includes(value);
+  const hasCustomValue = value.trim().length > 0 && !isPreset;
+  const selectedValue = hasCustomValue ? OTHER_PRESET_VALUE : value;
+
+  const handleSelectChange = (nextValue: string) => {
+    if (nextValue === OTHER_PRESET_VALUE) {
+      if (!hasCustomValue) onChange('');
+      return;
+    }
+
+    onChange(nextValue);
+  };
+
+  return (
+    <div className="guided-preset-field">
+      <label htmlFor={selectId}>{label}</label>
+      <select
+        id={selectId}
+        className="field-input"
+        value={selectedValue}
+        onChange={(event) => handleSelectChange(event.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {presets.map((preset) => (
+          <option key={preset} value={preset}>{preset}</option>
+        ))}
+        <option value={OTHER_PRESET_VALUE}>Other</option>
+      </select>
+      {selectedValue === OTHER_PRESET_VALUE && (
+        multilineCustom ? (
+          <>
+            <label className="guided-preset-field__custom-label" htmlFor={customId}>
+              Custom {label}
+            </label>
+            <textarea
+              id={customId}
+              className="field-textarea"
+              value={hasCustomValue ? value : ''}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder={customPlaceholder}
+            />
+          </>
+        ) : (
+          <>
+            <label className="guided-preset-field__custom-label" htmlFor={customId}>
+              Custom {label}
+            </label>
+            <input
+              id={customId}
+              className="field-input"
+              value={hasCustomValue ? value : ''}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder={customPlaceholder}
+            />
+          </>
+        )
+      )}
+    </div>
+  );
+}
 
 function mergeGameContextDefaults(
   current: GameProjectContext | undefined,
@@ -370,7 +556,7 @@ export function ProjectEditor() {
           id: nextRecordId('script'),
           scriptName: '',
           platformLanguage: activeGamePlatform === 'roblox' ? 'Luau' : '',
-          status: 'Active',
+          status: 'Planned',
         },
       ],
     });
@@ -629,33 +815,27 @@ export function ProjectEditor() {
           <div className="game-context-section">
             <div className="field-label">Game Overview</div>
             <div className="game-context-grid">
-              <label>
-                Genre
-                <input
-                  className="field-input"
-                  value={activeGameContext.overview?.genre ?? ''}
-                  onChange={(event) => updateGameOverview('genre', event.target.value)}
-                  placeholder="Example: Survival tycoon"
-                />
-              </label>
-              <label>
-                Target player
-                <input
-                  className="field-input"
-                  value={activeGameContext.overview?.targetPlayer ?? ''}
-                  onChange={(event) => updateGameOverview('targetPlayer', event.target.value)}
-                  placeholder="Example: Casual Roblox players"
-                />
-              </label>
-              <label>
-                Art style
-                <input
-                  className="field-input"
-                  value={activeGameContext.overview?.artStyle ?? ''}
-                  onChange={(event) => updateGameOverview('artStyle', event.target.value)}
-                  placeholder="Example: Bright low-poly"
-                />
-              </label>
+              <GuidedPresetField
+                label="Genre"
+                value={activeGameContext.overview?.genre ?? ''}
+                presets={GAME_GENRE_PRESETS}
+                onChange={(value) => updateGameOverview('genre', value)}
+                customPlaceholder="Example: Survival tycoon"
+              />
+              <GuidedPresetField
+                label="Target player"
+                value={activeGameContext.overview?.targetPlayer ?? ''}
+                presets={TARGET_PLAYER_PRESETS}
+                onChange={(value) => updateGameOverview('targetPlayer', value)}
+                customPlaceholder="Example: Roblox players who like social building"
+              />
+              <GuidedPresetField
+                label="Art style"
+                value={activeGameContext.overview?.artStyle ?? ''}
+                presets={ART_STYLE_PRESETS}
+                onChange={(value) => updateGameOverview('artStyle', value)}
+                customPlaceholder="Example: Cozy farm fantasy"
+              />
               <label>
                 Platform target
                 <input
@@ -665,34 +845,33 @@ export function ProjectEditor() {
                   placeholder="Example: Roblox mobile and desktop"
                 />
               </label>
-              <label>
-                Monetisation plan
-                <textarea
-                  className="field-textarea"
-                  value={activeGameContext.overview?.monetisationPlan ?? ''}
-                  onChange={(event) => updateGameOverview('monetisationPlan', event.target.value)}
-                  placeholder="Example: Optional gamepasses, cosmetics, and boosts"
-                />
-              </label>
-              <label>
-                Current playable state
-                <textarea
-                  className="field-textarea"
-                  value={activeGameContext.overview?.currentPlayableState ?? ''}
-                  onChange={(event) => updateGameOverview('currentPlayableState', event.target.value)}
-                  placeholder="Example: Basic map, doors, currency, and one wave working"
-                />
-              </label>
-            </div>
-            <label className="game-context-wide-field">
-              Core gameplay loop
-              <textarea
-                className="field-textarea"
-                value={activeGameContext.overview?.coreLoop ?? ''}
-                onChange={(event) => updateGameOverview('coreLoop', event.target.value)}
-                placeholder="Example: Build base, defend waves, earn currency, upgrade systems"
+              <GuidedPresetField
+                label="Monetisation plan"
+                value={activeGameContext.overview?.monetisationPlan ?? ''}
+                presets={MONETISATION_PRESETS}
+                onChange={(value) => updateGameOverview('monetisationPlan', value)}
+                customPlaceholder="Example: Optional gamepasses, cosmetics, and boosts"
+                multilineCustom
               />
-            </label>
+              <GuidedPresetField
+                label="Current playable state"
+                value={activeGameContext.overview?.currentPlayableState ?? ''}
+                presets={PLAYABLE_STATE_PRESETS}
+                onChange={(value) => updateGameOverview('currentPlayableState', value)}
+                customPlaceholder="Example: Basic map, doors, currency, and one wave working"
+                multilineCustom
+              />
+            </div>
+            <div className="game-context-wide-field">
+              <GuidedPresetField
+                label="Core gameplay loop"
+                value={activeGameContext.overview?.coreLoop ?? ''}
+                presets={CORE_LOOP_PRESETS}
+                onChange={(value) => updateGameOverview('coreLoop', value)}
+                customPlaceholder="Example: Build base, defend waves, earn currency, upgrade systems"
+                multilineCustom
+              />
+            </div>
           </div>
 
           <div className="game-context-section">
@@ -747,14 +926,13 @@ export function ProjectEditor() {
                         onChange={(event) => updateKnownBug(index, { ...bug, systemAffected: event.target.value })}
                       />
                     </label>
-                    <label>
-                      Status
-                      <input
-                        className="field-input"
-                        value={bug.status ?? ''}
-                        onChange={(event) => updateKnownBug(index, { ...bug, status: event.target.value })}
-                      />
-                    </label>
+                    <GuidedPresetField
+                      label="Status"
+                      value={bug.status ?? ''}
+                      presets={BUG_STATUS_PRESETS}
+                      onChange={(value) => updateKnownBug(index, { ...bug, status: value })}
+                      customPlaceholder="Example: Blocked until animation is replaced"
+                    />
                     <label>
                       Reproduction notes
                       <textarea
@@ -848,24 +1026,20 @@ export function ProjectEditor() {
                             placeholder="Example: Spawns enemy waves"
                           />
                         </label>
-                        <label>
-                          Related system
-                          <input
-                            className="field-input"
-                            value={script.relatedSystem ?? ''}
-                            onChange={(event) => updateScriptVaultEntry(index, { ...script, relatedSystem: event.target.value })}
-                            placeholder="Example: NPC waves"
-                          />
-                        </label>
-                        <label>
-                          Status
-                          <input
-                            className="field-input"
-                            value={script.status ?? ''}
-                            onChange={(event) => updateScriptVaultEntry(index, { ...script, status: event.target.value })}
-                            placeholder="Example: Working, buggy, planned"
-                          />
-                        </label>
+                        <GuidedPresetField
+                          label="Related system"
+                          value={script.relatedSystem ?? ''}
+                          presets={RELATED_SYSTEM_PRESETS}
+                          onChange={(value) => updateScriptVaultEntry(index, { ...script, relatedSystem: value })}
+                          customPlaceholder="Example: NPC waves"
+                        />
+                        <GuidedPresetField
+                          label="Status"
+                          value={script.status ?? ''}
+                          presets={SCRIPT_STATUS_PRESETS}
+                          onChange={(value) => updateScriptVaultEntry(index, { ...script, status: value })}
+                          customPlaceholder="Example: Works locally, not multiplayer-safe"
+                        />
                         <label>
                           Notes
                           <textarea
