@@ -3,6 +3,7 @@ import { useProjectStore } from '../../store/projectStore';
 import { useActiveProject } from '../../hooks/useActiveProject';
 import {
   isDesktopApp,
+  getFolderActionLabel,
   linkFolder,
   rescanLinkedFolder,
   exportActiveProjectAsMarkdown,
@@ -282,6 +283,7 @@ export function ActionBar() {
   }
 
   const hasLinkedFolder = !!activeProject.linkedFolder?.path;
+  const folderActionLabel = getFolderActionLabel();
   const pendingGitCommits = activeProject.pendingGitCommits ?? [];
 
   let syncGitLabel = 'Sync Git';
@@ -400,26 +402,24 @@ export function ActionBar() {
           {activationCopied ? 'Copied — paste into your AI' : 'Set up auto-updates'}
         </button>
 
-        {desktopApp && (
-          !hasLinkedFolder ? (
-            <button
-              type="button"
-              className="action-bar__btn"
-              onClick={() => void linkFolder()}
-              title="Choose a local project folder so Memephant can scan files and track changes"
-            >
-              Select project folder
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="action-bar__btn"
-              onClick={() => void rescanLinkedFolder()}
-              title="Scan the linked project folder again for updated files"
-            >
-              Rescan linked folder
-            </button>
-          )
+        {!hasLinkedFolder ? (
+          <button
+            type="button"
+            className="action-bar__btn"
+            onClick={() => void linkFolder()}
+            title="Connect a project folder so Memephant can scan useful files locally"
+          >
+            {folderActionLabel}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="action-bar__btn"
+            onClick={() => void rescanLinkedFolder()}
+            title="Scan the connected project folder again for updated files"
+          >
+            Rescan Folder
+          </button>
         )}
 
         {desktopApp && (

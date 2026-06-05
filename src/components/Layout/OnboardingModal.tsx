@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isDesktopApp, linkFolder } from '../../services/tauriActions';
+import { getFolderActionLabel, isDesktopApp, linkFolder } from '../../services/tauriActions';
 import { useProjectStore } from '../../store/projectStore';
 import type { ExportMode, Platform } from '../../types/memphant-types';
 import './OnboardingModal.css';
@@ -33,6 +33,7 @@ export function OnboardingModal() {
   const [step, setStep] = useState(1);
   const [selection, setSelection] = useState<OnboardingChoice>('mix');
   const desktop = isDesktopApp();
+  const folderActionLabel = getFolderActionLabel();
 
   const selectedDefaults = useMemo(() => CHOICE_DEFAULTS[selection], [selection]);
 
@@ -165,12 +166,14 @@ export function OnboardingModal() {
           <div className="onboarding-step">
             <h2 className="onboarding-title">Connect your project folder</h2>
             <p className="onboarding-subtitle">
-              Memephant can watch for file changes and automatically keep your AI context fresh.
+              Connect an existing project folder from your device. Memephant scans locally and
+              builds context from useful files.
             </p>
 
             {!desktop && (
               <p className="onboarding-note">
-                Folder linking is available in the desktop app.
+                Folder selection uses the platform picker where supported. If this device cannot
+                expose folders, you can skip and import a Memephant Project backup later.
               </p>
             )}
 
@@ -184,33 +187,23 @@ export function OnboardingModal() {
                   Back
                 </button>
 
-                {desktop ? (
-                  <div className="onboarding-folder-actions">
-                    <button
-                      type="button"
-                      className="onboarding-btn onboarding-btn--primary"
-                      onClick={() => void handleLinkFolder()}
-                    >
-                      Select a folder
-                    </button>
-
-                    <button
-                      type="button"
-                      className="onboarding-btn onboarding-btn--secondary"
-                      onClick={completeOnboarding}
-                    >
-                      Skip for now
-                    </button>
-                  </div>
-                ) : (
+                <div className="onboarding-folder-actions">
                   <button
                     type="button"
                     className="onboarding-btn onboarding-btn--primary"
+                    onClick={() => void handleLinkFolder()}
+                  >
+                    {folderActionLabel}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="onboarding-btn onboarding-btn--secondary"
                     onClick={completeOnboarding}
                   >
                     Skip for now
                   </button>
-                )}
+                </div>
               </div>
             </div>
           </div>

@@ -11,6 +11,7 @@ import {
   isDesktopApp,
   createProjectFromFolder,
   createProjectFromTemplate,
+  getFolderActionLabel,
   importProjectFromFile,
   saveToDisk,
 } from '../../services/tauriActions';
@@ -100,6 +101,7 @@ export function WelcomeScreen() {
 
   const importFileRef = useRef<HTMLInputElement>(null);
   const desktopApp = isDesktopApp();
+  const folderActionLabel = getFolderActionLabel();
 
   const canAdvanceStep1 = name.trim().length > 0;
   const canAdvanceStep2 = summary.trim().length > 0;
@@ -242,11 +244,10 @@ export function WelcomeScreen() {
             <div className="welcome-flow__step">
               <span className="welcome-flow__number">1</span>
               <div>
-                <strong>Describe your project once</strong>
+                <strong>Connect a project folder</strong>
                 <div>
-                  {desktopApp
-                    ? 'Scan a folder or fill in the details. Takes under two minutes.'
-                    : 'Fill in the details or import an existing project. Takes under two minutes.'}
+                  Connect an existing project folder from your device. Memephant scans locally and
+                  builds context from useful files.
                 </div>
               </div>
             </div>
@@ -267,6 +268,15 @@ export function WelcomeScreen() {
           </div>
 
           <div className="welcome-actions">
+            <button className="welcome-btn welcome-btn--primary" onClick={() => void createProjectFromFolder()}>
+              <span className="welcome-btn__text">
+                {folderActionLabel}
+                <small className="welcome-btn__subtitle">
+                  Connect an existing project folder from your device
+                </small>
+              </span>
+            </button>
+
             <button
               className="welcome-btn welcome-btn--demo"
               onClick={() => void handleTryDemoProject()}
@@ -280,65 +290,39 @@ export function WelcomeScreen() {
               </span>
             </button>
 
-            {desktopApp ? (
+            <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowLaunchpad(true)}>
+              + New Project
+            </button>
+
+            <button
+              className="welcome-btn welcome-btn--secondary"
+              onClick={() => setShowBlueprint(true)}
+            >
+              <span className="welcome-btn__text">
+                New Project Blueprint
+                <small className="welcome-btn__subtitle">Start with complete project context</small>
+              </span>
+            </button>
+
+            <button className="welcome-btn--link" onClick={() => setMode('templates')}>
+              From Template
+            </button>
+
+            <button className="welcome-btn--link" onClick={handleImportClick}>
+              Import Memephant Project
+            </button>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: 'none' }}
+              onChange={(e) => void handleImportFileChange(e)}
+            />
+
+            {!desktopApp && (
               <>
-                {/* PRIMARY: Start with complete context */}
-                <button
-                  className="welcome-btn welcome-btn--primary"
-                  onClick={() => setShowBlueprint(true)}
-                >
-                  <span aria-hidden="true">+</span>
-                  <span className="welcome-btn__text">
-                    New Project Blueprint
-                    <small className="welcome-btn__subtitle">Start with complete project context</small>
-                  </span>
-                </button>
-
-                {/* SECONDARY: Create blank project */}
-                <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowLaunchpad(true)}>
-                  + New Project
-                </button>
-
-                <button className="welcome-btn welcome-btn--secondary" onClick={() => void createProjectFromFolder()}>
-                  Select a project folder
-                </button>
-
-                {/* TERTIARY: Templates */}
-                <button className="welcome-btn--link" onClick={() => setMode('templates')}>
-                  From template
-                </button>
-              </>
-            ) : (
-              <>
-                {/* Web: Start with complete context */}
-                <button className="welcome-btn welcome-btn--primary" onClick={() => setShowBlueprint(true)}>
-                  <span className="welcome-btn__text">
-                    New Project Blueprint
-                    <small className="welcome-btn__subtitle">Start with complete project context</small>
-                  </span>
-                </button>
-
-                <button className="welcome-btn welcome-btn--secondary" onClick={() => setShowLaunchpad(true)}>
-                  + New Project
-                </button>
-
-                <button className="welcome-btn welcome-btn--secondary" onClick={handleImportClick}>
-                  Import project JSON
-                </button>
-                <input
-                  ref={importFileRef}
-                  type="file"
-                  accept=".json,application/json"
-                  style={{ display: 'none' }}
-                  onChange={(e) => void handleImportFileChange(e)}
-                />
-
-                <button className="welcome-btn--link" onClick={() => setMode('templates')}>
-                  From template
-                </button>
-
                 <div className="welcome-desktop-note">
-                  <span>Want full project tracking?</span>
+                  <span>Want native rescans?</span>
                   <button
                     type="button"
                     className="welcome-desktop-note__link"
@@ -348,8 +332,8 @@ export function WelcomeScreen() {
                   </button>
                 </div>
                 <p className="welcome-privacy">
-                  Folder scanning is available in the desktop app. The web app can import exported
-                  Memephant JSON files.
+                  Folder selection uses your browser or OS picker where supported. If this device
+                  cannot expose folders, import a Memephant Project backup instead.
                 </p>
               </>
             )}
@@ -359,7 +343,7 @@ export function WelcomeScreen() {
             No more re-explaining your project at the start of every chat. One Context Passport, any AI.
           </p>
           <p className="welcome-privacy">
-            Local-first by default. Sign in only if you want cloud backup across devices.
+            Local-first by default. Secrets and local paths are excluded from AI exports.
           </p>
 
           {!cloudUser && (

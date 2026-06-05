@@ -37,15 +37,15 @@ export { isDesktopApp, isBrowserApp } from '../utils/runtime';
 
 
 export function canScanFolders(): boolean {
-  return isDesktopApp();
+  return isDesktopApp() || isBrowserApp();
 }
 
 export function canLinkFolders(): boolean {
-  return isDesktopApp();
+  return isDesktopApp() || isBrowserApp();
 }
 
 export function canRescanLinkedFolders(): boolean {
-  return isDesktopApp();
+  return isDesktopApp() || isBrowserApp();
 }
 
 export function canSyncGit(): boolean {
@@ -89,11 +89,11 @@ export function getUnavailableFeatureMessage(
 ): string {
   switch (feature) {
     case 'folderScan':
-      return 'Selecting or scanning a local project folder requires the desktop app.';
+      return 'Folder selection is not supported by this browser yet. Try the desktop app, or use Import Memephant Project as a backup.';
     case 'folderLink':
-      return 'Selecting a local project folder requires the desktop app.';
+      return 'Folder linking is not supported by this browser yet. Try the desktop app, or use Import Memephant Project as a backup.';
     case 'rescan':
-      return 'Rescanning a linked folder requires the desktop app.';
+      return 'Rescanning a folder requires selecting the folder again on this platform.';
     case 'gitSync':
       return 'Git sync requires the desktop app.';
     case 'nativeStorage':
@@ -101,6 +101,10 @@ export function getUnavailableFeatureMessage(
     default:
       return 'This feature requires the desktop app.';
   }
+}
+
+export function getFolderActionLabel(): 'Open Folder' | 'Select Folder' {
+  return isDesktopApp() ? 'Open Folder' : 'Select Folder';
 }
 
 // ————————————————————————————————————————————————————————————————————————————
@@ -188,6 +192,419 @@ async function openFolderDialog(): Promise<string | null> {
     console.error('Dialog failed:', err);
     return null;
   }
+}
+
+type BrowserFileSystemHandle = {
+  kind: 'file' | 'directory';
+  name: string;
+};
+
+type BrowserFileSystemFileHandle = BrowserFileSystemHandle & {
+  kind: 'file';
+  getFile: () => Promise<File>;
+};
+
+type BrowserFileSystemDirectoryHandle = BrowserFileSystemHandle & {
+  kind: 'directory';
+  entries: () => AsyncIterable<[string, BrowserFileSystemHandle]>;
+};
+
+type BrowserDirectoryWindow = Window & {
+  showDirectoryPicker?: () => Promise<BrowserFileSystemDirectoryHandle>;
+};
+
+type DirectoryInputElement = HTMLInputElement & {
+  webkitdirectory?: boolean;
+  directory?: boolean;
+};
+
+type BrowserScannedFile = {
+  path: string;
+  size: number;
+  lastModified: number;
+  text?: string;
+};
+
+type SelectedFolderScan = {
+  folderName: string;
+  linkedPath: string;
+  result: ScanResult;
+};
+
+const BROWSER_LINKED_FOLDER_PREFIX = 'browser-folder:';
+const BROWSER_SCAN_FILE_LIMIT = 800;
+const BROWSER_SCAN_TEXT_LIMIT = 64_000;
+const BROWSER_SAFE_TEXT_FILES = new Set([
+  'package.json',
+  'cargo.toml',
+  'readme.md',
+  'readme.txt',
+  'godot.project',
+]);
+const IGNORED_FOLDER_NAMES = new Set([
+  '.git',
+  '.next',
+  '.turbo',
+  '.vercel',
+  'bin',
+  'build',
+  'binaries',
+  'dist',
+  'intermediate',
+  'library',
+  'logs',
+  'node_modules',
+  'obj',
+  'saved',
+  'target',
+  'temp',
+]);
+const IGNORED_FILE_NAMES = new Set([
+  '.env',
+  '.env.local',
+  '.env.production',
+  '.env.development',
+  '.npmrc',
+  '.pypirc',
+  'credentials.json',
+  'secrets.json',
+  'service-account.json',
+]);
+const SECRET_FILE_NAME_PATTERN =
+  /(^|[-_.])(secret|secrets|credential|credentials|token|tokens|password|private[-_.]?key)([-_.]|$)/i;
+const USEFUL_FILE_EXTENSIONS = [
+  '.cs',
+  '.css',
+  '.gd',
+  '.godot',
+  '.html',
+  '.js',
+  '.json',
+  '.jsx',
+  '.lua',
+  '.luau',
+  '.md',
+  '.py',
+  '.rbxlx',
+  '.rs',
+  '.svelte',
+  '.toml',
+  '.ts',
+  '.tscn',
+  '.tsx',
+  '.unity',
+  '.uproject',
+  '.vue',
+  '.yml',
+  '.yaml',
+  '.yyp',
+];
+
+function isBrowserDirectoryPickerSupported(): boolean {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+  if (typeof (window as BrowserDirectoryWindow).showDirectoryPicker === 'function') return true;
+  const input = document.createElement('input') as DirectoryInputElement;
+  return 'webkitdirectory' in input || 'directory' in input;
+}
+
+function safeBrowserFolderName(name: string): string {
+  return name.replace(/[\\/:*?"<>|]+/g, '-').trim() || 'Selected Folder';
+}
+
+function browserLinkedFolderPath(folderName: string): string {
+  return `${BROWSER_LINKED_FOLDER_PREFIX}${safeBrowserFolderName(folderName)}`;
+}
+
+function isIgnoredFolder(name: string): boolean {
+  return IGNORED_FOLDER_NAMES.has(name.toLowerCase());
+}
+
+function isIgnoredFile(path: string): boolean {
+  const parts = path.split('/').map((part) => part.toLowerCase());
+  const fileName = parts[parts.length - 1] ?? '';
+  const folderParts = parts.slice(0, -1);
+  return (
+    folderParts.some((part) => IGNORED_FOLDER_NAMES.has(part)) ||
+    IGNORED_FILE_NAMES.has(fileName) ||
+    fileName.startsWith('.env.') ||
+    SECRET_FILE_NAME_PATTERN.test(fileName)
+  );
+}
+
+function isUsefulFile(path: string): boolean {
+  const lower = path.toLowerCase();
+  if (isIgnoredFile(lower)) return false;
+  return (
+    BROWSER_SAFE_TEXT_FILES.has(lower.split('/').pop() ?? '') ||
+    USEFUL_FILE_EXTENSIONS.some((extension) => lower.endsWith(extension))
+  );
+}
+
+async function maybeReadSafeBrowserFile(file: File, relativePath: string): Promise<string | undefined> {
+  const fileName = relativePath.toLowerCase().split('/').pop() ?? '';
+  if (!BROWSER_SAFE_TEXT_FILES.has(fileName) || file.size > BROWSER_SCAN_TEXT_LIMIT) {
+    return undefined;
+  }
+
+  try {
+    return await file.text();
+  } catch {
+    return undefined;
+  }
+}
+
+async function collectBrowserDirectoryFiles(
+  directory: BrowserFileSystemDirectoryHandle,
+  prefix = '',
+  files: BrowserScannedFile[] = [],
+): Promise<BrowserScannedFile[]> {
+  if (files.length >= BROWSER_SCAN_FILE_LIMIT) return files;
+
+  for await (const [name, handle] of directory.entries()) {
+    if (files.length >= BROWSER_SCAN_FILE_LIMIT) break;
+
+    const relativePath = prefix ? `${prefix}/${name}` : name;
+    if (handle.kind === 'directory') {
+      if (!isIgnoredFolder(name)) {
+        await collectBrowserDirectoryFiles(
+          handle as BrowserFileSystemDirectoryHandle,
+          relativePath,
+          files,
+        );
+      }
+      continue;
+    }
+
+    if (!isUsefulFile(relativePath)) continue;
+
+    const file = await (handle as BrowserFileSystemFileHandle).getFile();
+    files.push({
+      path: relativePath,
+      size: file.size,
+      lastModified: file.lastModified,
+      text: await maybeReadSafeBrowserFile(file, relativePath),
+    });
+  }
+
+  return files;
+}
+
+async function openBrowserDirectoryInput(): Promise<{ folderName: string; files: BrowserScannedFile[] } | null> {
+  if (typeof document === 'undefined') return null;
+
+  const input = document.createElement('input') as DirectoryInputElement;
+  input.type = 'file';
+  input.multiple = true;
+  input.webkitdirectory = true;
+  input.directory = true;
+  input.style.display = 'none';
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: { folderName: string; files: BrowserScannedFile[] } | null) => {
+      if (settled) return;
+      settled = true;
+      input.remove();
+      resolve(value);
+    };
+
+    input.addEventListener('change', async () => {
+      const selectedFiles = Array.from(input.files ?? []);
+      if (selectedFiles.length === 0) {
+        finish(null);
+        return;
+      }
+
+      const usefulFiles = selectedFiles
+        .map((file) => {
+          const relativePath =
+            (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
+          return { file, relativePath };
+        })
+        .filter(({ relativePath }) => isUsefulFile(relativePath))
+        .slice(0, BROWSER_SCAN_FILE_LIMIT);
+
+      const files: BrowserScannedFile[] = [];
+      for (const { file, relativePath } of usefulFiles) {
+        files.push({
+          path: relativePath,
+          size: file.size,
+          lastModified: file.lastModified,
+          text: await maybeReadSafeBrowserFile(file, relativePath),
+        });
+      }
+
+      const firstPath = (selectedFiles[0] as File & { webkitRelativePath?: string }).webkitRelativePath;
+      const folderName = firstPath?.split('/').filter(Boolean)[0] || 'Selected Folder';
+      finish({ folderName, files });
+    });
+
+    document.body.appendChild(input);
+    input.click();
+    window.setTimeout(() => {
+      if (!input.files || input.files.length === 0) finish(null);
+    }, 60_000);
+  });
+}
+
+async function openBrowserFolder(): Promise<{ folderName: string; files: BrowserScannedFile[] } | null> {
+  if (!isBrowserDirectoryPickerSupported()) {
+    store().showToast(getUnavailableFeatureMessage('folderScan'), 'info');
+    return null;
+  }
+
+  const picker = (window as BrowserDirectoryWindow).showDirectoryPicker;
+  if (typeof picker === 'function') {
+    try {
+      const directory = await picker.call(window);
+      return {
+        folderName: directory.name,
+        files: await collectBrowserDirectoryFiles(directory),
+      };
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return null;
+      console.warn('Browser folder picker failed:', err);
+      const fallback = await openBrowserDirectoryInput();
+      if (fallback) return fallback;
+      store().showToast(getUnavailableFeatureMessage('folderScan'), 'info');
+      return null;
+    }
+  }
+
+  return openBrowserDirectoryInput();
+}
+
+function parsePackageJson(text: string | undefined): PackageInfo | undefined {
+  if (!text) return undefined;
+  try {
+    const parsed = JSON.parse(text) as Record<string, unknown>;
+    return {
+      name: typeof parsed.name === 'string' ? parsed.name : undefined,
+      description: typeof parsed.description === 'string' ? parsed.description : undefined,
+      version: typeof parsed.version === 'string' ? parsed.version : undefined,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function parseCargoToml(text: string | undefined): PackageInfo | undefined {
+  if (!text) return undefined;
+  const name = /^name\s*=\s*["']([^"']+)["']/m.exec(text)?.[1];
+  const version = /^version\s*=\s*["']([^"']+)["']/m.exec(text)?.[1];
+  return name || version ? { name, version } : undefined;
+}
+
+function summarizeReadme(text: string | undefined): string | undefined {
+  if (!text) return undefined;
+  const paragraph = text
+    .split(/\r?\n\r?\n/)
+    .map((part) => part.replace(/^#+\s*/gm, '').replace(/\s+/g, ' ').trim())
+    .find((part) => part.length > 24 && !part.startsWith('!['));
+  return paragraph ? paragraph.slice(0, 280) : undefined;
+}
+
+function detectBrowserStack(files: BrowserScannedFile[]): TechStackInfo {
+  const paths = files.map((file) => file.path.toLowerCase());
+  const has = (predicate: (path: string) => boolean) => paths.some(predicate);
+  const languages = new Set<string>();
+  const frameworks = new Set<string>();
+  const packageManagers = new Set<string>();
+  const buildTools = new Set<string>();
+  const runtimes = new Set<string>();
+  const signals: StackSignal[] = [];
+
+  const addSignal = (source: string, signal: string, detail?: string) => {
+    signals.push({ source, signal, detail });
+  };
+
+  if (has((path) => path.endsWith('.ts') || path.endsWith('.tsx'))) languages.add('TypeScript');
+  if (has((path) => path.endsWith('.js') || path.endsWith('.jsx'))) languages.add('JavaScript');
+  if (has((path) => path.endsWith('.lua') || path.endsWith('.luau'))) languages.add('Luau/Lua');
+  if (has((path) => path.endsWith('.cs'))) languages.add('C#');
+  if (has((path) => path.endsWith('.gd'))) languages.add('GDScript');
+  if (has((path) => path.endsWith('.rs'))) languages.add('Rust');
+  if (has((path) => path.endsWith('package.json'))) {
+    runtimes.add('Node.js');
+    addSignal('package.json', 'Node project');
+  }
+  if (has((path) => path.endsWith('pnpm-lock.yaml'))) packageManagers.add('pnpm');
+  if (has((path) => path.endsWith('package-lock.json'))) packageManagers.add('npm');
+  if (has((path) => path.endsWith('vite.config.ts') || path.endsWith('vite.config.js'))) {
+    buildTools.add('Vite');
+    addSignal('vite.config', 'Vite');
+  }
+  if (has((path) => path.endsWith('next.config.js') || path.endsWith('next.config.ts'))) frameworks.add('Next.js');
+  if (has((path) => path.endsWith('godot.project') || path.endsWith('.tscn') || path.endsWith('.gd'))) frameworks.add('Godot');
+  if (has((path) => path.endsWith('.unity'))) frameworks.add('Unity');
+  if (has((path) => path.endsWith('.uproject'))) frameworks.add('Unreal Engine');
+  if (has((path) => path.endsWith('.rbxlx') || path.endsWith('.luau'))) frameworks.add('Roblox');
+
+  return {
+    languages: Array.from(languages),
+    frameworks: Array.from(frameworks),
+    package_managers: Array.from(packageManagers),
+    build_tools: Array.from(buildTools),
+    runtimes: Array.from(runtimes),
+    confidence: signals.length > 0 ? 'medium' : 'low',
+    signals,
+  };
+}
+
+function hashBrowserScannedFiles(files: BrowserScannedFile[]): string {
+  const key = files
+    .map((file) => `${file.path}:${file.size}:${file.lastModified}`)
+    .sort()
+    .join('|');
+  let hash = 5381;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 33) ^ key.charCodeAt(i);
+    hash = hash >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+function buildBrowserScanResult(folderName: string, files: BrowserScannedFile[]): SelectedFolderScan {
+  const readme = files.find((file) => /^readme\.(md|txt)$/i.test(file.path.split('/').pop() ?? ''))?.text;
+  const packageJson = parsePackageJson(files.find((file) => file.path.toLowerCase().endsWith('package.json'))?.text);
+  const cargoToml = parseCargoToml(files.find((file) => file.path.toLowerCase().endsWith('cargo.toml'))?.text);
+  const summary = packageJson?.description || summarizeReadme(readme) || '';
+  const stack = detectBrowserStack(files);
+
+  return {
+    folderName,
+    linkedPath: browserLinkedFolderPath(folderName),
+    result: {
+      files: files.map((file) => file.path).sort().slice(0, 200),
+      scan_hash: hashBrowserScannedFiles(files),
+      meta: {
+        readme,
+        package_json: packageJson,
+        cargo_toml: cargoToml,
+        stack,
+        suggestions: {
+          project_name: packageJson?.name || cargoToml?.name || safeBrowserFolderName(folderName),
+          summary,
+          detected_tags: [...stack.frameworks, ...stack.languages].slice(0, 8),
+        },
+      },
+    },
+  };
+}
+
+async function selectAndScanProjectFolder(): Promise<SelectedFolderScan | null> {
+  if (isDesktopApp()) {
+    const selected = await openFolderDialog();
+    if (!selected) return null;
+
+    const normalizedPath = selected.replace(/\\/g, '/');
+    const folderName = normalizedPath.split('/').filter(Boolean).pop() || 'Imported Project';
+    const result = await tauriInvoke<ScanResult>('scan_project_folder', { folderPath: selected });
+    return { folderName, linkedPath: selected, result };
+  }
+
+  const selected = await openBrowserFolder();
+  return selected ? buildBrowserScanResult(selected.folderName, selected.files) : null;
 }
 
 export async function syncGitCommits(projectId: string): Promise<GitCommit[]> {
@@ -824,6 +1241,79 @@ export function withRestorePoint(
   );
 }
 
+function debugCloudSave(meta: Record<string, unknown>): void {
+  try {
+    if (typeof window === 'undefined') return;
+    if (window.localStorage.getItem('mph_debug_cloud_save') !== '1') return;
+    console.info('[cloud-save]', meta);
+  } catch {
+    // Debug logging must never affect save behavior.
+  }
+}
+
+async function attemptCloudPushAfterLocalSave(localProject: ProjectMemory): Promise<void> {
+  const latestStore = store();
+  const cloudSyncEnabled = latestStore.settings.privacy.cloudSyncEnabled;
+  const cloudDisconnecting = latestStore.cloudDisconnecting;
+  const hasCloudUser = Boolean(latestStore.cloudUser);
+  const willAttemptCloudPush = cloudSyncEnabled && !cloudDisconnecting;
+
+  debugCloudSave({
+    localSaved: true,
+    cloudSyncEnabled,
+    cloudDisconnecting,
+    hasCloudUser,
+    willAttemptCloudPush,
+  });
+
+  if (!cloudSyncEnabled) {
+    latestStore.setSyncStatus('saved_local');
+    return;
+  }
+
+  if (cloudDisconnecting) {
+    latestStore.setSyncStatus('saved_local');
+    return;
+  }
+
+  try {
+    const result = await pushProject(localProject, latestStore.cloudUser?.id);
+    debugCloudSave({
+      localSaved: true,
+      cloudPushResult: result.status,
+      hasCloudUser,
+    });
+
+    if (result.status === 'disabled') {
+      latestStore.setSyncStatus('error');
+      latestStore.showToast('Saved locally, but cloud sync is not available.', 'error');
+      return;
+    }
+
+    if (result.status === 'pending') {
+      latestStore.setSyncStatus('pending');
+      if (latestStore.syncStatus !== 'pending') {
+        latestStore.showToast('Saved locally. Cloud sync is pending.', 'info');
+      }
+      return;
+    }
+
+    if (result.status === 'error') {
+      latestStore.setSyncStatus('error');
+      latestStore.showToast(result.message || 'Saved locally, but cloud sync failed.', 'error');
+      return;
+    }
+
+    if (result.status === 'saved_local') {
+      latestStore.setSyncStatus('saved_local');
+    }
+  } catch (err) {
+    console.error('[Memphant] autosave cloud push unhandled error:', err);
+    latestStore.setSyncStatus('error');
+    latestStore.showToast('Saved locally, but cloud sync failed.', 'error');
+  }
+}
+
 export async function saveToDisk(project: ProjectMemory): Promise<void> {
   const storeState = store();
   const localProject = touchProject(project);
@@ -851,45 +1341,7 @@ export async function saveToDisk(project: ProjectMemory): Promise<void> {
     storeState.setSyncStatus('saved_local');
   }
 
-  setTimeout(() => {
-    void (async () => {
-      const latestStore = store();
-      if (!latestStore.settings.privacy.cloudSyncEnabled) {
-        latestStore.setSyncStatus('saved_local');
-        return;
-      }
-
-      if (latestStore.cloudDisconnecting) {
-        latestStore.setSyncStatus('saved_local');
-        return;
-      }
-
-      try {
-        const result = await pushProject(localProject, latestStore.cloudUser?.id);
-        if (result.status === 'pending') {
-          latestStore.setSyncStatus('pending');
-          if (latestStore.syncStatus !== 'pending') {
-            latestStore.showToast('Saved locally. Cloud sync is pending.', 'info');
-          }
-          return;
-        }
-
-        if (result.status === 'error') {
-          latestStore.setSyncStatus('error');
-          latestStore.showToast(result.message || 'Saved locally, but cloud sync failed.', 'error');
-          return;
-        }
-
-        if (result.status === 'saved_local') {
-          latestStore.setSyncStatus('saved_local');
-        }
-      } catch (err) {
-        console.error('[Memphant] autosave cloud push unhandled error:', err);
-        latestStore.setSyncStatus('error');
-        latestStore.showToast('Saved locally, but cloud sync failed.', 'error');
-      }
-    })();
-  }, 50);
+  void attemptCloudPushAfterLocalSave(localProject);
 }
 
 export async function loadAllFromDisk(): Promise<ProjectMemory[]> {
@@ -1090,24 +1542,19 @@ export async function createProjectFromFolder(): Promise<void> {
 
   if (checkFreeTierLimit()) return;
 
-  const selected = await openFolderDialog();
-  if (!selected) return;
-
   try {
-    const normalizedPath = selected.replace(/\\/g, '/');
-    const folderName = normalizedPath.split('/').filter(Boolean).pop() || 'Imported Project';
-
-    const result = await tauriInvoke<ScanResult>('scan_project_folder', { folderPath: selected });
+    const selected = await selectAndScanProjectFolder();
+    if (!selected) return;
 
     const derivedName =
-      result.meta?.suggestions?.project_name ||
-      result.meta?.package_json?.name ||
-      result.meta?.cargo_toml?.name ||
-      folderName;
+      selected.result.meta?.suggestions?.project_name ||
+      selected.result.meta?.package_json?.name ||
+      selected.result.meta?.cargo_toml?.name ||
+      selected.folderName;
 
     const derivedSummary =
-      result.meta?.suggestions?.summary ||
-      result.meta?.package_json?.description ||
+      selected.result.meta?.suggestions?.summary ||
+      selected.result.meta?.package_json?.description ||
       '';
 
     const now = new Date().toISOString();
@@ -1122,20 +1569,24 @@ export async function createProjectFromFolder(): Promise<void> {
       goals: [],
       rules: [],
       decisions: [],
-      currentState: `Project folder scanned. ${result.files.length} useful files identified.`,
+      currentState: `Project folder scanned. ${selected.result.files.length} useful files identified.`,
       nextSteps: [],
       openQuestions: [],
-      importantAssets: result.files.slice(0, 200),
+      importantAssets: selected.result.files.slice(0, 200),
       projectCharter: '',
       checkpoints: [],
       restorePoints: [],
-      linkedFolder: { path: selected, scanHash: result.scan_hash, lastScannedAt: now },
+      linkedFolder: {
+        path: selected.linkedPath,
+        scanHash: selected.result.scan_hash,
+        lastScannedAt: now,
+      },
       changelog: [
         {
           timestamp: now,
           field: 'general',
           action: 'added',
-          summary: `Project created from folder: ${folderName}`,
+          summary: `Project created from folder: ${selected.folderName}`,
           source: 'app',
         },
       ],
@@ -1162,6 +1613,12 @@ export async function rescanLinkedFolder(): Promise<void> {
 
   if (!canRescanLinkedFolders()) {
     store().showToast(getUnavailableFeatureMessage('rescan'), 'info');
+    return;
+  }
+
+  if (!isDesktopApp()) {
+    store().showToast('Select the folder again so Memephant can rescan it locally.', 'info');
+    await linkFolder();
     return;
   }
 
@@ -1285,17 +1742,19 @@ export async function linkFolder(): Promise<void> {
     return;
   }
 
-  const selected = await openFolderDialog();
-  if (!selected) return;
-
   try {
-    const result = await tauriInvoke<ScanResult>('scan_project_folder', { folderPath: selected });
+    const selected = await selectAndScanProjectFolder();
+    if (!selected) return;
     const now = new Date().toISOString();
 
     const updatedProject: ProjectMemory = {
       ...activeProject,
-      importantAssets: result.files.slice(0, 200),
-      linkedFolder: { path: selected, scanHash: result.scan_hash, lastScannedAt: now },
+      importantAssets: selected.result.files.slice(0, 200),
+      linkedFolder: {
+        path: selected.linkedPath,
+        scanHash: selected.result.scan_hash,
+        lastScannedAt: now,
+      },
       updatedAt: now,
       changelog: [
         ...activeProject.changelog,
@@ -1317,6 +1776,35 @@ export async function linkFolder(): Promise<void> {
     console.error('Link folder failed:', err);
     store().showToast('Could not scan that folder.', 'error');
   }
+}
+
+export async function unlinkFolder(): Promise<void> {
+  const activeProject = store().activeProject();
+  if (!activeProject?.linkedFolder) {
+    store().showToast('This project is not linked to a folder.');
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const updatedProject: ProjectMemory = {
+    ...activeProject,
+    linkedFolder: undefined,
+    updatedAt: now,
+    changelog: [
+      ...activeProject.changelog,
+      {
+        timestamp: now,
+        field: 'linkedFolder',
+        action: 'removed',
+        summary: 'Project folder unlinked',
+        source: 'app',
+      },
+    ],
+  };
+
+  store().updateProject(activeProject.id, updatedProject);
+  await saveToDisk(updatedProject);
+  store().showToast('Folder unlinked. Project memory kept.');
 }
 
 export async function importProjectFromFile(file: File): Promise<void> {

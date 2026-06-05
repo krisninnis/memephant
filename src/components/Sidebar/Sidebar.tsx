@@ -12,6 +12,7 @@ import {
   createProject,
   createProjectFromFolder,
   createProjectFromTemplate,
+  getFolderActionLabel,
   importProjectFromFile,
   deleteProject,
 } from "../../services/tauriActions";
@@ -57,6 +58,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const currentView = useProjectStore((s) => s.currentView);
   const targetPlatform = useProjectStore((s) => s.targetPlatform);
   const settings = useProjectStore((s) => s.settings);
+  const syncStatus = useProjectStore((s) => s.syncStatus);
 
   const setActiveProject = useProjectStore((s) => s.setActiveProject);
   const setCurrentView = useProjectStore((s) => s.setCurrentView);
@@ -84,6 +86,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const importFileRef = useRef<HTMLInputElement>(null);
 
   const desktopApp = isDesktopApp();
+  const folderActionLabel = getFolderActionLabel();
   const selectedPlatformId = ensureValidPlatformId(
     targetPlatform,
     settings.platforms,
@@ -340,136 +343,28 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       >
         <button
           type="button"
-          className={`sidebar-nav-card${currentView === "memory-vault" ? " sidebar-nav-card--active" : ""}`}
+          className={`sidebar-secondary-nav-btn${currentView === "memory-vault" ? " sidebar-secondary-nav-btn--active" : ""}`}
           aria-current={currentView === "memory-vault" ? "page" : undefined}
           onClick={() => {
             setCurrentView("memory-vault");
             onNavigate?.();
           }}
           title="Open your local Personal Memory Vault"
-          style={{
-            width: "100%",
-            cursor: "pointer",
-            background:
-              currentView === "memory-vault"
-                ? "linear-gradient(135deg, rgba(124,58,237,0.22), rgba(245,158,11,0.12))"
-                : "rgba(255,255,255,0.03)",
-            border:
-              currentView === "memory-vault"
-                ? "1px solid rgba(245,158,11,0.28)"
-                : "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "18px",
-            padding: "1rem",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: "0.38rem",
-            transition: "all 0.22s ease",
-            boxShadow:
-              currentView === "memory-vault"
-                ? "0 0 22px rgba(245,158,11,0.08)"
-                : "none",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)";
-            e.currentTarget.style.borderColor = "rgba(245,158,11,0.22)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.borderColor =
-              currentView === "memory-vault"
-                ? "rgba(245,158,11,0.28)"
-                : "rgba(255,255,255,0.08)";
-          }}
         >
-          <span
-            style={{
-              color: "#f8fafc",
-              fontSize: "1rem",
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Memory Vault
-          </span>
-
-          <span
-            style={{
-              color: "#94a3b8",
-              fontSize: "0.76rem",
-              lineHeight: 1.5,
-              textAlign: "left",
-            }}
-          >
-            Private personal memory
-          </span>
+          🔐 Memory Vault
         </button>
 
         <button
           type="button"
-          className={`sidebar-nav-card${currentView === "launch-studio" ? " sidebar-nav-card--active" : ""}`}
+          className={`sidebar-secondary-nav-btn${currentView === "launch-studio" ? " sidebar-secondary-nav-btn--active" : ""}`}
           aria-current={currentView === "launch-studio" ? "page" : undefined}
           onClick={() => {
             setCurrentView("launch-studio");
             onNavigate?.();
           }}
           title="Open Launch Studio"
-          style={{
-            width: "100%",
-            cursor: "pointer",
-            background:
-              currentView === "launch-studio"
-                ? "linear-gradient(135deg, rgba(217,119,6,0.2), rgba(14,165,233,0.12))"
-                : "rgba(255,255,255,0.03)",
-            border:
-              currentView === "launch-studio"
-                ? "1px solid rgba(245,158,11,0.28)"
-                : "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "18px",
-            padding: "1rem",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: "0.38rem",
-            transition: "all 0.22s ease",
-            boxShadow:
-              currentView === "launch-studio"
-                ? "0 0 22px rgba(245,158,11,0.08)"
-                : "none",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-1px)";
-            e.currentTarget.style.borderColor = "rgba(245,158,11,0.22)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.borderColor =
-              currentView === "launch-studio"
-                ? "rgba(245,158,11,0.28)"
-                : "rgba(255,255,255,0.08)";
-          }}
         >
-          <span
-            style={{
-              color: "#f8fafc",
-              fontSize: "1rem",
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Launch Studio
-          </span>
-
-          <span
-            style={{
-              color: "#94a3b8",
-              fontSize: "0.76rem",
-              lineHeight: 1.5,
-              textAlign: "left",
-            }}
-          >
-            Launch kits and build updates
-          </span>
+          🚀 Launch Studio
         </button>
       </div>
 
@@ -485,6 +380,15 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               title="Start a new project memory"
             >
               + New Project
+            </button>
+
+            <button
+              type="button"
+              className="sidebar-action-btn"
+              onClick={() => void createProjectFromFolder()}
+              title="Connect an existing project folder from your device"
+            >
+              📁 {folderActionLabel}
             </button>
 
             <button
@@ -507,38 +411,25 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
               }}
               title="Create a project from a starter template"
             >
-              📋 From template
+              📋 From Template
             </button>
 
-            {desktopApp ? (
-              <button
-                type="button"
-                className="sidebar-action-btn"
-                onClick={() => void createProjectFromFolder()}
-                title="Create a project by scanning a local folder"
-              >
-                📂 Select folder
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="sidebar-action-btn"
-                  onClick={handleImportClick}
-                  title="Import a saved project JSON file"
-                >
-                  📥 Import project JSON
-                </button>
-                <input
-                  ref={importFileRef}
-                  type="file"
-                  accept=".json,application/json"
-                  style={{ display: "none" }}
-                  onChange={(e) => void handleImportFileChange(e)}
-                  title="Choose a project JSON file to import"
-                />
-              </>
-            )}
+            <button
+              type="button"
+              className="sidebar-action-btn"
+              onClick={handleImportClick}
+              title="Import a saved Memephant project file"
+            >
+              📥 Import Memephant Project
+            </button>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: "none" }}
+              onChange={(e) => void handleImportFileChange(e)}
+              title="Choose a Memephant project file to import"
+            />
           </>
         )}
 
@@ -707,9 +598,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       <div className="sidebar-projects">
         {projects.length === 0 && (
           <p className="sidebar-empty">
-            {desktopApp
-              ? "No projects yet — create one above or open a folder."
-              : "No projects yet — create one above or import a project."}
+            No projects yet - create one above or connect a folder.
           </p>
         )}
 
@@ -748,6 +637,34 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           >
             Show less
           </button>
+        )}
+      </div>
+
+      <div className="sidebar-status-chip-row">
+        {!cloudUser ? (
+          <span className="sidebar-status-chip sidebar-status-chip--local">
+            💾 Local only
+          </span>
+        ) : settings.privacy.cloudSyncEnabled && syncStatus === 'synced' ? (
+          <span className="sidebar-status-chip sidebar-status-chip--synced">
+            ☁️ Backups active
+          </span>
+        ) : settings.privacy.cloudSyncEnabled && syncStatus === 'syncing' ? (
+          <span className="sidebar-status-chip sidebar-status-chip--syncing">
+            ☁️ Syncing…
+          </span>
+        ) : settings.privacy.cloudSyncEnabled && syncStatus === 'error' ? (
+          <span className="sidebar-status-chip sidebar-status-chip--error">
+            ⚠️ Sync issue
+          </span>
+        ) : settings.privacy.cloudSyncEnabled ? (
+          <span className="sidebar-status-chip sidebar-status-chip--pending">
+            ☁️ Signed in
+          </span>
+        ) : (
+          <span className="sidebar-status-chip sidebar-status-chip--local">
+            💾 Local only
+          </span>
         )}
       </div>
 

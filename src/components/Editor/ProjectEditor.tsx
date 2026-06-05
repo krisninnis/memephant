@@ -14,7 +14,13 @@ import {
 } from '../../utils/projectMemoryCleanup';
 import { GitHubScanPreview } from './GitHubScanPreview';
 import { scanGitHubRepo, mergeScanResult, parseGitHubUrl } from '../../services/githubScanner';
-import { restoreProjectFromHistory } from '../../services/tauriActions';
+import {
+  getFolderActionLabel,
+  linkFolder,
+  rescanLinkedFolder,
+  restoreProjectFromHistory,
+  unlinkFolder,
+} from '../../services/tauriActions';
 import { RecentActivityBlock } from '../RecentActivityBlock';
 import type { GitHubScanResult } from '../../services/githubScanner';
 import type {
@@ -254,6 +260,17 @@ function formatRestorePointTime(isoString: string): string {
   });
 }
 
+function formatLinkedFolderTime(isoString: string | undefined): string {
+  if (!isoString) return 'Not scanned yet';
+  return new Date(isoString).toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function ProjectEditor() {
   const activeProject = useActiveProject();
   const updateProject = useProjectStore((s) => s.updateProject);
@@ -482,6 +499,8 @@ export function ProjectEditor() {
   const activeGameContext = activeProject.gameContext ?? createDefaultGameContext(activeGamePlatform);
   const activeProjectCategory = activeProject.projectCategory ?? 'general-software';
   const activePlatformLinks = GAME_PLATFORM_LINKS[activeGamePlatform] ?? [];
+  const folderActionLabel = getFolderActionLabel();
+  const hasLinkedFolder = Boolean(activeProject.linkedFolder?.path);
 
   const updateGameContext = (next: GameProjectContext) => {
     update('gameContext', next);
@@ -747,6 +766,47 @@ export function ProjectEditor() {
             </div>
           </div>
         )}
+
+      <section className="connected-folder-panel" aria-label="Connected Folder">
+        <div className="connected-folder-panel__header">
+          <div>
+            <div className="field-label">Connected Folder</div>
+            <p>
+              Connect an existing project folder from your device. Memephant scans locally and
+              builds context from useful files.
+            </p>
+          </div>
+          <span className={`connected-folder-panel__status${hasLinkedFolder ? ' connected-folder-panel__status--connected' : ''}`}>
+            {hasLinkedFolder ? 'Connected' : 'Not connected'}
+          </span>
+        </div>
+        <div className="connected-folder-panel__meta">
+          <span>Status: {hasLinkedFolder ? 'Connected' : 'Not connected'}</span>
+          <span>Last Scan: {formatLinkedFolderTime(activeProject.linkedFolder?.lastScannedAt)}</span>
+        </div>
+        <p className="connected-folder-panel__privacy">
+          Secrets and local paths are excluded from AI exports. Folder contents are not uploaded or synced automatically.
+        </p>
+        <div className="connected-folder-panel__actions">
+          {hasLinkedFolder ? (
+            <>
+              <button type="button" className="github-scan-btn" onClick={() => void rescanLinkedFolder()}>
+                Rescan Folder
+              </button>
+              <button type="button" className="github-scan-btn" onClick={() => void linkFolder()}>
+                Change Folder
+              </button>
+              <button type="button" className="memory-cleanup-preview__ghost-btn" onClick={() => void unlinkFolder()}>
+                Unlink Folder
+              </button>
+            </>
+          ) : (
+            <button type="button" className="github-scan-btn" onClick={() => void linkFolder()}>
+              {folderActionLabel}
+            </button>
+          )}
+        </div>
+      </section>
 
       <div className="field-group">
         <div className="field-label">Project Category</div>

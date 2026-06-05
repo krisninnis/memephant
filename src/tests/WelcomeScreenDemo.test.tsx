@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { WelcomeScreen } from '../components/Layout/WelcomeScreen';
 import type { ProjectMemory } from '../types/memphant-types';
 import { DEMO_PROJECT_ID } from '../utils/demoProject';
-import { saveToDisk } from '../services/tauriActions';
+import { createProjectFromFolder, saveToDisk } from '../services/tauriActions';
 
 const mockAddProject = jest.fn();
 const mockSetActiveProject = jest.fn();
@@ -37,6 +37,7 @@ jest.mock('../services/tauriActions', () => ({
   isDesktopApp: jest.fn(() => false),
   createProjectFromFolder: jest.fn(),
   createProjectFromTemplate: jest.fn(),
+  getFolderActionLabel: jest.fn(() => 'Select Folder'),
   importProjectFromFile: jest.fn(),
   saveToDisk: jest.fn().mockResolvedValue(undefined),
 }));
@@ -56,8 +57,9 @@ describe('WelcomeScreen demo project entry', () => {
     render(<WelcomeScreen />);
 
     expect(
-      screen.getByText(/Create or load a project, generate a Context Passport/i),
+      screen.getByText(/Build a project memory, generate a Context Passport/i),
     ).toBeInTheDocument();
+    expect(screen.getByText('Connect a project folder')).toBeInTheDocument();
     expect(screen.getByText('Generate a Context Passport')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /try demo project/i }));
@@ -88,5 +90,15 @@ describe('WelcomeScreen demo project entry', () => {
     expect(mockShowToast).toHaveBeenCalledWith(
       'Demo project opened. Generate a Context Passport to try the handoff.',
     );
+  });
+
+  it('prioritizes selecting a project folder and demotes Memephant project import', () => {
+    render(<WelcomeScreen />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Select Folder/i }));
+
+    expect(createProjectFromFolder).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: /Import Memephant Project/i })).toBeInTheDocument();
+    expect(screen.queryByText(/Import project JSON/i)).not.toBeInTheDocument();
   });
 });

@@ -4,7 +4,11 @@ import { useProjectStore } from '../store/projectStore';
 import type { ProjectMemory } from '../types/memphant-types';
 
 jest.mock('../services/tauriActions', () => ({
+  getFolderActionLabel: jest.fn(() => 'Select Folder'),
+  linkFolder: jest.fn(async () => undefined),
+  rescanLinkedFolder: jest.fn(async () => undefined),
   restoreProjectFromHistory: jest.fn(async () => undefined),
+  unlinkFolder: jest.fn(async () => undefined),
 }));
 
 jest.mock('../hooks/useRecentActivity', () => ({
@@ -156,5 +160,29 @@ describe('ProjectEditor Script Vault', () => {
     );
     expect(screen.getByLabelText('Status')).toHaveDisplayValue('Other');
     expect(screen.getByLabelText('Custom Status')).toHaveValue('Needs designer check');
+  });
+
+  it('shows connected folder status and actions without exposing the local path', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        linkedFolder: {
+          path: 'C:\\Users\\thoma\\repos\\private-roblox-game',
+          scanHash: 'scan-123',
+          lastScannedAt: '2026-06-05T10:15:00.000Z',
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const panel = screen.getByRole('region', { name: 'Connected Folder' });
+    expect(within(panel).getByText('Status: Connected')).toBeInTheDocument();
+    expect(within(panel).getByText(/Last Scan:/)).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Rescan Folder' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Change Folder' })).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Unlink Folder' })).toBeInTheDocument();
+    expect(panel).not.toHaveTextContent('C:\\Users\\thoma\\repos\\private-roblox-game');
   });
 });

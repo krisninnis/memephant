@@ -11,6 +11,7 @@ jest.mock('../services/tauriActions', () => ({
   createProject: jest.fn(async () => undefined),
   createProjectFromFolder: jest.fn(async () => undefined),
   createProjectFromTemplate: jest.fn(async () => undefined),
+  getFolderActionLabel: jest.fn(() => 'Select Folder'),
   importProjectFromFile: jest.fn(async () => undefined),
   deleteProject: jest.fn(async () => undefined),
   copyExportToClipboard: jest.fn(async () => undefined),
@@ -91,7 +92,7 @@ describe('AppShell Memory Vault navigation', () => {
     render(<AppShell />);
 
     expect(
-      screen.getByRole('button', { name: /Memory Vault Private personal memory/i }),
+      screen.getByRole('button', { name: /Memory Vault/i }),
     ).toBeInTheDocument();
   });
 
@@ -99,7 +100,7 @@ describe('AppShell Memory Vault navigation', () => {
     render(<AppShell />);
 
     fireEvent.click(
-      screen.getByRole('button', { name: /Memory Vault Private personal memory/i }),
+      screen.getByRole('button', { name: /Memory Vault/i }),
     );
 
     expect(
@@ -117,7 +118,7 @@ describe('AppShell Memory Vault navigation', () => {
     render(<AppShell />);
 
     expect(
-      screen.getByRole('button', { name: /Launch Studio Launch kits and build updates/i }),
+      screen.getByRole('button', { name: /Launch Studio/i }),
     ).toBeInTheDocument();
   });
 
@@ -125,7 +126,7 @@ describe('AppShell Memory Vault navigation', () => {
     render(<AppShell />);
 
     fireEvent.click(
-      screen.getByRole('button', { name: /Launch Studio Launch kits and build updates/i }),
+      screen.getByRole('button', { name: /Launch Studio/i }),
     );
 
     expect(screen.getByRole('heading', { name: 'Launch Studio' })).toBeInTheDocument();
