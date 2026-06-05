@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import type { ProjectMemory } from '../../types/memphant-types';
 import { copyExportToClipboard } from '../../services/tauriActions';
 import { generateBuildUpdate } from '../../utils/buildUpdateGenerator';
+import { track } from '../../lib/analytics';
 import { SocialBridgeActions } from '../LaunchStudio/SocialBridgeActions';
 
 interface BuildUpdateModalProps {
@@ -14,6 +15,10 @@ export function BuildUpdateModal({ project, onClose }: BuildUpdateModalProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const overlayRef = useRef<HTMLDivElement>(null);
   const update = generateBuildUpdate(project);
+
+  useEffect(() => {
+    track('build_update_generated');
+  }, []);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {

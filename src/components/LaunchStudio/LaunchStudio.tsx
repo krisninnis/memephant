@@ -5,6 +5,7 @@ import { LaunchPassportModal } from '../Workspace/LaunchPassportModal';
 import { BuildUpdateModal } from '../Workspace/BuildUpdateModal';
 import { ContentReadinessModal } from './ContentReadinessModal';
 import { DailyContentPackModal } from './DailyContentPackModal';
+import { track } from '../../lib/analytics';
 
 type LaunchStudioPage = 'clarity' | 'launch' | 'postToday' | 'share';
 
@@ -80,6 +81,10 @@ export function LaunchStudio() {
   const savedRecentProgress = activeProject?.recentProgressNote ?? '';
   const hasRecentProgressText = recentProgressDraft.trim().length > 0;
   const recentProgressChanged = recentProgressDraft !== savedRecentProgress;
+
+  useEffect(() => {
+    track('launch_studio_opened');
+  }, []);
 
   useEffect(() => {
     setProjectReasonDraft(activeProject?.projectReason ?? '');

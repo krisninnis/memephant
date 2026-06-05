@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import type { ProjectMemory } from '../../types/memphant-types';
 import { copyExportToClipboard } from '../../services/tauriActions';
 import { generateLaunchPassport } from '../../utils/launchPassportGenerator';
+import { track } from '../../lib/analytics';
 import { SocialBridgeActions } from '../LaunchStudio/SocialBridgeActions';
 
 interface LaunchPassportModalProps {
@@ -14,6 +15,10 @@ export function LaunchPassportModal({ project, onClose }: LaunchPassportModalPro
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const overlayRef = useRef<HTMLDivElement>(null);
   const passport = generateLaunchPassport(project);
+
+  useEffect(() => {
+    track('launch_passport_generated');
+  }, []);
 
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {

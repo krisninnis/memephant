@@ -558,6 +558,79 @@
   transform: scale(0.97);
 }
 
+/* ─── Post-copy handoff bridge ────────────────────────────────────────────── */
+
+.passport-modal__handoff-bridge {
+  margin: 0 1.5rem 1.25rem;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.35), rgba(5, 46, 37, 0.2));
+  animation: handoff-bridge-in 0.28s ease both;
+}
+
+@keyframes handoff-bridge-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.passport-modal__handoff-bridge-title {
+  margin: 0 0 0.75rem;
+  color: #6ee7b7;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.passport-modal__handoff-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.passport-modal__handoff-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: #a7f3d0;
+  font-size: 0.87rem;
+  line-height: 1.5;
+}
+
+.passport-modal__handoff-step-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.passport-modal__handoff-prompt {
+  display: block;
+  margin-top: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #d1fae5;
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  user-select: all;
+  cursor: text;
+}
+
 /* ─── Responsive (Add Platform) ──────────────────────────────────────────── */
 
 @media (max-width: 600px) {

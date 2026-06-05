@@ -21,6 +21,7 @@ import {
 import { defaultPassportStyleSettings } from '../../utils/passportStyleSettings';
 import { applyPassportStyleSettings } from '../../utils/passportStyleTransform';
 import { AddPlatformModal } from './AddPlatformModal';
+import { track } from '../../lib/analytics';
 import './ContextPassportModal.css';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -97,6 +98,10 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
   // Generate built-in passport once — pure, deterministic
   const passport = generateContextPassport(project);
 
+  useEffect(() => {
+    track('context_passport_generated');
+  }, []);
+
   // Resolve active tab info
   const builtinTab = FORMAT_TABS.find((t) => t.id === activeTabKey);
   const customTab = customPlatforms.find((p) => p.id === activeTabKey);
@@ -128,7 +133,8 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
     try {
       await navigator.clipboard.writeText(currentText);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      track('context_passport_copied');
+      setTimeout(() => setCopied(false), 12000);
     } catch {
       // Clipboard may not be available in some contexts
     }
@@ -340,6 +346,30 @@ export function ContextPassportModal({ project, onClose }: ContextPassportModalP
                 : `Copy for ${activeTabLabel}`}
             </button>
           </div>
+
+          {/* Post-copy handoff bridge — shown after copy */}
+          {copied && (
+            <div className="passport-modal__handoff-bridge" role="status" aria-live="polite">
+              <p className="passport-modal__handoff-bridge-title">✅ Passport ready — here's what to do next</p>
+              <ol className="passport-modal__handoff-steps">
+                <li>
+                  <span className="passport-modal__handoff-step-num">1</span>
+                  Open a <strong>new chat</strong> in {activeTabLabel || 'your AI tool'}
+                </li>
+                <li>
+                  <span className="passport-modal__handoff-step-num">2</span>
+                  <strong>Paste</strong> your Context Passport
+                </li>
+                <li>
+                  <span className="passport-modal__handoff-step-num">3</span>
+                  Send this message:
+                  <code className="passport-modal__handoff-prompt">
+                    Continue this project from the attached Context Passport.
+                  </code>
+                </li>
+              </ol>
+            </div>
+          )}
         </div>
       </div>
 
