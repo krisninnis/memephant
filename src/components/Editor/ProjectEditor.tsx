@@ -40,6 +40,7 @@ import {
   PROJECT_CATEGORY_OPTIONS,
   createDefaultGameContext,
 } from '../../utils/gameProjectTypes';
+import { classifyRobloxScript } from '../../utils/robloxScriptClassifier';
 
 type ScanState = 'idle' | 'scanning' | 'preview' | 'error';
 
@@ -476,6 +477,7 @@ function scriptVaultEntryFromSuggestion(
   suggestion: ScriptScanSuggestion,
   id: string,
 ): ScriptVaultEntry {
+  const classification = classifyRobloxScript(suggestion.relativePath);
   return {
     id,
     scriptName: suggestion.fileName,
@@ -486,6 +488,9 @@ function scriptVaultEntryFromSuggestion(
     notes: 'Suggested from linked folder scan',
     codeSnippet: '',
     includeInContextPassport: false,
+    ...(classification
+      ? { runContext: classification.runContext, runContextBasis: classification.basis }
+      : {}),
   };
 }
 
@@ -1677,7 +1682,12 @@ export function ProjectEditor() {
                         onClick={() => openScriptWorkspaceForScript(index)}
                         aria-label={`Open ${scriptSummaryLabel(script, index, scriptVaultEntries)} in Script Workspace`}
                       >
-                        <span>{scriptSummaryLabel(script, index, scriptVaultEntries)}</span>
+                        <span className="script-vault-summary__item-head">
+                          <span>{scriptSummaryLabel(script, index, scriptVaultEntries)}</span>
+                          {script.runContext && script.runContext !== 'Unknown' ? (
+                            <span className="script-vault-summary__run-context">{script.runContext}</span>
+                          ) : null}
+                        </span>
                         <small>{script.status || 'No status'} / {script.relatedSystem || 'No system'}</small>
                       </button>
                     ))}

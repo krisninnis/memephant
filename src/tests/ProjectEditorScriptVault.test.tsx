@@ -622,6 +622,34 @@ describe('ProjectEditor Script Vault', () => {
         codeSnippet: '',
       }),
     ]);
+
+    const added = project.gameContext?.scriptVault?.[0];
+    expect(added?.runContext).toBe('Script');
+    expect(added?.runContextBasis).toBe('path');
+  });
+
+
+  it('shows a read-only run context badge for classified scripts and hides it when unknown', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        gameContext: {
+          ...baseProject.gameContext,
+          scriptVault: [
+            { id: 's1', scriptName: 'Bar.client.luau', platformLanguage: 'Luau', runContext: 'LocalScript', runContextBasis: 'filename' },
+            { id: 's2', scriptName: 'Mystery.lua', platformLanguage: 'Luau', runContext: 'Unknown', runContextBasis: 'none' },
+            { id: 's3', scriptName: 'Plain.lua', platformLanguage: 'Luau' },
+          ],
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const vault = screen.getByRole('region', { name: 'Script Vault' });
+    expect(within(vault).getByText('LocalScript')).toBeInTheDocument();
+    expect(within(vault).queryByText('Unknown')).not.toBeInTheDocument();
   });
 
   it('adds all new script suggestions without duplicating existing Script Vault records', () => {
