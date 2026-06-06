@@ -21,6 +21,10 @@ import {
   restoreProjectFromHistory,
   unlinkFolder,
 } from '../../services/tauriActions';
+import {
+  getLinkedFolderConnectionState,
+  hasRestorableLinkedFolderAccess,
+} from '../../services/linkedFolderState';
 import { RecentActivityBlock } from '../RecentActivityBlock';
 import type { GitHubScanResult } from '../../services/githubScanner';
 import type {
@@ -581,10 +585,13 @@ export function ProjectEditor() {
     useState<PendingScriptDuplicateConfirmation | null>(null);
 
   const project = activeProject;
+  const linkedFolderPathForLocalAccess = hasRestorableLinkedFolderAccess(project?.linkedFolder)
+    ? project?.linkedFolder?.path ?? ''
+    : '';
 
   const { markdown, loading, error } = useRecentActivity(
     project?.id ?? '',
-    project?.linkedFolder?.path ?? '',
+    linkedFolderPathForLocalAccess,
   );
 
   const recentRestorePoints = project
@@ -797,7 +804,15 @@ export function ProjectEditor() {
   const activeProjectCategory = activeProject.projectCategory ?? 'general-software';
   const activePlatformLinks = GAME_PLATFORM_LINKS[activeGamePlatform] ?? [];
   const folderActionLabel = getFolderActionLabel();
-  const hasLinkedFolder = Boolean(activeProject.linkedFolder?.path);
+  const folderConnectionState = getLinkedFolderConnectionState(activeProject);
+  const hasLinkedFolder = folderConnectionState === 'connected';
+  const needsFolderReconnect = folderConnectionState === 'reconnect-needed';
+  const hasPriorFolderScan = folderConnectionState !== 'not-connected';
+  const folderStatusLabel = hasLinkedFolder
+    ? 'Connected'
+    : needsFolderReconnect
+      ? 'Reconnect needed'
+      : 'Not connected';
   const folderScanSummary = useMemo(
     () => buildFolderScanSummary(
       activeProject,
@@ -1285,14 +1300,27 @@ export function ProjectEditor() {
               builds context from useful files.
             </p>
           </div>
-          <span className={`connected-folder-panel__status${hasLinkedFolder ? ' connected-folder-panel__status--connected' : ''}`}>
-            {hasLinkedFolder ? 'Connected' : 'Not connected'}
+          <span
+            className={[
+              'connected-folder-panel__status',
+              hasLinkedFolder ? 'connected-folder-panel__status--connected' : '',
+              needsFolderReconnect ? 'connected-folder-panel__status--reconnect' : '',
+            ].filter(Boolean).join(' ')}
+          >
+            {folderStatusLabel}
           </span>
         </div>
         <div className="connected-folder-panel__meta">
-          <span>Status: {hasLinkedFolder ? 'Connected' : 'Not connected'}</span>
-          <span>Last Scan: {formatLinkedFolderTime(activeProject.linkedFolder?.lastScannedAt)}</span>
+          <span>Status: {folderStatusLabel}</span>
+          {hasPriorFolderScan && (
+            <span>Last Scan: {formatLinkedFolderTime(activeProject.linkedFolder?.lastScannedAt)}</span>
+          )}
         </div>
+        {needsFolderReconnect && (
+          <p className="connected-folder-panel__reconnect">
+            Folder access needs to be reconnected on this device.
+          </p>
+        )}
         <p className="connected-folder-panel__privacy">
           Secrets and local paths are excluded from AI exports. Folder contents are not uploaded or synced automatically.
         </p>
@@ -1309,6 +1337,15 @@ export function ProjectEditor() {
                 Unlink Folder
               </button>
             </>
+          ) : needsFolderReconnect ? (
+            <>
+              <button type="button" className="github-scan-btn" onClick={() => void linkFolder()}>
+                Reconnect Folder
+              </button>
+              <button type="button" className="memory-cleanup-preview__ghost-btn" onClick={() => void unlinkFolder()}>
+                Unlink Folder
+              </button>
+            </>
           ) : (
             <button type="button" className="github-scan-btn" onClick={() => void linkFolder()}>
               {folderActionLabel}
@@ -1317,7 +1354,7 @@ export function ProjectEditor() {
         </div>
       </section>
 
-      {hasLinkedFolder && (
+      {hasPriorFolderScan && (
         <section className="folder-scan-results-card" role="region" aria-label="Scan Results">
           <div className="folder-scan-results-card__header">
             <div>

@@ -711,6 +711,25 @@ function normalizeProjectBlueprint(value: unknown): ProjectMemory['projectBluepr
   return candidate.version === '1.0' ? (candidate as ProjectMemory['projectBlueprint']) : undefined;
 }
 
+function normalizeLinkedFolder(value: LegacyLinkedFolder | undefined): ProjectMemory['linkedFolder'] {
+  if (!value) return undefined;
+
+  const path = typeof value.path === 'string' && value.path.trim().length > 0
+    ? value.path
+    : undefined;
+  const scanHash = typeof value.scanHash === 'string' ? value.scanHash : undefined;
+  const lastScannedAt =
+    typeof value.lastScannedAt === 'string' ? value.lastScannedAt : undefined;
+
+  if (!path && !scanHash && !lastScannedAt) return undefined;
+
+  return {
+    path,
+    scanHash,
+    lastScannedAt,
+  };
+}
+
 export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory {
   const legacy = raw as LegacyProject;
   const normalizedChangelog = Array.isArray(raw.changelog)
@@ -787,13 +806,7 @@ export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory
             typeof legacy.aiInstructions.focus === 'string'
           ? legacy.aiInstructions.focus
           : '',
-    linkedFolder: legacy.linkedFolder
-      ? {
-          path: legacy.linkedFolder.path ?? '',
-          scanHash: legacy.linkedFolder.scanHash,
-          lastScannedAt: legacy.linkedFolder.lastScannedAt,
-        }
-      : undefined,
+    linkedFolder: normalizeLinkedFolder(legacy.linkedFolder),
     lastGitSync:
       raw.lastGitSync &&
       typeof raw.lastGitSync === 'object' &&

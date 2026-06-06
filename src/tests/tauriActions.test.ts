@@ -3,6 +3,7 @@ import {
   canScanFolders,
   getFolderActionLabel,
   getUnavailableFeatureMessage,
+  normalizeOldProject,
 } from '../services/tauriActions';
 import { isDesktopApp } from '../utils/runtime';
 
@@ -71,5 +72,35 @@ describe('folder-first runtime helpers', () => {
   it('uses a browser-specific fallback message when folder selection is unavailable', () => {
     expect(getUnavailableFeatureMessage('folderScan')).toContain('Folder selection is not supported by this browser yet');
     expect(getUnavailableFeatureMessage('folderScan')).toContain('Import Memephant Project');
+  });
+});
+
+describe('tauriActions normalizeOldProject linked folder metadata', () => {
+  it('keeps safe linked folder scan metadata when the local path is absent', () => {
+    const project = normalizeOldProject({
+      id: 'pathless-linked-folder',
+      name: 'Pathless Linked Folder',
+      summary: 'Loaded from cloud-safe local data.',
+      goals: [],
+      rules: [],
+      decisions: [],
+      currentState: 'Ready.',
+      nextSteps: [],
+      openQuestions: [],
+      importantAssets: ['README.md'],
+      changelog: [],
+      checkpoints: [],
+      platformState: {},
+      linkedFolder: {
+        scanHash: 'scan-pathless',
+        lastScannedAt: '2026-06-05T14:27:00.000Z',
+      },
+    });
+
+    expect(project.linkedFolder).toEqual({
+      path: undefined,
+      scanHash: 'scan-pathless',
+      lastScannedAt: '2026-06-05T14:27:00.000Z',
+    });
   });
 });

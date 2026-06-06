@@ -10,6 +10,7 @@ import {
   replaceCloudHydrationAutosaveSkipIds,
 } from '../utils/cloudHydrationAutosave';
 import { devError, devWarn } from '../utils/devLogging';
+import { preserveLocalLinkedFolderStateForProjects } from '../services/linkedFolderState';
 import { track } from '../lib/analytics';
 
 function isTauri(): boolean {
@@ -218,16 +219,17 @@ export function useTauriSync() {
 
               const applyCloudResult = (merged: ProjectMemory[], conflicts: string[]) => {
                 const st = useProjectStore.getState();
+                const locallyRehydrated = preserveLocalLinkedFolderStateForProjects(merged, loaded);
 
-                devWarn(`[useTauriSync] CLOUD PROJECTS LOADED: ${merged.length} projects`);
+                devWarn(`[useTauriSync] CLOUD PROJECTS LOADED: ${locallyRehydrated.length} projects`);
 
                 // These projects came from cloud hydration, not a user edit.
                 // Skip the first autosave for each hydrated project so startup/login
                 // does not immediately generate an autosave push.
-                replaceCloudHydrationAutosaveSkipIds(merged.map((project) => project.id));
+                replaceCloudHydrationAutosaveSkipIds(locallyRehydrated.map((project) => project.id));
 
-                st.setProjects(merged);
-                st.setActiveProject(merged[0]?.id ?? null);
+                st.setProjects(locallyRehydrated);
+                st.setActiveProject(locallyRehydrated[0]?.id ?? null);
 
                 if (conflicts.length > 0) {
                   st.showToast(

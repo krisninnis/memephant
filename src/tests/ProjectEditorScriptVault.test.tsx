@@ -529,6 +529,82 @@ describe('ProjectEditor Script Vault', () => {
     expect(panel).not.toHaveTextContent('C:\\Users\\thoma\\repos\\private-roblox-game');
   });
 
+  it('shows reconnect-needed state with previous safe scan metadata after refresh', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: [
+          'README.md',
+          'ServerScriptService/NPCSpawner.lua',
+          'C:\\Users\\thoma\\repos\\private-roblox-game\\SecretServer.lua',
+        ],
+        linkedFolder: {
+          scanHash: 'scan-reconnect',
+          lastScannedAt: '2026-06-05T14:27:00.000Z',
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const panel = screen.getByRole('region', { name: 'Connected Folder' });
+    expect(within(panel).getByText('Status: Reconnect needed')).toBeInTheDocument();
+    expect(within(panel).getByText('Folder access needs to be reconnected on this device.')).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Reconnect Folder' })).toBeInTheDocument();
+    expect(within(panel).queryByRole('button', { name: 'Rescan Folder' })).not.toBeInTheDocument();
+
+    const scanResults = screen.getByRole('region', { name: 'Scan Results' });
+    expect(within(scanResults).getByText(/Detected Project Type:/)).toHaveTextContent('Roblox');
+    expect(within(scanResults).getByText(/Files Analysed:/)).toHaveTextContent('3');
+    expect(within(scanResults).getAllByText('NPCSpawner.lua').length).toBeGreaterThan(0);
+    expect(within(scanResults).getAllByText('SecretServer.lua').length).toBeGreaterThan(0);
+    expect(scanResults).not.toHaveTextContent('C:\\Users\\thoma');
+    expect(scanResults).not.toHaveTextContent('private-roblox-game');
+  });
+
+  it('treats browser folder aliases as reconnect-needed because no folder handle is persisted', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: ['README.md'],
+        linkedFolder: {
+          path: 'browser-folder:RobloxGame',
+          scanHash: 'scan-browser',
+          lastScannedAt: '2026-06-05T14:27:00.000Z',
+        },
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const panel = screen.getByRole('region', { name: 'Connected Folder' });
+    expect(within(panel).getByText('Status: Reconnect needed')).toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Reconnect Folder' })).toBeInTheDocument();
+    expect(panel).not.toHaveTextContent('browser-folder:RobloxGame');
+    expect(screen.getByRole('region', { name: 'Scan Results' })).toBeInTheDocument();
+  });
+
+  it('shows not-connected state only when there is no folder and no prior folder scan metadata', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        importantAssets: [],
+        linkedFolder: undefined,
+      }],
+      activeProjectId: baseProject.id,
+    });
+
+    render(<ProjectEditor />);
+
+    const panel = screen.getByRole('region', { name: 'Connected Folder' });
+    expect(within(panel).getByText('Status: Not connected')).toBeInTheDocument();
+    expect(within(panel).queryByText(/Last Scan:/)).not.toBeInTheDocument();
+    expect(within(panel).getByRole('button', { name: 'Select Folder' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Scan Results' })).not.toBeInTheDocument();
+  });
+
   it('renders scan results from linked folder assets without exposing local paths', () => {
     useProjectStore.setState({
       projects: [{

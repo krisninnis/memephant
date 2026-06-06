@@ -31,6 +31,7 @@ import { getRuntimeEnv } from '../utils/runtimeEnv';
 import { getAuthCallbackUrl } from '../utils/authCallbackUrl';
 import { devError, devWarn } from '../utils/devLogging';
 import { toCloudProjectData } from './toCloudProjectData';
+import { preserveLocalLinkedFolderState } from './linkedFolderState';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1472,7 +1473,7 @@ async function pullAndMerge(
       const remoteTs = row.updated_at ?? localUpdatedAt(remoteProject);
 
       if (remoteTs > localTs) {
-        localMap.set(remoteProject.id, remoteProject);
+        localMap.set(remoteProject.id, preserveLocalLinkedFolderState(remoteProject, local));
         changed = true;
         conflicts.push(remoteProject.name || remoteProject.id);
 

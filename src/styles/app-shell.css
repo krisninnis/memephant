@@ -2235,6 +2235,19 @@ select {
   background: rgba(16, 185, 129, 0.12);
 }
 
+.connected-folder-panel__status--reconnect {
+  border-color: rgba(245, 158, 11, 0.36);
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.connected-folder-panel__reconnect {
+  margin: 0;
+  color: #f8d68a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .connected-folder-panel__meta,
 .connected-folder-panel__actions {
   display: flex;

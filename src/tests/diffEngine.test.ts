@@ -803,6 +803,22 @@ describe('normalizeOldProject — schema migration', () => {
     expect(result.openQuestion).toBe('Should we use Stripe?');
   });
 
+  it('preserves cloud-safe linked folder scan metadata without a local path', () => {
+    const raw = makeLegacyRaw({
+      linkedFolder: {
+        scanHash: 'scan-cloud-safe',
+        lastScannedAt: '2026-06-05T14:27:00.000Z',
+      },
+    });
+    const result = normalizeOldProject(raw);
+
+    expect(result.linkedFolder).toEqual({
+      path: undefined,
+      scanHash: 'scan-cloud-safe',
+      lastScannedAt: '2026-06-05T14:27:00.000Z',
+    });
+  });
+
   it('migrates projectReason from legacy data when present', () => {
     const raw = makeLegacyRaw({
       projectReason: 'I got tired of re-explaining project context to every AI tool.',

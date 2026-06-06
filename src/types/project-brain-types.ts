@@ -63,7 +63,7 @@ export interface ChangelogEntry {
 }
 
 export interface LinkedFolder {
-  path: string; // NEVER exported
+  path?: string; // Local-only. NEVER exported.
   scanHash?: string;
   lastScannedAt?: string;
 }

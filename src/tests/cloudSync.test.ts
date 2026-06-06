@@ -1,4 +1,5 @@
 import { toCloudProjectData } from '../services/toCloudProjectData';
+import { preserveLocalLinkedFolderStateForProjects } from '../services/linkedFolderState';
 import type { ProjectMemory } from '../types/memphant-types';
 
 const OPENAI_KEY = `sk-${'a'.repeat(30)}`;
@@ -63,6 +64,51 @@ describe('toCloudProjectData', () => {
       scanHash: 'scan-hash-survives',
       lastScannedAt: '2026-05-20T09:00:00.000Z',
     });
+  });
+
+  it('rehydrates same-device linked folder access from local metadata after cloud hydration', () => {
+    const localPath = 'C:\\Users\\thoma\\repos\\private-roblox-game';
+    const localProject = makeProject({
+      id: 'same-device-project',
+      importantAssets: ['README.md', 'ServerScriptService/NPCSpawner.lua'],
+      linkedFolder: {
+        path: localPath,
+        scanHash: 'scan-same-device',
+        lastScannedAt: '2026-05-20T09:00:00.000Z',
+      },
+    });
+    const cloudProject = toCloudProjectData(localProject) as unknown as ProjectMemory;
+
+    const [rehydrated] = preserveLocalLinkedFolderStateForProjects([cloudProject], [localProject]);
+
+    expect(rehydrated.linkedFolder?.path).toBe(localPath);
+    expect(rehydrated.linkedFolder?.scanHash).toBe('scan-same-device');
+    expect(JSON.stringify(toCloudProjectData(rehydrated))).not.toContain(localPath);
+  });
+
+  it('does not restore a local folder path when cloud scan metadata does not match', () => {
+    const localProject = makeProject({
+      id: 'mismatched-project',
+      importantAssets: ['README.md'],
+      linkedFolder: {
+        path: 'C:\\Users\\thoma\\repos\\old-project',
+        scanHash: 'scan-old',
+        lastScannedAt: '2026-05-20T09:00:00.000Z',
+      },
+    });
+    const cloudProject = makeProject({
+      id: 'mismatched-project',
+      importantAssets: ['different.md'],
+      linkedFolder: {
+        scanHash: 'scan-new',
+        lastScannedAt: '2026-05-21T09:00:00.000Z',
+      },
+    });
+
+    const [rehydrated] = preserveLocalLinkedFolderStateForProjects([cloudProject], [localProject]);
+
+    expect(rehydrated.linkedFolder?.path).toBeUndefined();
+    expect(rehydrated.linkedFolder?.scanHash).toBe('scan-new');
   });
 
   it('keeps sanitized legacy project link fields but drops local legacy paths', () => {

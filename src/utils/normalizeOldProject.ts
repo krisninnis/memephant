@@ -172,16 +172,22 @@ function normalizeLinkedFolder(
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
 
   const folder = value as Record<string, unknown>;
+  const path =
+    typeof folder.path === 'string' && folder.path.trim().length > 0
+      ? folder.path
+      : undefined;
+  const scanHash = typeof folder.scanHash === 'string' ? folder.scanHash : undefined;
+  const lastScannedAt =
+    typeof folder.lastScannedAt === 'string' ? folder.lastScannedAt : undefined;
 
-  if (typeof folder.path !== 'string' || folder.path.trim().length === 0) {
+  if (!path && !scanHash && !lastScannedAt) {
     return undefined;
   }
 
   return {
-    path: folder.path,
-    scanHash: typeof folder.scanHash === 'string' ? folder.scanHash : undefined,
-    lastScannedAt:
-      typeof folder.lastScannedAt === 'string' ? folder.lastScannedAt : undefined,
+    path,
+    scanHash,
+    lastScannedAt,
   };
 }
 
