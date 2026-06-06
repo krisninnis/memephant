@@ -157,6 +157,39 @@ describe('game project support', () => {
     expect(passport.formats.codex).not.toContain('CODE_SNIPPET:');
   });
 
+  it('emits script run context in exports only when known', () => {
+    const project: ProjectMemory = {
+      ...gameProject,
+      gameContext: {
+        ...gameProject.gameContext,
+        scriptVault: [
+          { scriptName: 'Foo.server.lua', platformLanguage: 'Luau', runContext: 'Script', runContextBasis: 'filename' },
+          { scriptName: 'Bar.client.luau', platformLanguage: 'Luau', runContext: 'LocalScript', runContextBasis: 'filename' },
+          { scriptName: 'Baz.lua', platformLanguage: 'Luau', runContext: 'ModuleScript', runContextBasis: 'path' },
+          { scriptName: 'Mystery.lua', platformLanguage: 'Luau', runContext: 'Unknown', runContextBasis: 'none' },
+          { scriptName: 'Plain.lua', platformLanguage: 'Luau' },
+        ],
+      },
+    };
+
+    const passport = generateContextPassport(project);
+
+    expect(passport.formats.markdown).toContain('Run context: Script');
+    expect(passport.formats.markdown).toContain('Run context: LocalScript');
+    expect(passport.formats.markdown).toContain('Run context: ModuleScript');
+    expect(passport.formats.claude).toContain('<run_context>Script</run_context>');
+    expect(passport.formats.claude).toContain('<run_context>LocalScript</run_context>');
+    expect(passport.formats.claude).toContain('<run_context>ModuleScript</run_context>');
+    expect(passport.formats.codex).toContain('RUN_CONTEXT: Script');
+    expect(passport.formats.codex).toContain('RUN_CONTEXT: LocalScript');
+    expect(passport.formats.codex).toContain('RUN_CONTEXT: ModuleScript');
+
+    // Unknown / unclassified scripts never emit a run context.
+    expect(passport.formats.markdown).not.toContain('Run context: Unknown');
+    expect(passport.formats.claude).not.toContain('<run_context>Unknown</run_context>');
+    expect(passport.formats.codex).not.toContain('RUN_CONTEXT: Unknown');
+  });
+
   it('uses game-aware workflow guidance for game projects', () => {
     const output = formatForPlatform(gameProject, 'chatgpt', undefined, 'full');
 

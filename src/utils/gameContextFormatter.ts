@@ -83,6 +83,7 @@ export function formatGameContextMarkdown(project: ProjectMemory, clean: CleanTe
     scripts.forEach((script) => {
       lines.push(`- ${clean(script.scriptName.trim())}${script.purpose ? `: ${clean(script.purpose.trim())}` : ''}`);
       if (script.platformLanguage) lines.push(`  - Platform/language: ${clean(script.platformLanguage)}`);
+      if (script.runContext && script.runContext !== 'Unknown') lines.push(`  - Run context: ${script.runContext}`);
       if (script.relatedSystem) lines.push(`  - Related system: ${clean(script.relatedSystem)}`);
       if (script.status) lines.push(`  - Status: ${clean(script.status)}`);
       if (script.notes) lines.push(`  - Notes: ${clean(script.notes)}`);
@@ -164,6 +165,7 @@ export function formatGameContextXml(project: ProjectMemory, clean: CleanText): 
     scripts.forEach((script) => {
       lines.push('      <script>');
       lines.push(`        <name>${clean(script.scriptName)}</name>`);
+      if (script.runContext && script.runContext !== 'Unknown') lines.push(`        <run_context>${script.runContext}</run_context>`);
       if (script.platformLanguage) lines.push(`        <platform_language>${clean(script.platformLanguage)}</platform_language>`);
       if (script.purpose) lines.push(`        <purpose>${clean(script.purpose)}</purpose>`);
       if (script.relatedSystem) lines.push(`        <related_system>${clean(script.relatedSystem)}</related_system>`);
@@ -230,6 +232,7 @@ export function formatGameContextCodex(project: ProjectMemory, clean: CleanText)
     lines.push('  SCRIPT_VAULT:');
     scripts.forEach((script) => {
       lines.push(`    - ${clean(script.scriptName)}${script.purpose ? `: ${clean(script.purpose)}` : ''}`);
+      if (script.runContext && script.runContext !== 'Unknown') lines.push(`      RUN_CONTEXT: ${script.runContext}`);
       if (script.relatedSystem) lines.push(`      RELATED_SYSTEM: ${clean(script.relatedSystem)}`);
       if (script.status) lines.push(`      STATUS: ${clean(script.status)}`);
       if (script.notes) lines.push(`      NOTES: ${clean(script.notes)}`);
