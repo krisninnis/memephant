@@ -462,14 +462,8 @@ const QUICK_START_FALLBACK_TASKS = {
 
 type QuickStartProjectCategory = keyof typeof QUICK_START_FALLBACK_TASKS;
 
-const MEMEPHANT_QUICK_START_CURRENT_STATE =
-  'Memephant Desktop is live as a local-first cross-AI project handoff app. Recent work improved Memory Vault, Quick Start exports, export reliability, and fresh ChatGPT handoff compatibility.';
-
-const LAUNCHPAD_QUICK_START_CURRENT_STATE =
-  'LaunchPad CRM is at the early MVP design stage, focused on lead tracking, follow-up reminders, notes, and deal status.';
-
 const GENERIC_QUICK_START_CURRENT_STATE =
-  'The project is ready to continue from the available saved context.';
+  'The project does not yet have a reliable saved current state. Use the summary, goals, rules, and task below; ask before assuming missing details.';
 
 const QUICK_START_EXTRA_PLACEHOLDER_PATTERNS = [
   /add a brief description/i,
@@ -478,10 +472,6 @@ const QUICK_START_EXTRA_PLACEHOLDER_PATTERNS = [
   /only include genuinely/i,
   /not done, not future/i,
 ];
-
-function isLaunchPadProject(project: ProjectMemory): boolean {
-  return /launchpad\s+crm/i.test(project.name);
-}
 
 function isGenericSummary(value: string | undefined | null): boolean {
   const clean = value?.trim() ?? '';
@@ -568,14 +558,6 @@ function getQuickStartTask(project: ProjectMemory, task?: string): string {
 function getQuickStartCurrentState(project: ProjectMemory): string {
   if (!isQuickStartPlaceholder(project.currentState) && project.currentState.trim().length >= 12) {
     return project.currentState;
-  }
-
-  if (getQuickStartProjectCategory(project) === 'aiTooling') {
-    return MEMEPHANT_QUICK_START_CURRENT_STATE;
-  }
-
-  if (isLaunchPadProject(project)) {
-    return LAUNCHPAD_QUICK_START_CURRENT_STATE;
   }
 
   return GENERIC_QUICK_START_CURRENT_STATE;

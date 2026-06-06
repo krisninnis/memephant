@@ -579,7 +579,7 @@ describe('quick mode', () => {
   const launchPadCurrentState =
     'LaunchPad CRM is at the early MVP design stage, focused on lead tracking, follow-up reminders, notes, and deal status.';
   const genericCurrentState =
-    'The project is ready to continue from the available saved context.';
+    'The project does not yet have a reliable saved current state. Use the summary, goals, rules, and task below; ask before assuming missing details.';
 
   it('creates a compact fresh-chat handoff under the safe size threshold', () => {
     const project = makeProject({
@@ -656,33 +656,78 @@ describe('quick mode', () => {
     expect(output).not.toContain('What was built, fixed, or decided');
   });
 
-  it('uses the Memephant currentState fallback for Memephant projects', () => {
+  it('does not use the Memephant currentState fallback for projects mentioning Context Passport', () => {
     const output = formatForPlatform(
+      makeProject({
+        name: 'Context Passport Review Tool',
+        summary: 'A helper for reviewing exported project context before sharing it.',
+        currentState: placeholderCurrentState,
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(genericCurrentState);
+    expect(output).not.toContain(memephantCurrentState);
+  });
+
+  it('uses the neutral currentState fallback for LaunchPad CRM when no reliable currentState exists', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'LaunchPad CRM',
+        currentState: '',
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(genericCurrentState);
+    expect(output).not.toContain(launchPadCurrentState);
+  });
+
+  it('does not leak LaunchPad CRM currentState text into Roblox game Quick Start exports', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'Roblox NPC Quest',
+        summary: 'A Roblox game prototype with NPC quests, player rewards, and Luau systems.',
+        currentState: placeholderCurrentState,
+      }),
+      'chatgpt',
+      undefined,
+      'quick',
+    );
+
+    expect(output).toContain(genericCurrentState);
+    expect(output).not.toContain(launchPadCurrentState);
+  });
+
+  it('uses no hardcoded named-project currentState fallback in Quick Start output', () => {
+    const projects = [
       makeProject({
         name: 'memephant-desktop',
         summary: 'Local-first AI memory and handoff tooling for cross-AI continuity.',
         currentState: placeholderCurrentState,
       }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
-
-    expect(output).toContain(memephantCurrentState);
-  });
-
-  it('uses the LaunchPad CRM currentState fallback for LaunchPad CRM', () => {
-    const output = formatForPlatform(
       makeProject({
         name: 'LaunchPad CRM',
         currentState: placeholderCurrentState,
       }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
+      makeProject({
+        name: 'Roblox NPC Quest',
+        summary: 'A Roblox game prototype with NPC quests, player rewards, and Luau systems.',
+        currentState: placeholderCurrentState,
+      }),
+    ];
 
-    expect(output).toContain(launchPadCurrentState);
+    const outputs = projects.map((project) => formatForPlatform(project, 'chatgpt', undefined, 'quick'));
+
+    for (const output of outputs) {
+      expect(output).toContain(genericCurrentState);
+      expect(output).not.toContain(memephantCurrentState);
+      expect(output).not.toContain(launchPadCurrentState);
+    }
   });
 
   it('uses the CRM fallback task for LaunchPad CRM', () => {
