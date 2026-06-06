@@ -405,6 +405,30 @@ select {
   word-break: break-word;
 }
 
+.project-card__name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.project-card__workspace {
+  flex: 0 0 auto;
+  max-width: 92px;
+  overflow: hidden;
+  padding: 3px 7px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 999px;
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.08);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .project-card__summary {
   display: block;
   width: 100%;

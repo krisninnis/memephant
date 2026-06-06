@@ -69,6 +69,82 @@
   gap: 14px;
 }
 
+.launchpad-workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.launchpad-workspace-card {
+  display: flex;
+  gap: 14px;
+  min-height: 172px;
+  padding: 18px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.035);
+  color: #fff;
+  cursor: pointer;
+}
+
+.launchpad-workspace-card.is-selected {
+  border-color: rgba(244, 182, 103, 0.78);
+  background: rgba(217, 119, 6, 0.13);
+}
+
+.launchpad-workspace-card__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.launchpad-workspace-card__body {
+  display: grid;
+  gap: 7px;
+}
+
+.launchpad-workspace-card__body strong {
+  font-size: 1rem;
+}
+
+.launchpad-workspace-card__body small,
+.launchpad-workspace-card__tools {
+  color: rgba(248, 250, 252, 0.64);
+  line-height: 1.5;
+}
+
+.launchpad-workspace-card__tools {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.launchpad-workspace-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(244, 182, 103, 0.18);
+  border-radius: 16px;
+  background: rgba(244, 182, 103, 0.07);
+}
+
+.launchpad-workspace-summary span {
+  color: rgba(248, 250, 252, 0.64);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .launchpad-option {
   display: flex;
   gap: 14px;
@@ -250,6 +326,10 @@
 }
 
 @media (max-width: 720px) {
+  .launchpad-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
   .launchpad-template-grid {
     grid-template-columns: 1fr;
   }
@@ -275,6 +355,11 @@
 
   .launchpad-footer {
     flex-direction: column-reverse;
+  }
+
+  .launchpad-workspace-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .launchpad-primary,
@@ -329,4 +414,3 @@
   background: rgba(255,255,255,0.08);
   border-color: rgba(244, 182, 103, 0.28);
 }
-

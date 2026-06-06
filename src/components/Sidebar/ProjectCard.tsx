@@ -1,4 +1,5 @@
 import type { ProjectMemory } from '../../types/memphant-types';
+import { getWorkspaceTypeLabel, resolveProjectWorkspaceType } from '../../utils/workspaceTypes';
 
 interface ProjectCardProps {
   project: ProjectMemory;
@@ -22,10 +23,15 @@ export function ProjectCard({
   onSelect,
   onDelete,
 }: ProjectCardProps) {
+  const workspaceType = resolveProjectWorkspaceType(project);
+
   return (
     <div className={`project-card${isActive ? ' project-card--active' : ''}`}>
       <button type="button" className="project-card__body" onClick={onSelect}>
-        <span className="project-card__name">{project.name}</span>
+        <span className="project-card__name-row">
+          <span className="project-card__name">{project.name}</span>
+          <span className="project-card__workspace">{getWorkspaceTypeLabel(workspaceType)}</span>
+        </span>
         <span className="project-card__summary">{getSummaryText(project.summary)}</span>
       </button>
 
