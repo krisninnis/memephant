@@ -1258,7 +1258,7 @@ function debugCloudSave(meta: Record<string, unknown>): void {
   try {
     if (typeof window === 'undefined') return;
     if (window.localStorage.getItem('mph_debug_cloud_save') !== '1') return;
-    console.info('[cloud-save]', meta);
+    console.warn('[cloud-save]', meta);
   } catch {
     // Debug logging must never affect save behavior.
   }

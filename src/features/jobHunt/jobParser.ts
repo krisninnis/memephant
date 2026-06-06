@@ -66,14 +66,14 @@ function stripMetadata(text: string): string {
 function cleanNamePart(value: string): string {
   const firstSegment = value.split(/\s+[-–|]\s+/)[0] ?? value;
   return firstSegment
-    .replace(/^[|,;:\-\s]+|[|,;:\-\s]+$/g, '')
+    .replace(/^[|,;:\s-]+|[|,;:\s-]+$/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 function extractLocation(text: string): string | undefined {
   const match =
-    text.match(/\b(?:location|based in)\s*[:\-]\s*([^.;|]+)/i) ||
+    text.match(/\b(?:location|based in)\s*[:-]\s*([^.;|]+)/i) ||
     text.match(/\b(?:remote|hybrid|onsite|on-site)\s*(?:in|,)?\s*([A-Z][A-Za-z\s,]+)?/);
   const location = match?.[1]?.trim().replace(/\s+/g, ' ');
   return location || undefined;

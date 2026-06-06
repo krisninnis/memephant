@@ -279,15 +279,15 @@ describe('Personal Memory Vault foundation', () => {
 
   it('DEFAULT_FRONTAL_LOBE_PROFILE matches createDefaultPersonalMemoryVault profile', () => {
     const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
-    const { updatedAt: _u, ...profileWithoutDate } = vault.frontalLobeProfile!;
 
-    expect(profileWithoutDate).toEqual(DEFAULT_FRONTAL_LOBE_PROFILE);
+    expect(vault.frontalLobeProfile).toEqual(DEFAULT_FRONTAL_LOBE_PROFILE);
   });
 
   it('normalizePersonalMemoryVault hydrates frontalLobeProfile for vaults missing it', () => {
     const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
     // Simulate a vault saved before Task 8A (no frontalLobeProfile)
-    const { frontalLobeProfile: _removed, ...oldVault } = vault;
+    const oldVault = { ...vault };
+    delete oldVault.frontalLobeProfile;
     expect(isPersonalMemoryVault(oldVault)).toBe(true);
 
     const normalized = normalizePersonalMemoryVault(oldVault);
@@ -362,7 +362,8 @@ describe('Personal Memory Vault foundation', () => {
 
   it('frontalLobeProfile is not required for isPersonalMemoryVault to return true', () => {
     const vault = createDefaultPersonalMemoryVault('2026-05-12T12:00:00.000Z');
-    const { frontalLobeProfile: _removed, ...oldVault } = vault;
+    const oldVault = { ...vault };
+    delete oldVault.frontalLobeProfile;
 
     // Old vaults without frontalLobeProfile must still be valid
     expect(isPersonalMemoryVault(oldVault)).toBe(true);

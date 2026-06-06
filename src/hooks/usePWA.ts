@@ -130,7 +130,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       setUpdateAvailable(false);
       setUpdateMessage('A web update was found, but it is not ready to reload yet. You can keep working.');
     }
-  }, [updateAvailable]);
+  }, [setUpdateAvailable, updateAvailable]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || isTauri()) return;
@@ -155,7 +155,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [setUpdateAvailable]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -175,7 +175,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
 
     mediaQuery.addListener(syncInstalledState);
     return () => mediaQuery.removeListener(syncInstalledState);
-  }, []);
+  }, [setUpdateAvailable]);
 
   useEffect(() => {
     return () => {
@@ -184,7 +184,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
         updateIntervalRef.current = null;
       }
     };
-  }, []);
+  }, [setUpdateAvailable]);
 
   const install = useCallback(async () => {
     if (!deferredPromptRef.current || isTauri()) return;
@@ -227,7 +227,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsChecking(false);
     }
-  }, []);
+  }, [setUpdateAvailable]);
 
   const applyUpdate = useCallback(async () => {
     if (isTauri()) {

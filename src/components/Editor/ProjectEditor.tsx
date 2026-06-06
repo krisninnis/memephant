@@ -284,6 +284,14 @@ type FolderScanSummary = {
   suggestions: ScriptScanSuggestion[];
 };
 
+const EMPTY_FOLDER_SCAN_SUMMARY: FolderScanSummary = {
+  projectType: 'Unknown',
+  filesAnalysed: 0,
+  importantFiles: [],
+  scripts: [],
+  suggestions: [],
+};
+
 type PendingScriptDuplicateConfirmation = {
   existingName: string;
   onConfirm: () => void;
@@ -791,6 +799,21 @@ export function ProjectEditor() {
     [project],
   );
 
+  const activeGamePlatform = activeProject?.gamePlatform ?? 'roblox';
+  const activeGameContext = activeProject?.gameContext ?? createDefaultGameContext(activeGamePlatform);
+  const activeProjectCategory = activeProject?.projectCategory ?? 'general-software';
+  const folderScanSummary = useMemo(
+    () => activeProject
+      ? buildFolderScanSummary(
+          activeProject,
+          activeGamePlatform,
+          activeProjectCategory,
+          activeGameContext.scriptVault ?? [],
+        )
+      : EMPTY_FOLDER_SCAN_SUMMARY,
+    [activeProject, activeGamePlatform, activeProjectCategory, activeGameContext.scriptVault],
+  );
+
   if (!project) {
     return (
       <div className="project-editor project-editor--empty">
@@ -799,9 +822,6 @@ export function ProjectEditor() {
     );
   }
 
-  const activeGamePlatform = activeProject.gamePlatform ?? 'roblox';
-  const activeGameContext = activeProject.gameContext ?? createDefaultGameContext(activeGamePlatform);
-  const activeProjectCategory = activeProject.projectCategory ?? 'general-software';
   const activePlatformLinks = GAME_PLATFORM_LINKS[activeGamePlatform] ?? [];
   const folderActionLabel = getFolderActionLabel();
   const folderConnectionState = getLinkedFolderConnectionState(activeProject);
@@ -813,15 +833,6 @@ export function ProjectEditor() {
     : needsFolderReconnect
       ? 'Reconnect needed'
       : 'Not connected';
-  const folderScanSummary = useMemo(
-    () => buildFolderScanSummary(
-      activeProject,
-      activeGamePlatform,
-      activeProjectCategory,
-      activeGameContext.scriptVault ?? [],
-    ),
-    [activeProject, activeGamePlatform, activeProjectCategory, activeGameContext.scriptVault],
-  );
   const scriptVaultEntries = activeGameContext.scriptVault ?? [];
   const safeSelectedScriptIndex =
     scriptVaultEntries.length === 0

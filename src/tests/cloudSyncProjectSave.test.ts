@@ -50,7 +50,7 @@ describe('cloud project save auth path', () => {
 
   it('keeps cloud save debug logging gated and content-free', () => {
     expect(tauriActionsSource).toContain("window.localStorage.getItem('mph_debug_cloud_save') !== '1'");
-    expect(tauriActionsSource).toContain("console.info('[cloud-save]', meta)");
+    expect(tauriActionsSource).toContain("console.warn('[cloud-save]', meta)");
     expect(tauriActionsSource).not.toContain('debugCloudSave({ project');
     expect(tauriActionsSource).not.toContain('debugCloudSave({ data');
   });

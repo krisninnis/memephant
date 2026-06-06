@@ -1,5 +1,3 @@
-/* eslint-env jest, node */
-
 import { readFileSync } from "fs";
 import { join } from "path";
 

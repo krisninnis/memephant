@@ -23,6 +23,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2021,
+        ...globals.node,
       },
     },
     plugins: {
@@ -48,7 +49,11 @@ export default [
   },
 
   {
-    files: ['src/tests/**/*.{ts,tsx}', 'src/**/__mocks__/**/*.{ts,tsx}'],
+    files: [
+      'src/tests/**/*.{ts,tsx}',
+      'src/**/__tests__/**/*.{ts,tsx}',
+      'src/**/__mocks__/**/*.{ts,tsx}',
+    ],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -59,6 +64,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.es2021,
+        ...globals.node,
         ...globals.jest,
       },
     },
