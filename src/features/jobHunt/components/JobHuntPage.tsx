@@ -46,6 +46,8 @@ export function JobHuntPage() {
               selectedJobId={selectedJob?.id ?? null}
               onSelect={selectJob}
               onStatusChange={updateJobStatus}
+              onRemoteTypeChange={(id, remoteType) => updateJob(id, { remoteType })}
+              onFitScoreChange={(id, fitScore) => updateJob(id, { fitScore })}
               onNotesChange={(id, notes) => updateJob(id, { notes })}
               onDelete={deleteJob}
             />

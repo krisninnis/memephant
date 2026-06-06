@@ -7,6 +7,7 @@ const DEFAULT_PROFILE: JobHuntProfile = {
   targetRoles: [],
   targetLocations: [],
   preferredRemoteType: 'any',
+  experienceLevel: '',
   cvSummary: '',
   keySkills: [],
   projects: [],

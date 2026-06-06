@@ -5,11 +5,12 @@ export type JobApplicationStatus =
   | 'follow_up'
   | 'interview'
   | 'rejected'
-  | 'offer';
+  | 'offer'
+  | (string & {});
 
-export type JobRemoteType = 'remote' | 'hybrid' | 'onsite' | 'unknown';
+export type JobRemoteType = 'remote' | 'hybrid' | 'onsite' | 'remote_uk_only' | 'unknown' | (string & {});
 
-export type JobFitScore = 'high' | 'medium' | 'low' | 'unknown';
+export type JobFitScore = 'high' | 'medium' | 'low' | 'stretch' | 'not_suitable' | 'unknown' | (string & {});
 
 export type JobItem = {
   id: string;
@@ -31,7 +32,8 @@ export type JobItem = {
 export type JobHuntProfile = {
   targetRoles: string[];
   targetLocations: string[];
-  preferredRemoteType?: 'remote' | 'hybrid' | 'onsite' | 'any';
+  preferredRemoteType?: 'remote' | 'hybrid' | 'onsite' | 'remote_uk_only' | 'any' | (string & {});
+  experienceLevel?: string;
   cvSummary?: string;
   keySkills: string[];
   projects: string[];

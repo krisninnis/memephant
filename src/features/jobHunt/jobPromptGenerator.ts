@@ -76,6 +76,8 @@ export function generateJobPrompt(
     '',
     field('Preferred remote type', profile.preferredRemoteType),
     '',
+    field('Experience level', profile.experienceLevel),
+    '',
     field('CV summary', profile.cvSummary),
     '',
     'Key skills:',

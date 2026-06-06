@@ -49,6 +49,7 @@ export function JobPromptPanel({ profile, job }: Props) {
             type="button"
             className={`job-hunt-prompt-tabs__button${promptType === type ? ' job-hunt-prompt-tabs__button--active' : ''}`}
             onClick={() => setPromptType(type)}
+            disabled={!job}
           >
             {getJobPromptLabel(type)}
           </button>
@@ -57,7 +58,7 @@ export function JobPromptPanel({ profile, job }: Props) {
 
       <textarea
         className="field-textarea job-hunt-prompt-preview"
-        value={prompt || 'Select a job to generate prompts.'}
+        value={prompt || 'Import or select a job first to generate prompts.'}
         readOnly
       />
 

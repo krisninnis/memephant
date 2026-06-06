@@ -7,10 +7,20 @@ type Props = {
 
 export function PasteJobsPanel({ onImport, lastImportCount }: Props) {
   const [pastedText, setPastedText] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   const handleImport = () => {
+    if (!pastedText.trim()) {
+      setFeedback('Paste a job list first.');
+      return;
+    }
     const count = onImport(pastedText);
-    if (count > 0) setPastedText('');
+    if (count > 0) {
+      setPastedText('');
+      setFeedback(`${count} ${count === 1 ? 'job' : 'jobs'} added.`);
+      return;
+    }
+    setFeedback('No jobs were detected. Try pasting a numbered or bulleted list.');
   };
 
   return (
@@ -34,13 +44,12 @@ export function PasteJobsPanel({ onImport, lastImportCount }: Props) {
           type="button"
           className="github-scan-btn"
           onClick={handleImport}
-          disabled={!pastedText.trim()}
         >
           Import jobs
         </button>
-        {lastImportCount > 0 && (
+        {(feedback || lastImportCount > 0) && (
           <span className="job-hunt-import-count">
-            {lastImportCount} {lastImportCount === 1 ? 'job' : 'jobs'} added
+            {feedback || `${lastImportCount} ${lastImportCount === 1 ? 'job' : 'jobs'} added`}
           </span>
         )}
       </div>

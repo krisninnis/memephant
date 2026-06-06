@@ -1,5 +1,56 @@
 import type { JobHuntProfile } from '../types';
 
+const OTHER_VALUE = '__other__';
+
+const TARGET_ROLE_PRESETS = [
+  'Frontend Developer',
+  'Junior Developer',
+  'Web Developer',
+  'Software Engineer',
+  'AI Engineer',
+  'Data Analyst',
+  'IT Support',
+  'Automation Specialist',
+  'Low-code Developer',
+  'Game Developer',
+  'Roblox Developer',
+];
+
+const EXPERIENCE_LEVEL_PRESETS = [
+  'Entry level',
+  'Junior',
+  'Graduate',
+  'Mid-level',
+  'Career switcher',
+  'Self-taught / portfolio-based',
+];
+
+const PREFERRED_REMOTE_PRESETS = [
+  { value: 'any', label: 'Any' },
+  { value: 'remote', label: 'Fully remote' },
+  { value: 'hybrid', label: 'Hybrid' },
+  { value: 'onsite', label: 'On-site' },
+  { value: 'remote_uk_only', label: 'Remote UK only' },
+];
+
+const KEY_SKILL_PRESETS = [
+  'TypeScript',
+  'React',
+  'JavaScript',
+  'HTML',
+  'CSS',
+  'Python',
+  'SQL',
+  'WordPress',
+  'Accessibility',
+  'GitHub',
+  'AWS',
+  'Supabase',
+  'Tauri',
+  'Roblox',
+  'Luau',
+];
+
 type Props = {
   profile: JobHuntProfile;
   onChange: (profile: JobHuntProfile) => void;
@@ -16,7 +67,71 @@ function joinLines(items: string[]): string {
   return items.join('\n');
 }
 
+function selectedPresetValue(value: string | undefined, presets: Array<string | { value: string; label: string }>): string {
+  const raw = value?.trim() ?? '';
+  if (!raw) return '';
+  return presets.some((preset) => (typeof preset === 'string' ? preset : preset.value) === raw) ? raw : OTHER_VALUE;
+}
+
+function GuidedSelect({
+  label,
+  value,
+  presets,
+  placeholder = 'Choose a preset...',
+  customPlaceholder = 'Type a custom value',
+  onChange,
+}: {
+  label: string;
+  value: string | undefined;
+  presets: Array<string | { value: string; label: string }>;
+  placeholder?: string;
+  customPlaceholder?: string;
+  onChange: (value: string) => void;
+}) {
+  const selectValue = selectedPresetValue(value, presets);
+
+  return (
+    <div className="job-hunt-guided-field">
+      <label>
+        {label}
+        <select
+          className="field-input"
+          value={selectValue}
+          onChange={(event) => {
+            const next = event.target.value;
+            onChange(next === OTHER_VALUE ? '' : next);
+          }}
+        >
+          <option value="">{placeholder}</option>
+          {presets.map((preset) => {
+            const option = typeof preset === 'string' ? { value: preset, label: preset } : preset;
+            return <option key={option.value} value={option.value}>{option.label}</option>;
+          })}
+          <option value={OTHER_VALUE}>Other</option>
+        </select>
+      </label>
+
+      {selectValue === OTHER_VALUE && (
+        <label>
+          Custom {label}
+          <input
+            className="field-input"
+            value={value ?? ''}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={customPlaceholder}
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
 export function JobHuntProfilePanel({ profile, onChange }: Props) {
+  const addSkill = (skill: string) => {
+    if (profile.keySkills.some((item) => item.toLowerCase() === skill.toLowerCase())) return;
+    onChange({ ...profile, keySkills: [...profile.keySkills, skill] });
+  };
+
   return (
     <section className="job-hunt-card" aria-label="Job Hunt Profile">
       <div className="job-hunt-card__header">
@@ -27,15 +142,27 @@ export function JobHuntProfilePanel({ profile, onChange }: Props) {
       </div>
 
       <div className="job-hunt-form-grid">
-        <label>
-          Target roles
-          <textarea
-            className="field-textarea"
-            value={joinLines(profile.targetRoles)}
-            onChange={(event) => onChange({ ...profile, targetRoles: splitLines(event.target.value) })}
-            placeholder="Frontend developer&#10;React engineer"
+        <div className="job-hunt-guided-field">
+          <GuidedSelect
+            label="Target role"
+            value={profile.targetRoles[0] ?? ''}
+            presets={TARGET_ROLE_PRESETS}
+            onChange={(value) => onChange({ ...profile, targetRoles: value ? [value, ...profile.targetRoles.slice(1)] : profile.targetRoles.slice(1) })}
+            customPlaceholder="Example: Creative technologist"
           />
-        </label>
+          <label>
+            Additional target roles
+            <textarea
+              className="field-textarea"
+              value={joinLines(profile.targetRoles.slice(1))}
+              onChange={(event) => {
+                const first = profile.targetRoles[0] ? [profile.targetRoles[0]] : [];
+                onChange({ ...profile, targetRoles: [...first, ...splitLines(event.target.value)] });
+              }}
+              placeholder="Optional extra roles"
+            />
+          </label>
+        </div>
 
         <label>
           Target locations
@@ -47,19 +174,21 @@ export function JobHuntProfilePanel({ profile, onChange }: Props) {
           />
         </label>
 
-        <label>
-          Preferred remote type
-          <select
-            className="field-input"
-            value={profile.preferredRemoteType ?? 'any'}
-            onChange={(event) => onChange({ ...profile, preferredRemoteType: event.target.value as JobHuntProfile['preferredRemoteType'] })}
-          >
-            <option value="any">Any</option>
-            <option value="remote">Remote</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="onsite">Onsite</option>
-          </select>
-        </label>
+        <GuidedSelect
+          label="Experience level"
+          value={profile.experienceLevel ?? ''}
+          presets={EXPERIENCE_LEVEL_PRESETS}
+          onChange={(value) => onChange({ ...profile, experienceLevel: value })}
+          customPlaceholder="Example: Returning to tech after a break"
+        />
+
+        <GuidedSelect
+          label="Preferred remote type"
+          value={profile.preferredRemoteType ?? 'any'}
+          presets={PREFERRED_REMOTE_PRESETS}
+          onChange={(value) => onChange({ ...profile, preferredRemoteType: value as JobHuntProfile['preferredRemoteType'] })}
+          customPlaceholder="Example: Mostly remote, 1 day/month onsite"
+        />
 
         <label>
           CV summary
@@ -71,15 +200,31 @@ export function JobHuntProfilePanel({ profile, onChange }: Props) {
           />
         </label>
 
-        <label>
-          Key skills
+        <div className="job-hunt-guided-field">
+          <span className="job-hunt-field-label">Key skills</span>
+          <div className="job-hunt-skill-chips" aria-label="Quick-add key skills">
+            {KEY_SKILL_PRESETS.map((skill) => (
+              <button
+                key={skill}
+                type="button"
+                className="job-hunt-skill-chip"
+                onClick={() => addSkill(skill)}
+                disabled={profile.keySkills.some((item) => item.toLowerCase() === skill.toLowerCase())}
+              >
+                {skill}
+              </button>
+            ))}
+          </div>
+          <label>
+            Key skills
           <textarea
             className="field-textarea"
             value={joinLines(profile.keySkills)}
             onChange={(event) => onChange({ ...profile, keySkills: splitLines(event.target.value) })}
             placeholder="TypeScript&#10;React&#10;Accessibility"
           />
-        </label>
+          </label>
+        </div>
 
         <label>
           Projects
