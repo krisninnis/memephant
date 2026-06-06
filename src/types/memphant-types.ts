@@ -1,3 +1,5 @@
+import type { RobloxRunContext } from '../utils/robloxScriptClassifier';
+
 export type BuiltInPlatformId =
   | 'chatgpt'
   | 'claude'
@@ -216,6 +218,10 @@ export interface ScriptVaultEntry {
   notes?: string;
   codeSnippet?: string;
   includeInContextPassport?: boolean;
+  /** Derived Roblox run context (LocalScript | Script | ModuleScript | Unknown). Optional. */
+  runContext?: RobloxRunContext;
+  /** How runContext was derived. Optional. */
+  runContextBasis?: 'filename' | 'path' | 'none';
 }
 
 export interface GameProjectContext {
