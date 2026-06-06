@@ -453,9 +453,6 @@ function compactList(
   return cleanItems.map((item) => `${indent}- ${truncateText(item, 180)}`).join('\n');
 }
 
-const LAUNCHPAD_QUICK_START_SUMMARY =
-  'LaunchPad CRM is a simple CRM for freelancers, solo founders, and small service businesses to track leads, follow-ups, customer notes, and deal status without needing a heavy CRM like Salesforce or HubSpot.';
-
 const QUICK_START_FALLBACK_TASKS = {
   aiTooling: 'Help me continue improving onboarding, export flow, and cross-AI continuity.',
   crm: 'Help me design the follow-up reminder flow for this CRM.',
@@ -553,11 +550,11 @@ function getQuickStartProjectCategory(project: ProjectMemory): QuickStartProject
 }
 
 function getQuickStartSummary(project: ProjectMemory): string {
-  if (isLaunchPadProject(project) || isGenericSummary(project.summary)) {
-    return LAUNCHPAD_QUICK_START_SUMMARY;
+  if (isGenericSummary(project.summary)) {
+    return `${project.name.trim()} — summary not yet written.`;
   }
 
-  return project.summary;
+  return project.summary.trim();
 }
 
 function getQuickStartTask(project: ProjectMemory, task?: string): string {

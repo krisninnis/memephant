@@ -604,19 +604,39 @@ describe('quick mode', () => {
     expect(output).not.toContain('RECENT ACTIVITY SHOULD NOT APPEAR');
   });
 
-  it('replaces generic placeholder summaries in Quick Start Export', () => {
+  it('replaces generic placeholder summaries with a neutral project-specific line in Quick Start Export', () => {
     const output = formatForPlatform(
       makeProject({
-        name: 'LaunchPad CRM',
-        summary: "LaunchPad CRM is a project. Add a brief description of what it does and who it's for.",
+        name: 'Notebook Cleaner',
+        summary: "Notebook Cleaner is a project. Add a brief description of what it does and who it's for.",
       }),
       'chatgpt',
       'Design the next screen.',
       'quick',
     );
 
-    expect(output).toContain(launchPadFallbackSummary);
+    expect(output).toContain('Notebook Cleaner \u2014 summary not yet written.');
     expect(output).not.toContain('Add a brief description');
+    // Must never describe this project using another project's sample text.
+    expect(output).not.toContain('LaunchPad CRM');
+    expect(output).not.toContain(launchPadFallbackSummary);
+  });
+
+  it('never leaks the LaunchPad sample summary into an unrelated project (Roblox practice)', () => {
+    const output = formatForPlatform(
+      makeProject({
+        name: 'Roblox practice',
+        summary: '(no summary yet)',
+      }),
+      'chatgpt',
+      'Continue building the next feature.',
+      'quick',
+    );
+
+    const summarySection = output.split('## Project Summary')[1]?.split('## Current State')[0] ?? '';
+    expect(summarySection).toContain('Roblox practice \u2014 summary not yet written.');
+    expect(summarySection).not.toContain('LaunchPad');
+    expect(summarySection).not.toContain('CRM');
   });
 
   it('removes placeholder currentState from Quick Start Export', () => {
