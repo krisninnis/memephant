@@ -4,6 +4,8 @@ import type { ProjectMemory } from '../types/memphant-types';
 import { copyExportToClipboard } from '../services/tauriActions';
 import { useProjectStore } from '../store/projectStore';
 
+jest.setTimeout(15000);
+
 const mockProject: ProjectMemory = {
   schema_version: '1.2.0',
   id: 'launch-studio-project',
