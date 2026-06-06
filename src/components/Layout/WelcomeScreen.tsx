@@ -15,13 +15,14 @@ import {
   importProjectFromFile,
   saveToDisk,
 } from '../../services/tauriActions';
-import type { ProjectMemory } from '../../types/memphant-types';
+import type { ProjectMemory, ProjectWorkspaceType } from '../../types/memphant-types';
 import { PROJECT_TEMPLATES } from '../../utils/projectTemplates';
 import type { ProjectTemplate } from '../../utils/projectTemplates';
 import { DEMO_PROJECT_ID, createDemoProject } from '../../utils/demoProject';
 import LaunchpadWizard from '../Launchpad/LaunchpadWizard';
 import BlueprintWizard from '../Blueprint/BlueprintWizard';
 import { track } from '../../lib/analytics';
+import { getWorkspaceDefaults } from '../../utils/workspaceTypes';
 import './WelcomeScreen.css';
 
 type Mode = 'landing' | 'wizard' | 'templates';
@@ -45,7 +46,12 @@ const STEP_PLACEHOLDERS: Record<Step, string> = {
   3: 'e.g. Design the onboarding flow. Fix the login bug. Write the executive summary.',
 };
 
-function buildFirstProject(name: string, summary: string, firstStep: string): ProjectMemory {
+function buildFirstProject(
+  name: string,
+  summary: string,
+  firstStep: string,
+  workspaceType: ProjectWorkspaceType = 'ai',
+): ProjectMemory {
   const now = new Date().toISOString();
   const id = `${name.trim().replace(/\s+/g, '_').toLowerCase()}_${Date.now()}`;
 
@@ -53,6 +59,7 @@ function buildFirstProject(name: string, summary: string, firstStep: string): Pr
     schema_version: 1,
     id,
     name: name.trim(),
+    ...getWorkspaceDefaults(workspaceType),
     summary: summary.trim(),
     goals: [],
     rules: [],
@@ -90,6 +97,7 @@ export function WelcomeScreen() {
   const [templateName, setTemplateName] = useState('');
   const [showLaunchpad, setShowLaunchpad] = useState(false);
   const [showBlueprint, setShowBlueprint] = useState(false);
+  const [selectedWorkspaceType, setSelectedWorkspaceType] = useState<ProjectWorkspaceType>('ai');
 
   const addProject = useProjectStore((s) => s.addProject);
   const projects = useProjectStore((s) => s.projects);
@@ -127,6 +135,7 @@ export function WelcomeScreen() {
     setName('');
     setSummary('');
     setFirstStep('');
+    setSelectedWorkspaceType('ai');
   };
 
   const handleCreate = async () => {
@@ -134,7 +143,7 @@ export function WelcomeScreen() {
     setCreating(true);
 
     try {
-      const project = buildFirstProject(name, summary, firstStep);
+      const project = buildFirstProject(name, summary, firstStep, selectedWorkspaceType);
       await saveToDisk(project);
       addProject(project);
       setActiveProject(project.id);
@@ -204,17 +213,22 @@ export function WelcomeScreen() {
   const launchpadModal = showLaunchpad ? (
     <LaunchpadWizard
       onClose={() => setShowLaunchpad(false)}
-      onScanExisting={() => {
+      onScanExisting={(workspaceType) => {
         setShowLaunchpad(false);
-        void createProjectFromFolder();
+        void createProjectFromFolder(workspaceType);
       }}
-      onCreateBlankMemory={() => {
+      onCreateBlankMemory={(workspaceType) => {
         setShowLaunchpad(false);
+        setSelectedWorkspaceType(workspaceType);
         setMode('wizard');
         setStep(1);
         setName('');
         setSummary('');
         setFirstStep('');
+      }}
+      onOpenJobHunt={() => {
+        setShowLaunchpad(false);
+        setCurrentView('job-hunt');
       }}
     />
   ) : null;

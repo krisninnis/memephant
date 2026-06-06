@@ -18,10 +18,12 @@ import {
 } from "../../services/tauriActions";
 import { PROJECT_TEMPLATES } from "../../utils/projectTemplates";
 import type { ProjectTemplate } from "../../utils/projectTemplates";
+import type { ProjectWorkspaceType } from "../../types/memphant-types";
 import {
   ensureValidPlatformId,
   getPlatformConfig,
 } from "../../utils/platformRegistry";
+import { resolveProjectWorkspaceType } from "../../utils/workspaceTypes";
 import ProjectCard from "./ProjectCard";
 import ConfirmDialog from "../Shared/ConfirmDialog";
 import LaunchpadWizard from "../Launchpad/LaunchpadWizard";
@@ -67,6 +69,8 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const [createMode, setCreateMode] = useState<CreateMode>("none");
   const [showLaunchpad, setShowLaunchpad] = useState(false);
   const [showBlueprint, setShowBlueprint] = useState(false);
+  const [pendingWorkspaceType, setPendingWorkspaceType] =
+    useState<ProjectWorkspaceType>("ai");
   const [newName, setNewName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -155,11 +159,12 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
     setNewName("");
     setTemplateName("");
     setSelectedTemplate(null);
+    setPendingWorkspaceType("ai");
   };
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
-    await createProject(newName);
+    await createProject(newName, pendingWorkspaceType);
     resetCreate();
     onNavigate?.();
   };
@@ -216,6 +221,10 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
   const pendingDeleteProject = pendingDeleteId
     ? projects.find((p) => p.id === pendingDeleteId)
     : null;
+
+  const activeProject = projects.find((project) => project.id === activeProjectId);
+  const activeWorkspaceType = resolveProjectWorkspaceType(activeProject);
+  const showJobHuntNav = currentView === "job-hunt" || activeWorkspaceType === "jobHunt";
 
   const planLabel = "Free during early access";
 
@@ -367,18 +376,20 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           🚀 Launch Studio
         </button>
 
-        <button
-          type="button"
-          className={`sidebar-secondary-nav-btn${currentView === "job-hunt" ? " sidebar-secondary-nav-btn--active" : ""}`}
-          aria-current={currentView === "job-hunt" ? "page" : undefined}
-          onClick={() => {
-            setCurrentView("job-hunt");
-            onNavigate?.();
-          }}
-          title="Open Job Hunt Passport"
-        >
-          Job Hunt Passport
-        </button>
+        {showJobHuntNav && (
+          <button
+            type="button"
+            className={`sidebar-secondary-nav-btn${currentView === "job-hunt" ? " sidebar-secondary-nav-btn--active" : ""}`}
+            aria-current={currentView === "job-hunt" ? "page" : undefined}
+            onClick={() => {
+              setCurrentView("job-hunt");
+              onNavigate?.();
+            }}
+            title="Open Job Hunt Passport"
+          >
+            Job Hunt Passport
+          </button>
+        )}
       </div>
 
       <div className="sidebar-actions">
@@ -398,7 +409,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
             <button
               type="button"
               className="sidebar-action-btn"
-              onClick={() => void createProjectFromFolder()}
+              onClick={() => void createProjectFromFolder("software")}
               title="Connect an existing project folder from your device"
             >
               📁 {folderActionLabel}
@@ -757,15 +768,21 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       {showLaunchpad && (
         <LaunchpadWizard
           onClose={() => setShowLaunchpad(false)}
-          onScanExisting={() => {
+          onScanExisting={(workspaceType) => {
             setShowLaunchpad(false);
-            void createProjectFromFolder();
+            void createProjectFromFolder(workspaceType);
             onNavigate?.();
           }}
-          onCreateBlankMemory={() => {
+          onCreateBlankMemory={(workspaceType) => {
             setShowLaunchpad(false);
+            setPendingWorkspaceType(workspaceType);
             setCreateMode("name");
             setTimeout(() => nameInputRef.current?.focus(), 50);
+          }}
+          onOpenJobHunt={() => {
+            setShowLaunchpad(false);
+            setCurrentView("job-hunt");
+            onNavigate?.();
           }}
         />
       )}

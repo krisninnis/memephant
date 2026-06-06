@@ -21,6 +21,7 @@ export type Platform = string;
 export type ExportMode = 'quick' | 'full' | 'delta' | 'specialist' | 'smart';
 export type PlatformCategory = 'chat' | 'dev' | 'local' | 'custom';
 export type AIWorkflowMode = 'build' | 'debug' | 'launch' | 'research' | 'investor';
+export type ProjectWorkspaceType = 'ai' | 'software' | 'game' | 'jobHunt';
 export type ProjectCategory =
   | 'general-software'
   | 'website'
@@ -330,6 +331,8 @@ export interface ProjectCheckpointSnapshot {
   lastAiSession?: LastAiSession;
   /** Lightweight context preset for how the next AI should think about the project. */
   workflowMode?: AIWorkflowMode;
+  /** High-level workspace used to keep the UI focused without changing exports. */
+  workspaceType?: ProjectWorkspaceType;
   /** Broad project classification used to unlock context-specific fields. */
   projectCategory?: ProjectCategory;
   /** Free-text label when the project category is Other. */
@@ -551,6 +554,7 @@ export function cloneCheckpointSnapshot(project: ProjectCheckpointSnapshot): Pro
       : undefined,
     lastAiSession: project.lastAiSession ? { ...project.lastAiSession } : undefined,
     workflowMode: project.workflowMode,
+    workspaceType: project.workspaceType,
     projectCategory: project.projectCategory,
     projectCategoryOther: project.projectCategoryOther,
     gamePlatform: project.gamePlatform,
@@ -576,6 +580,7 @@ export function hashProjectState(project: ProjectCheckpointSnapshot): string {
     project.projectReason ?? '',
     project.recentProgressNote ?? '',
     project.projectBlueprint ? JSON.stringify(project.projectBlueprint) : '',
+    project.workspaceType ?? '',
     project.projectCategory ?? '',
     project.projectCategoryOther ?? '',
     project.gamePlatform ?? '',

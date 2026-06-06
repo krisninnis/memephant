@@ -11,6 +11,7 @@ import type {
   ChangelogEntry,
   PlatformState,
   ProjectMemory,
+  ProjectWorkspaceType,
   Platform,
   ProjectCheckpoint,
   ProjectRestorePoint,
@@ -22,6 +23,17 @@ import { dequeue } from './syncQueue';
 import { suggestEmptyFields } from '../utils/autoSuggest';
 import type { ProjectTemplate } from '../utils/projectTemplates';
 import { track } from '../lib/analytics';
+import {
+  createDefaultGameContext,
+  isGamePlatform,
+  isProjectCategory,
+} from '../utils/gameProjectTypes';
+import { isAIWorkflowMode } from '../utils/workflowModes';
+import {
+  getWorkspaceDefaults,
+  isProjectWorkspaceType,
+  resolveProjectWorkspaceType,
+} from '../utils/workspaceTypes';
 
 // ————————————————————————————————————————————————————————————————————————————
 // Free tier limit
@@ -695,6 +707,9 @@ type LegacyProject = Record<string, unknown> & {
   importantAssets?: unknown;
   projectCharter?: string;
   aiInstructions?: string | { focus?: string };
+  githubRepo?: string;
+  detectedStack?: unknown;
+  scanInfo?: unknown;
   linkedFolder?: LegacyLinkedFolder;
   changelog?: unknown;
   checkpoints?: unknown;
@@ -703,6 +718,13 @@ type LegacyProject = Record<string, unknown> & {
   projectReason?: string;
   recentProgressNote?: string;
   projectBlueprint?: unknown;
+  workflowMode?: unknown;
+  workspaceType?: unknown;
+  projectCategory?: unknown;
+  projectCategoryOther?: unknown;
+  gamePlatform?: unknown;
+  gamePlatformOther?: unknown;
+  gameContext?: unknown;
 };
 
 function normalizeProjectBlueprint(value: unknown): ProjectMemory['projectBlueprint'] {
@@ -732,6 +754,32 @@ function normalizeLinkedFolder(value: LegacyLinkedFolder | undefined): ProjectMe
 
 export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory {
   const legacy = raw as LegacyProject;
+  const linkedFolder = normalizeLinkedFolder(legacy.linkedFolder);
+  const projectCategory = isProjectCategory(legacy.projectCategory) ? legacy.projectCategory : undefined;
+  const gamePlatform = isGamePlatform(legacy.gamePlatform) ? legacy.gamePlatform : undefined;
+  const gameContext =
+    legacy.gameContext && typeof legacy.gameContext === 'object' && !Array.isArray(legacy.gameContext)
+      ? (legacy.gameContext as ProjectMemory['gameContext'])
+      : undefined;
+  const detectedStack = Array.isArray(legacy.detectedStack)
+    ? legacy.detectedStack.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    : undefined;
+  const workspaceType = isProjectWorkspaceType(legacy.workspaceType)
+    ? legacy.workspaceType
+    : resolveProjectWorkspaceType({
+        projectCategory,
+        gamePlatform,
+        gameContext,
+        linkedFolder,
+        githubRepo: typeof legacy.githubRepo === 'string' ? legacy.githubRepo : undefined,
+        scanInfo: legacy.scanInfo && typeof legacy.scanInfo === 'object'
+          ? legacy.scanInfo as ProjectMemory['scanInfo']
+          : undefined,
+        detectedStack,
+        importantAssets: Array.isArray(raw.importantAssets)
+          ? raw.importantAssets.filter((item): item is string => typeof item === 'string')
+          : [],
+      });
   const normalizedChangelog = Array.isArray(raw.changelog)
     ? raw.changelog.map((entry): ChangelogEntry => {
         const candidate = (entry && typeof entry === 'object' ? entry : {}) as Record<string, unknown>;
@@ -806,7 +854,9 @@ export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory
             typeof legacy.aiInstructions.focus === 'string'
           ? legacy.aiInstructions.focus
           : '',
-    linkedFolder: normalizeLinkedFolder(legacy.linkedFolder),
+    githubRepo: typeof legacy.githubRepo === 'string' ? legacy.githubRepo : undefined,
+    detectedStack,
+    linkedFolder,
     lastGitSync:
       raw.lastGitSync &&
       typeof raw.lastGitSync === 'object' &&
@@ -935,6 +985,20 @@ export function normalizeOldProject(raw: Record<string, unknown>): ProjectMemory
         ? raw.recentProgressNote
         : undefined,
     projectBlueprint: normalizeProjectBlueprint(raw.projectBlueprint),
+    workflowMode: isAIWorkflowMode(legacy.workflowMode) ? legacy.workflowMode : undefined,
+    workspaceType,
+    projectCategory,
+    projectCategoryOther:
+      typeof legacy.projectCategoryOther === 'string' && legacy.projectCategoryOther.trim()
+        ? legacy.projectCategoryOther
+        : undefined,
+    gamePlatform,
+    gamePlatformOther:
+      typeof legacy.gamePlatformOther === 'string' && legacy.gamePlatformOther.trim()
+        ? legacy.gamePlatformOther
+        : undefined,
+    gameContext:
+      gameContext ?? (workspaceType === 'game' ? createDefaultGameContext(gamePlatform ?? 'roblox') : undefined),
   };
 }
 
@@ -956,6 +1020,13 @@ export function toOldFormat(project: ProjectMemory): Record<string, unknown> {
     projectReason: project.projectReason ?? '',
     recentProgressNote: project.recentProgressNote ?? '',
     projectBlueprint: project.projectBlueprint,
+    workflowMode: project.workflowMode,
+    workspaceType: project.workspaceType,
+    projectCategory: project.projectCategory,
+    projectCategoryOther: project.projectCategoryOther,
+    gamePlatform: project.gamePlatform,
+    gamePlatformOther: project.gamePlatformOther,
+    gameContext: project.gameContext,
     nextSteps: project.nextSteps,
     openQuestions: project.openQuestions,
     importantAssets: project.importantAssets,
@@ -1451,7 +1522,10 @@ function checkFreeTierLimit(): boolean {
   return false;
 }
 
-export async function createProject(name: string): Promise<void> {
+export async function createProject(
+  name: string,
+  workspaceType: ProjectWorkspaceType = 'ai',
+): Promise<void> {
   if (!name.trim()) {
     store().showToast('Please enter a project name.');
     return;
@@ -1467,6 +1541,7 @@ export async function createProject(name: string): Promise<void> {
     id,
     name: name.trim(),
     updatedAt: now,
+    ...getWorkspaceDefaults(workspaceType),
     summary: '',
     goals: [],
     rules: [],
@@ -1547,7 +1622,9 @@ export async function createProjectFromTemplate(
   }
 }
 
-export async function createProjectFromFolder(): Promise<void> {
+export async function createProjectFromFolder(
+  workspaceType: ProjectWorkspaceType = 'software',
+): Promise<void> {
   if (!canScanFolders()) {
     store().showToast(getUnavailableFeatureMessage('folderScan'), 'info');
     return;
@@ -1578,6 +1655,7 @@ export async function createProjectFromFolder(): Promise<void> {
       id,
       name: derivedName,
       updatedAt: now,
+      ...getWorkspaceDefaults(workspaceType === 'jobHunt' ? 'software' : workspaceType),
       summary: derivedSummary,
       goals: [],
       rules: [],

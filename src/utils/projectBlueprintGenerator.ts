@@ -7,6 +7,7 @@ import type {
   ProjectBlueprintProjectType,
   ProjectBlueprintWorkingStyle,
   ProjectMemory,
+  ProjectWorkspaceType,
 } from '../types/memphant-types';
 import { SCHEMA_VERSION } from '../types/memphant-types';
 import {
@@ -26,6 +27,22 @@ const PROJECT_TYPE_LABELS: Record<ProjectBlueprintProjectType, string> = {
   'content-business': 'Content Business',
   other: 'Other',
 };
+
+function workspaceTypeForBlueprint(type: ProjectBlueprintProjectType): ProjectWorkspaceType {
+  if (type === 'game') return 'game';
+  if (
+    type === 'saas' ||
+    type === 'desktop-app' ||
+    type === 'mobile-app' ||
+    type === 'ai-tool' ||
+    type === 'browser-extension' ||
+    type === 'api' ||
+    type === 'internal-tool'
+  ) {
+    return 'software';
+  }
+  return 'ai';
+}
 
 const WORKING_STYLE_LABELS: Record<ProjectBlueprintWorkingStyle, string> = {
   'solo-founder': 'Solo founder',
@@ -548,6 +565,7 @@ export function createProjectFromBlueprint(
     ],
     platformState: {},
     workflowMode: 'build',
+    workspaceType: workspaceTypeForBlueprint(blueprint.input.projectType),
     projectCategory:
       blueprint.input.projectType === 'game'
         ? 'game'

@@ -57,6 +57,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       aiInstructions:
         'Help me preserve Roblox game context across AI tools. Track gameplay loop, Studio hierarchy, Luau scripts, LocalScripts, ModuleScripts, RemoteEvents, DataStores, StarterGui, Workspace, progression, monetisation, playtesting feedback, and known bugs.',
       workflowMode: 'build',
+      workspaceType: 'game',
       projectCategory: 'game',
       gamePlatform: 'roblox',
       gameContext: createDefaultGameContext('roblox'),
@@ -102,6 +103,8 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       projectCharter: '',
       aiInstructions:
         'Help me think through product decisions, marketing copy, and technical architecture. Challenge assumptions. Ask clarifying questions before suggesting features.',
+      workspaceType: 'software',
+      projectCategory: 'saas',
     }),
   },
   {
@@ -139,6 +142,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       projectCharter: '',
       aiInstructions:
         'Help me draft client communications, scope documents, and technical deliverables. Keep a professional, confident tone.',
+      workspaceType: 'ai',
     }),
   },
   {
@@ -176,6 +180,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       projectCharter: '',
       aiInstructions:
         'Help me write, edit, and structure my work. Match my voice. When I paste a draft, suggest improvements without rewriting entirely unless I ask.',
+      workspaceType: 'ai',
     }),
   },
   {
@@ -213,6 +218,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       projectCharter: '',
       aiInstructions:
         'Help me analyse sources, spot patterns, and summarise findings. Flag contradictions in evidence. Do not speculate without labelling it as such.',
+      workspaceType: 'ai',
     }),
   },
   {
@@ -250,6 +256,7 @@ export const PROJECT_TEMPLATES: ProjectTemplate[] = [
       projectCharter: '',
       aiInstructions:
         'Help me tailor CVs, write cover letters, prep for interviews, and draft follow-up emails. Keep a professional but confident tone.',
+      workspaceType: 'jobHunt',
     }),
   },
 ];

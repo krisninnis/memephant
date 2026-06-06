@@ -76,6 +76,7 @@ describe('game project support', () => {
     const normalized = normalizeOldProject(JSON.parse(JSON.stringify(gameProject)));
 
     expect(normalized.projectCategory).toBe('game');
+    expect(normalized.workspaceType).toBe('game');
     expect(normalized.gamePlatform).toBe('roblox');
     expect(normalized.gameContext?.overview?.coreLoop).toContain('Build base');
     expect(normalized.gameContext?.scriptVault?.[0]?.scriptName).toBe('NPCSpawner.lua');
@@ -88,6 +89,7 @@ describe('game project support', () => {
     } as Record<string, unknown>);
 
     expect(oldProject.projectCategory).toBeUndefined();
+    expect(oldProject.workspaceType).toBe('ai');
     expect(oldProject.gamePlatform).toBeUndefined();
     expect(oldProject.gameContext).toBeUndefined();
   });
@@ -105,6 +107,7 @@ describe('game project support', () => {
     }, '2026-06-05T10:00:00.000Z');
 
     expect(project.projectCategory).toBe('game');
+    expect(project.workspaceType).toBe('game');
     expect(project.gamePlatform).toBe('roblox');
     expect(project.gameContext?.overview?.platformTarget).toBe('Roblox');
     expect(project.aiInstructions).toContain('Roblox Studio hierarchy');

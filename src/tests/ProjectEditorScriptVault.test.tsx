@@ -449,6 +449,52 @@ describe('ProjectEditor Script Vault', () => {
     expect(screen.queryByRole('dialog', { name: 'Script Workspace' })).not.toBeInTheDocument();
   });
 
+  it('shows a focused AI project workspace without developer or game panels', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        id: 'ai-project',
+        workspaceType: 'ai',
+        projectCategory: undefined,
+        gamePlatform: undefined,
+        gameContext: undefined,
+      }],
+      activeProjectId: 'ai-project',
+    });
+
+    render(<ProjectEditor />);
+
+    expect(screen.getByText('Summary')).toBeInTheDocument();
+    expect(screen.getByText('Goals')).toBeInTheDocument();
+    expect(screen.getByText('Memory Core File')).toBeInTheDocument();
+    expect(screen.queryByText('GitHub Repository')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Connected Folder' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Game Systems')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Script Vault' })).not.toBeInTheDocument();
+  });
+
+  it('shows developer folder tools for Software projects without game panels', () => {
+    useProjectStore.setState({
+      projects: [{
+        ...baseProject,
+        id: 'software-project',
+        workspaceType: 'software',
+        projectCategory: 'general-software',
+        gamePlatform: undefined,
+        gameContext: undefined,
+      }],
+      activeProjectId: 'software-project',
+    });
+
+    render(<ProjectEditor />);
+
+    expect(screen.getByText('GitHub Repository')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Connected Folder' })).toBeInTheDocument();
+    expect(screen.getByText('Project Category')).toBeInTheDocument();
+    expect(screen.queryByText('Game Systems')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Script Vault' })).not.toBeInTheDocument();
+  });
+
   it('stores guided preset selections as the final game overview value', () => {
     render(<ProjectEditor />);
 

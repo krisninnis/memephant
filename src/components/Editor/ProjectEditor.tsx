@@ -45,6 +45,7 @@ import {
   createDefaultGameContext,
 } from '../../utils/gameProjectTypes';
 import { classifyRobloxScript } from '../../utils/robloxScriptClassifier';
+import { resolveProjectWorkspaceType } from '../../utils/workspaceTypes';
 
 type ScanState = 'idle' | 'scanning' | 'preview' | 'error';
 
@@ -801,7 +802,12 @@ export function ProjectEditor() {
 
   const activeGamePlatform = activeProject?.gamePlatform ?? 'roblox';
   const activeGameContext = activeProject?.gameContext ?? createDefaultGameContext(activeGamePlatform);
-  const activeProjectCategory = activeProject?.projectCategory ?? 'general-software';
+  const activeWorkspaceType = resolveProjectWorkspaceType(activeProject);
+  const activeProjectCategory = activeWorkspaceType === 'game'
+    ? 'game'
+    : activeProject?.projectCategory ?? 'general-software';
+  const showDeveloperWorkspace = activeWorkspaceType === 'software' || activeWorkspaceType === 'game';
+  const showGameWorkspace = activeWorkspaceType === 'game';
   const folderScanSummary = useMemo(
     () => activeProject
       ? buildFolderScanSummary(
@@ -839,7 +845,7 @@ export function ProjectEditor() {
       ? 0
       : Math.min(selectedScriptIndex, scriptVaultEntries.length - 1);
   const selectedScript = scriptVaultEntries[safeSelectedScriptIndex];
-  const showScriptWorkspace = scriptWorkspaceOpen && activeProjectCategory === 'game';
+  const showScriptWorkspace = scriptWorkspaceOpen && showGameWorkspace;
 
   const updateGameContext = (next: GameProjectContext) => {
     update('gameContext', next);
@@ -1118,11 +1124,15 @@ export function ProjectEditor() {
 
   const handleProjectCategoryChange = (category: ProjectCategory) => {
     if (category !== 'game') {
-      update('projectCategory', category);
+      updateProject(activeProject.id, {
+        projectCategory: category,
+        workspaceType: 'software',
+      } as Parameters<typeof updateProject>[1]);
       return;
     }
 
     updateProject(activeProject.id, {
+      workspaceType: 'game',
       projectCategory: 'game',
       gamePlatform: activeGamePlatform,
       gameContext: mergeGameContextDefaults(activeProject.gameContext, activeGamePlatform),
@@ -1197,112 +1207,114 @@ export function ProjectEditor() {
         />
       </div>
 
-      <div className="field-group github-repo-field">
-        <div className="field-label">
-          GitHub Repository <span className="field-label-optional">(optional)</span>
-          {activeProject.scanInfo && (
-            <span
-              className="github-scan-badge"
-              title={`Last scanned ${new Date(activeProject.scanInfo.scannedAt).toLocaleString()}`}
-            >
-              Scanned
-            </span>
-          )}
-        </div>
-        <div className="github-repo-input-row">
-          <input
-            className="field-input github-repo-input"
-            type="url"
-            value={activeProject.githubRepo || ''}
-            onChange={(e) => {
-              update('githubRepo', e.target.value);
-              if (scanState !== 'idle') handleScanDismiss();
-            }}
-            placeholder="https://github.com/username/repo"
-            spellCheck={false}
-            disabled={scanState === 'scanning'}
-          />
-          {parseGitHubUrl(activeProject.githubRepo || '') &&
-            scanState !== 'scanning' &&
-            scanState !== 'preview' && (
-              <button
-                type="button"
-                className="github-scan-btn"
-                onClick={() => void handleScan()}
-                title="Scan this repo to extract project context"
-              >
-                Scan repo
-              </button>
-            )}
-          {scanState === 'scanning' && (
-            <button type="button" className="github-scan-btn github-scan-btn--loading" disabled>
-              <span className="scan-spinner" />
-              Scanning...
-            </button>
-          )}
-          {activeProject.githubRepo?.startsWith('https://github.com/') && (
-            <a
-              className="github-repo-link"
-              href={activeProject.githubRepo}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Open repo in browser"
-            >
-              Open
-            </a>
-          )}
-        </div>
-
-        {scanState === 'error' && (
-          <div className="scan-error-msg">
-            {scanError}
-            <button type="button" className="scan-error-retry" onClick={() => void handleScan()}>
-              Try again
-            </button>
-          </div>
-        )}
-
-        {scanState !== 'preview' && scanState !== 'scanning' && (
-          <p className="github-repo-hint">
-            {parseGitHubUrl(activeProject.githubRepo || '')
-              ? 'Click "Scan repo" to automatically extract project context from this repository.'
-              : 'Paste a public GitHub URL - AIs can browse your code directly from this link.'}
-          </p>
-        )}
-      </div>
-
-      {scanState === 'preview' && scanResult && (
-        <GitHubScanPreview
-          result={scanResult}
-          onAccept={handleScanAccept}
-          onDismiss={handleScanDismiss}
-        />
-      )}
-
-      {activeProject.detectedStack &&
-        activeProject.detectedStack.length > 0 &&
-        scanState === 'idle' && (
-          <div className="field-group">
-            <div className="field-label">Detected Stack</div>
-            <div className="detected-stack-chips">
-              {activeProject.detectedStack.map((tech) => (
-                <span key={tech} className="detected-stack-chip">
-                  {tech}
+      {showDeveloperWorkspace && (
+        <>
+          <div className="field-group github-repo-field">
+            <div className="field-label">
+              GitHub Repository <span className="field-label-optional">(optional)</span>
+              {activeProject.scanInfo && (
+                <span
+                  className="github-scan-badge"
+                  title={`Last scanned ${new Date(activeProject.scanInfo.scannedAt).toLocaleString()}`}
+                >
+                  Scanned
                 </span>
-              ))}
-              <button
-                type="button"
-                className="detected-stack-rescan"
-                onClick={() => void handleScan()}
-                title="Re-scan repo to update stack detection"
-              >
-                Rescan
-              </button>
+              )}
             </div>
-          </div>
-        )}
+            <div className="github-repo-input-row">
+              <input
+                className="field-input github-repo-input"
+                type="url"
+                value={activeProject.githubRepo || ''}
+                onChange={(e) => {
+                  update('githubRepo', e.target.value);
+                  if (scanState !== 'idle') handleScanDismiss();
+                }}
+                placeholder="https://github.com/username/repo"
+                spellCheck={false}
+                disabled={scanState === 'scanning'}
+              />
+              {parseGitHubUrl(activeProject.githubRepo || '') &&
+                scanState !== 'scanning' &&
+                scanState !== 'preview' && (
+                  <button
+                    type="button"
+                    className="github-scan-btn"
+                    onClick={() => void handleScan()}
+                    title="Scan this repo to extract project context"
+                  >
+                    Scan repo
+                  </button>
+                )}
+              {scanState === 'scanning' && (
+                <button type="button" className="github-scan-btn github-scan-btn--loading" disabled>
+                  <span className="scan-spinner" />
+                  Scanning...
+                </button>
+              )}
+              {activeProject.githubRepo?.startsWith('https://github.com/') && (
+                <a
+                  className="github-repo-link"
+                  href={activeProject.githubRepo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open repo in browser"
+                >
+                  Open
+                </a>
+              )}
+            </div>
 
-      <section className="connected-folder-panel" aria-label="Connected Folder">
+            {scanState === 'error' && (
+              <div className="scan-error-msg">
+                {scanError}
+                <button type="button" className="scan-error-retry" onClick={() => void handleScan()}>
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {scanState !== 'preview' && scanState !== 'scanning' && (
+              <p className="github-repo-hint">
+                {parseGitHubUrl(activeProject.githubRepo || '')
+                  ? 'Click "Scan repo" to automatically extract project context from this repository.'
+                  : 'Paste a public GitHub URL - AIs can browse your code directly from this link.'}
+              </p>
+            )}
+          </div>
+
+          {scanState === 'preview' && scanResult && (
+            <GitHubScanPreview
+              result={scanResult}
+              onAccept={handleScanAccept}
+              onDismiss={handleScanDismiss}
+            />
+          )}
+
+          {activeProject.detectedStack &&
+            activeProject.detectedStack.length > 0 &&
+            scanState === 'idle' && (
+              <div className="field-group">
+                <div className="field-label">Detected Stack</div>
+                <div className="detected-stack-chips">
+                  {activeProject.detectedStack.map((tech) => (
+                    <span key={tech} className="detected-stack-chip">
+                      {tech}
+                    </span>
+                  ))}
+                  <button
+                    type="button"
+                    className="detected-stack-rescan"
+                    onClick={() => void handleScan()}
+                    title="Re-scan repo to update stack detection"
+                  >
+                    Rescan
+                  </button>
+                </div>
+              </div>
+            )}
+
+          <section className="connected-folder-panel" aria-label="Connected Folder">
         <div className="connected-folder-panel__header">
           <div>
             <div className="field-label">Connected Folder</div>
@@ -1473,8 +1485,11 @@ export function ProjectEditor() {
           )}
         </section>
       )}
+        </>
+      )}
 
-      <div className="field-group">
+      {showDeveloperWorkspace && (
+        <div className="field-group">
         <div className="field-label">Project Category</div>
         <select
           className="field-input"
@@ -1485,9 +1500,10 @@ export function ProjectEditor() {
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
-      </div>
+        </div>
+      )}
 
-      {activeProjectCategory === 'other' && (
+      {showDeveloperWorkspace && activeProjectCategory === 'other' && (
         <div className="field-group">
           <div className="field-label">Other Category</div>
           <input
@@ -1500,7 +1516,7 @@ export function ProjectEditor() {
         </div>
       )}
 
-      {activeProjectCategory === 'game' && (
+      {showGameWorkspace && (
         <section className="game-context-panel" aria-label="Game project context">
           <div className="field-group">
             <div className="field-label">Game Platform</div>

@@ -21,6 +21,7 @@ import {
   isProjectCategory,
 } from './gameProjectTypes';
 import { isAIWorkflowMode } from './workflowModes';
+import { isProjectWorkspaceType, resolveProjectWorkspaceType } from './workspaceTypes';
 
 type LegacyProject = Partial<ProjectMemory> & Record<string, unknown>;
 
@@ -295,6 +296,18 @@ export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
   const projectCategory = isProjectCategory(raw.projectCategory) ? raw.projectCategory : undefined;
   const gamePlatform = isGamePlatform(raw.gamePlatform) ? raw.gamePlatform : undefined;
   const gameContext = normalizeGameContext(raw.gameContext, gamePlatform);
+  const workspaceType = isProjectWorkspaceType(raw.workspaceType)
+    ? raw.workspaceType
+    : resolveProjectWorkspaceType({
+        projectCategory,
+        gamePlatform,
+        gameContext,
+        linkedFolder: normalizeLinkedFolder(raw.linkedFolder),
+        githubRepo: typeof raw.githubRepo === 'string' ? raw.githubRepo : undefined,
+        scanInfo: normalizeScanInfo(raw.scanInfo),
+        detectedStack: normalizeOptionalStringArray(raw.detectedStack),
+        importantAssets: normalizeStringArray(raw.importantAssets),
+      });
 
   return {
     schema_version: SCHEMA_VERSION,
@@ -342,6 +355,7 @@ export function normalizeOldProject(raw: LegacyProject): ProjectMemory {
         : undefined,
     projectBlueprint: normalizeProjectBlueprint(raw.projectBlueprint),
     workflowMode: isAIWorkflowMode(raw.workflowMode) ? raw.workflowMode : undefined,
+    workspaceType,
     projectCategory,
     projectCategoryOther: normalizeOptionalString(raw.projectCategoryOther),
     gamePlatform,

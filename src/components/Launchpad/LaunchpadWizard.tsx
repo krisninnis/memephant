@@ -6,17 +6,23 @@ import {
   saveToDisk,
 } from '../../services/tauriActions';
 import type { LaunchpadTemplateId } from '../../services/tauriActions';
-import type { ProjectMemory } from '../../types/memphant-types';
+import type { ProjectMemory, ProjectWorkspaceType } from '../../types/memphant-types';
 import { SCHEMA_VERSION } from '../../types/memphant-types';
+import {
+  WORKSPACE_TYPE_OPTIONS,
+  getWorkspaceDefaults,
+  getWorkspaceTypeOption,
+} from '../../utils/workspaceTypes';
 import './LaunchpadWizard.css';
 
 type LaunchpadMode = 'scan' | 'template' | 'blank';
-type LaunchpadStep = 'select' | 'template-details' | 'success';
+type LaunchpadStep = 'workspace' | 'select' | 'template-details' | 'success';
 
 interface LaunchpadWizardProps {
   onClose: () => void;
-  onScanExisting: () => void;
-  onCreateBlankMemory: () => void;
+  onScanExisting: (workspaceType: ProjectWorkspaceType) => void;
+  onCreateBlankMemory: (workspaceType: ProjectWorkspaceType) => void;
+  onOpenJobHunt: () => void;
 }
 
 const options: Array<{
@@ -76,13 +82,15 @@ export function LaunchpadWizard({
   onClose,
   onScanExisting,
   onCreateBlankMemory,
+  onOpenJobHunt,
 }: LaunchpadWizardProps) {
   const addProject = useProjectStore((s) => s.addProject);
   const setActiveProject = useProjectStore((s) => s.setActiveProject);
   const setCurrentView = useProjectStore((s) => s.setCurrentView);
   const showToast = useProjectStore((s) => s.showToast);
 
-  const [step, setStep] = useState<LaunchpadStep>('select');
+  const [step, setStep] = useState<LaunchpadStep>('workspace');
+  const [selectedWorkspaceType, setSelectedWorkspaceType] = useState<ProjectWorkspaceType>('ai');
   const [selectedMode, setSelectedMode] = useState<LaunchpadMode>('template');
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
@@ -93,14 +101,31 @@ export function LaunchpadWizard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const selectedWorkspace = getWorkspaceTypeOption(selectedWorkspaceType);
+  const availableOptions = options.filter((option) => {
+    if (selectedWorkspaceType === 'ai') return option.id !== 'scan';
+    if (selectedWorkspaceType === 'game') return option.id !== 'template';
+    return true;
+  });
+
+  const handleWorkspaceContinue = () => {
+    if (selectedWorkspaceType === 'jobHunt') {
+      onOpenJobHunt();
+      return;
+    }
+
+    setSelectedMode(selectedWorkspaceType === 'ai' || selectedWorkspaceType === 'game' ? 'blank' : 'template');
+    setStep('select');
+  };
+
   const handleContinue = () => {
     if (selectedMode === 'scan') {
-      onScanExisting();
+      onScanExisting(selectedWorkspaceType);
       return;
     }
 
     if (selectedMode === 'blank') {
-      onCreateBlankMemory();
+      onCreateBlankMemory(selectedWorkspaceType);
       return;
     }
 
@@ -212,6 +237,7 @@ memphant_update
         id: buildProjectId(projectName),
         name: projectName.trim(),
         updatedAt: now,
+        ...getWorkspaceDefaults(selectedWorkspaceType),
         summary: description.trim(),
         goals: [],
         rules: [],
@@ -265,10 +291,11 @@ memphant_update
         <div className="launchpad-header">
           <div>
             <p className="launchpad-eyebrow">Memephant Launchpad</p>
-            <h2>Start a project that never loses context</h2>
+            <h2>{step === 'workspace' ? 'What are you working on?' : `Start a ${selectedWorkspace.title}`}</h2>
             <p>
-              Create a new memory, scan an existing folder, or scaffold a local starter project
-              that Memephant can track from day one.
+              {step === 'workspace'
+                ? 'Choose a workspace so Memephant can show the tools that fit this project.'
+                : 'Create context, scan an existing folder, or set up the project memory you need.'}
             </p>
           </div>
 
@@ -277,10 +304,47 @@ memphant_update
           </button>
         </div>
 
+        {step === 'workspace' && (
+          <>
+            <div className="launchpad-workspace-grid">
+              {WORKSPACE_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`launchpad-workspace-card ${selectedWorkspaceType === option.id ? 'is-selected' : ''}`}
+                  onClick={() => setSelectedWorkspaceType(option.id)}
+                >
+                  <span className="launchpad-workspace-card__icon">{option.icon}</span>
+                  <span className="launchpad-workspace-card__body">
+                    <strong>{option.title}</strong>
+                    <small>{option.description}</small>
+                    <span className="launchpad-workspace-card__tools">
+                      {option.enabledTools.join(' / ')}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="launchpad-footer">
+              <button type="button" className="launchpad-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="button" className="launchpad-primary" onClick={handleWorkspaceContinue}>
+                Continue
+              </button>
+            </div>
+          </>
+        )}
+
         {step === 'select' && (
           <>
+            <div className="launchpad-workspace-summary">
+              <strong>{selectedWorkspace.title}</strong>
+              <span>{selectedWorkspace.enabledTools.join(' / ')}</span>
+            </div>
             <div className="launchpad-options">
-              {options.map((option) => (
+              {availableOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"
@@ -297,8 +361,8 @@ memphant_update
             </div>
 
             <div className="launchpad-footer">
-              <button type="button" className="launchpad-secondary" onClick={onClose}>
-                Cancel
+              <button type="button" className="launchpad-secondary" onClick={() => setStep('workspace')}>
+                Back
               </button>
               <button type="button" className="launchpad-primary" onClick={handleContinue}>
                 Continue
