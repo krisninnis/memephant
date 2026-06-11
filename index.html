@@ -48,23 +48,151 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Memephant",
-        "url": "https://memephant.com/",
-        "applicationCategory": "ProductivityApplication",
-        "operatingSystem": "Windows, macOS, Linux, Web",
-        "description": "Local-first project memory that moves your project context between ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs without rebuilding context.",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD",
-          "name": "Free during early access"
-        }
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://memephant.com/#organization",
+            "name": "Memephant",
+            "url": "https://memephant.com/",
+            "logo": "https://memephant.com/icons/icon-512-v2.png",
+            "sameAs": ["https://github.com/krisninnis/memphant"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://memephant.com/#website",
+            "name": "Memephant",
+            "url": "https://memephant.com/",
+            "publisher": { "@id": "https://memephant.com/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://memephant.com/#software",
+            "name": "Memephant",
+            "applicationCategory": "ProductivityApplication",
+            "operatingSystem": "Windows, macOS, Linux, Web",
+            "description": "Local-first project memory that moves your project context between ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs without rebuilding context.",
+            "url": "https://memephant.com/",
+            "downloadUrl": "https://github.com/krisninnis/memphant/releases/latest",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "name": "Free during early access"
+            },
+            "publisher": { "@id": "https://memephant.com/#organization" }
+          }
+        ]
       }
     </script>
+
+    <!-- SEO fallback styles (scoped; removed from DOM when React mounts) -->
+    <style id="mph-seo-styles">
+      .mph-seo {
+        min-height: 100vh;
+        background: #0f1117;
+        color: #e8eaf0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+      }
+      .mph-seo a { color: #4f8ef7; text-decoration: none; }
+      .mph-seo a:hover { text-decoration: underline; }
+      .mph-seo-nav, .mph-seo-main, .mph-seo-footer { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+      .mph-seo-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; flex-wrap: wrap; }
+      .mph-seo-logo { display: inline-flex; align-items: center; gap: 10px; color: #e8eaf0; font-weight: 700; font-size: 17px; }
+      .mph-seo-links { display: flex; gap: 20px; flex-wrap: wrap; font-size: 14px; }
+      .mph-seo-links a { color: #7a8399; }
+      .mph-seo-hero { padding: 56px 0 24px; }
+      .mph-seo-eyebrow { text-transform: uppercase; letter-spacing: 0.12em; font-size: 12px; font-weight: 700; color: #4f8ef7; margin: 0 0 12px; }
+      .mph-seo h1 { font-size: clamp(30px, 5vw, 52px); font-weight: 800; line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 18px; max-width: 760px; }
+      .mph-seo-sub { font-size: clamp(16px, 2vw, 19px); color: #a7accc; max-width: 680px; margin: 0 0 24px; }
+      .mph-seo-cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; }
+      .mph-seo-btn { display: inline-block; background: #4f8ef7; color: #fff; font-weight: 600; padding: 12px 22px; border-radius: 8px; }
+      .mph-seo-btn:hover { opacity: 0.9; text-decoration: none; }
+      .mph-seo-btn-outline { background: transparent; color: #e8eaf0; border: 1px solid #2a3348; }
+      .mph-seo-note, .mph-seo-platforms { font-size: 13px; color: #7a8399; margin: 6px 0 0; }
+      .mph-seo-section { padding: 28px 0; border-top: 1px solid #1e2535; }
+      .mph-seo-section h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -0.01em; margin: 0 0 12px; }
+      .mph-seo-section p, .mph-seo-section li { color: #a7accc; }
+      .mph-seo-section ol, .mph-seo-section ul { padding-left: 20px; }
+      .mph-seo-section li { margin: 8px 0; }
+      .mph-seo-explore { list-style: none; padding-left: 0; }
+      .mph-seo-footer { display: flex; gap: 20px; flex-wrap: wrap; padding-top: 28px; padding-bottom: 48px; margin-top: 8px; border-top: 1px solid #1e2535; font-size: 14px; }
+      .mph-seo-footer a { color: #7a8399; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><!-- Pre-render SEO content: crawlable before JS runs; React replaces #root contents on mount. -->
+      <div class="mph-seo" id="mph-seo">
+        <header class="mph-seo-nav">
+          <a class="mph-seo-logo" href="/">
+            <img src="/memphant-icon.svg" alt="Memephant" width="28" height="28" />
+            Memephant
+          </a>
+          <nav class="mph-seo-links" aria-label="Primary">
+            <a href="/ai-project-memory/">AI Project Memory</a>
+            <a href="/claude-to-chatgpt-project-handoff/">Claude → ChatGPT</a>
+            <a href="/local-first/">Local-First</a>
+            <a href="/download/">Download</a>
+          </nav>
+        </header>
+
+        <main class="mph-seo-main">
+          <section class="mph-seo-hero">
+            <p class="mph-seo-eyebrow">Local-first AI project memory</p>
+            <h1>Move your project between AI tools without rebuilding context</h1>
+            <p class="mph-seo-sub">
+              Memephant stores your project memory once — goals, key decisions, important files, and next steps —
+              then hands a clean Context Passport to ChatGPT, Claude, Gemini, Grok, Codex, Cursor, or a local LLM.
+              Switch AI tools without re-explaining your project every time.
+            </p>
+            <p class="mph-seo-cta">
+              <a class="mph-seo-btn" href="/download/">Download free</a>
+              <a class="mph-seo-btn mph-seo-btn-outline" href="https://github.com/krisninnis/memphant">View on GitHub</a>
+            </p>
+            <p class="mph-seo-note">Free during early access · Windows, macOS &amp; Linux · No account needed</p>
+            <p class="mph-seo-platforms">Works with ChatGPT, Claude, Gemini, Grok, Codex, Cursor, and local LLMs.</p>
+          </section>
+
+          <section class="mph-seo-section">
+            <h2>Every new AI chat starts from zero</h2>
+            <p>
+              AI tools forget your project between sessions. You re-explain your stack, paste old chat logs,
+              and hope nothing important is missing. Memephant keeps one portable, local-first project memory
+              so each AI session starts warm instead of blank.
+            </p>
+          </section>
+
+          <section class="mph-seo-section">
+            <h2>How Memephant works</h2>
+            <ol>
+              <li><strong>Store your project once</strong> — capture goals, key decisions, important files, and next steps, and scan a local folder to keep the memory grounded in reality.</li>
+              <li><strong>Copy a Context Passport</strong> — a handoff shaped for the AI you're about to use, with known API keys, tokens, and local paths redacted before export where possible.</li>
+              <li><strong>Paste, work, stay current</strong> — paste the AI's reply back into Memephant and review a diff before anything changes, so your memory carries to the next session and the next tool.</li>
+            </ol>
+          </section>
+
+          <section class="mph-seo-section">
+            <h2>Explore Memephant</h2>
+            <ul class="mph-seo-explore">
+              <li><a href="/ai-project-memory/">AI project memory</a> — persistent, local-first memory for your projects across every AI tool.</li>
+              <li><a href="/claude-to-chatgpt-project-handoff/">Claude to ChatGPT handoff</a> — move project context between Claude and ChatGPT without rebuilding it.</li>
+              <li><a href="/local-first/">Local-first model</a> — how your project memory stays on your device by default.</li>
+              <li><a href="/download/">Download Memephant</a> — get the desktop app for Windows, macOS, or Linux.</li>
+            </ul>
+          </section>
+        </main>
+
+        <footer class="mph-seo-footer">
+          <a href="/download/">Download</a>
+          <a href="/ai-project-memory/">AI Project Memory</a>
+          <a href="/claude-to-chatgpt-project-handoff/">Claude → ChatGPT</a>
+          <a href="/local-first/">Local-First</a>
+          <a href="/data-handling/">Data &amp; Trust</a>
+          <a href="/privacy/">Privacy</a>
+          <a href="/terms/">Terms</a>
+        </footer>
+      </div>
+    </div>
     <script>
       (function () {
         var host = window.location.hostname;
