@@ -63,7 +63,14 @@ export default defineConfig(async () => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         globIgnores: ["auth/callback.html"],
         cleanupOutdatedCaches: true,
-        navigateFallbackDenylist: [/^\/auth\/callback/, /^\/api\/auth-callback/],
+        navigateFallbackDenylist: [
+          /^\/auth\/callback/,
+          /^\/api\/auth-callback/,
+          /^\/robots\.txt$/,
+          /^\/sitemap\.xml$/,
+          /^\/manifest\.webmanifest$/,
+          /^\/favicon\.ico$/,
+        ],
         skipWaiting: false,
       },
 
