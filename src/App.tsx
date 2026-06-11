@@ -1,4 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import AppShell from './components/Layout/AppShell';
 import OnboardingModal from './components/Layout/OnboardingModal';
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
@@ -152,6 +153,8 @@ function App() {
           <AppShell />
           <PWAUpdatePrompt />
           {!isLoading && !settings.general.hasSeenOnboarding && <OnboardingModal />}
+          {/* Vercel Web Analytics — only on the Vercel-served web build, not the Tauri desktop app */}
+          {!isTauri() && <Analytics />}
         </PWAProvider>
       </PassportGate>
     </ErrorBoundary>
