@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Project Memory — Keep Your Project Context Across Every AI | Memephant</title>
+  <meta name="description" content="Every new AI chat starts from zero. Memephant gives your projects persistent, local-first memory so ChatGPT, Claude, and Gemini pick up where you left off." />
+  <meta name="keywords" content="ai project memory, project memory for ai, persistent ai memory, ai remembers my project, ai project context, cross-AI handoff, structured project memory" />
+  <meta name="author" content="Kris Ninnis" />
+  <meta name="theme-color" content="#d97706" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://memephant.com/ai-project-memory/" />
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="/memphant-icon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180-v2.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://memephant.com/ai-project-memory/" />
+  <meta property="og:site_name" content="Memephant" />
+  <meta property="og:title" content="AI Project Memory — Keep Your Project Context Across Every AI" />
+  <meta property="og:description" content="AI tools forget between sessions. Memephant stores your project memory once and hands clean context to ChatGPT, Claude, Gemini, and more — local-first." />
+  <meta property="og:image" content="https://memephant.com/og-image.png?v=a73816f" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Memephant project memory app preview" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@memephant" />
+  <meta name="twitter:title" content="AI Project Memory — Keep Your Project Context Across Every AI" />
+  <meta name="twitter:description" content="AI tools forget between sessions. Memephant stores your project memory once and hands clean context to ChatGPT, Claude, Gemini, and more — local-first." />
+  <meta name="twitter:image" content="https://memephant.com/og-image.png?v=a73816f" />
+  <meta name="twitter:image:alt" content="Memephant project memory app preview" />
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://memephant.com/#organization",
+        "name": "Memephant",
+        "url": "https://memephant.com/",
+        "logo": "https://memephant.com/icons/icon-512-v2.png",
+        "sameAs": ["https://github.com/krisninnis/memphant"]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://memephant.com/#website",
+        "name": "Memephant",
+        "url": "https://memephant.com/",
+        "publisher": { "@id": "https://memephant.com/#organization" }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://memephant.com/ai-project-memory/#webpage",
+        "url": "https://memephant.com/ai-project-memory/",
+        "name": "AI Project Memory — Keep Your Project Context Across Every AI",
+        "description": "What AI project memory means, why AI tools forget your project between sessions, and how Memephant gives you persistent, local-first project memory across ChatGPT, Claude, and Gemini.",
+        "isPartOf": { "@id": "https://memephant.com/#website" },
+        "about": { "@id": "https://memephant.com/#software" },
+        "breadcrumb": { "@id": "https://memephant.com/ai-project-memory/#breadcrumb" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://memephant.com/ai-project-memory/#breadcrumb",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://memephant.com/" },
+          { "@type": "ListItem", "position": 2, "name": "AI Project Memory", "item": "https://memephant.com/ai-project-memory/" }
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://memephant.com/#software",
+        "name": "Memephant",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Windows, macOS, Linux, Web",
+        "description": "Local-first project memory app that stores your project context once and hands it to ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs without rebuilding context.",
+        "url": "https://memephant.com/",
+        "downloadUrl": "https://github.com/krisninnis/memphant/releases/latest",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "name": "Free during early access"
+        },
+        "publisher": { "@id": "https://memephant.com/#organization" }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://memephant.com/ai-project-memory/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is AI project memory?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "AI project memory is a persistent record of a project — its goals, decisions, stack, and next steps — that you can give to any AI tool so it understands the work without you re-explaining it. The AI chat itself stays stateless; the memory lives with you and travels between tools."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why do AI tools forget my project between sessions?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "ChatGPT, Claude, and Gemini each keep only their own limited, separate context. Start a new chat, switch tools, or come back days later and that context is gone, so you have to describe your project from scratch again."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does Memephant give my projects persistent memory?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You store each project once in Memephant. When you open an AI tool, you copy a Context Passport — a handoff shaped for that platform — and paste it at the start of a chat. Paste the AI's reply back and Memephant shows a diff before updating, so your project memory stays current."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Where is my project memory stored?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Memephant is local-first: your project memory lives on your device in plain files by default. Cloud backup is optional and opt-in, and no account is needed to create projects or generate handoffs."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which AI tools does it work with?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Memephant generates handoffs shaped for ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs. You copy and paste each handoff yourself, so it works with any tool that accepts pasted text."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --bg2:       #161b27;
+      --bg3:       #1e2535;
+      --border:    #2a3348;
+      --text:      #e8eaf0;
+      --muted:     #7a8399;
+      --accent:    #4f8ef7;
+      --accent2:   #6d59f0;
+      --green:     #10a37f;
+      --amber:     #d97706;
+      --purple:    #8b5cf6;
+      --radius:    12px;
+      --radius-sm: 8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { max-width: 100%; height: auto; display: block; }
+
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+    .section { padding: 80px 0; }
+    .section--alt { background: var(--bg2); }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15, 17, 23, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px; max-width: 1000px; margin: 0 auto; padding: 0 24px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: var(--text); }
+    .nav-logo:hover { text-decoration: none; }
+    .nav-logo img { width: 28px; height: 28px; }
+    .btn-nav {
+      background: var(--accent); color: #fff !important;
+      padding: 7px 18px; border-radius: 8px; font-weight: 600; font-size: 14px;
+      transition: opacity 0.15s;
+    }
+    .btn-nav:hover { opacity: 0.88; text-decoration: none; }
+
+    /* Hero */
+    .hero { padding: 100px 0 70px; text-align: center; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--muted); font-size: 13px; font-weight: 600;
+      padding: 6px 14px; border-radius: 100px; margin-bottom: 28px;
+    }
+    .hero-badge .pill-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .dot-amber { background: var(--amber); }
+    .dot-green { background: var(--green); }
+    .dot-purple { background: var(--purple); }
+    .hero h1 {
+      font-size: clamp(34px, 5vw, 56px); font-weight: 800; line-height: 1.12;
+      letter-spacing: -0.03em; margin-bottom: 22px; max-width: 840px; margin-left: auto; margin-right: auto;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(17px, 2vw, 20px); color: var(--muted);
+      max-width: 660px; margin: 0 auto 36px; line-height: 1.6;
+    }
+    .hero-cta { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px;
+      border-radius: var(--radius-sm); font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; border: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.88; text-decoration: none; transform: translateY(-1px); }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--muted); text-decoration: none; }
+    .hero-note { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+    /* Forget strip */
+    .flow {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin-top: 52px; flex-wrap: wrap;
+    }
+    .flow-chip {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border);
+      font-size: 14px; font-weight: 600; background: var(--bg2);
+    }
+    .flow-chip .tag { color: var(--muted); font-weight: 500; }
+
+    /* Headings */
+    .section-eyebrow {
+      text-transform: uppercase; letter-spacing: 0.12em; font-size: 12px;
+      font-weight: 700; color: var(--accent); margin-bottom: 12px;
+    }
+    .section-heading {
+      font-size: clamp(26px, 3.5vw, 38px); font-weight: 800;
+      letter-spacing: -0.02em; margin-bottom: 16px; line-height: 1.15;
+    }
+    .section-sub { color: var(--muted); font-size: 17px; max-width: 640px; line-height: 1.6; }
+
+    /* Problem / Solution */
+    .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 44px; }
+    .problem-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px; }
+    .problem-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .problem-card p { color: var(--muted); line-height: 1.7; }
+    .problem-card--bad { border-color: rgba(239, 68, 68, 0.25); }
+    .problem-card--bad h3::before { content: "✗  "; color: #ef4444; }
+    .problem-card--good { border-color: rgba(16, 163, 127, 0.3); }
+    .problem-card--good h3::before { content: "✓  "; color: var(--green); }
+
+    /* Definition cards */
+    .def-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 44px; }
+    .def-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; }
+    .def-card .def-icon { font-size: 26px; margin-bottom: 12px; }
+    .def-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .def-card p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; margin-top: 48px; position: relative; }
+    .steps::before {
+      content: ''; position: absolute; left: 27px; top: 40px; bottom: 40px;
+      width: 2px; background: linear-gradient(to bottom, var(--accent), var(--accent2), transparent); opacity: 0.3;
+    }
+    .step { display: flex; gap: 24px; padding: 22px 0; }
+    .step-num {
+      flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-weight: 800; font-size: 20px;
+      display: flex; align-items: center; justify-content: center; position: relative; z-index: 1;
+    }
+    .step-body h3 { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+    .step-body p { color: var(--muted); line-height: 1.65; }
+
+    /* FAQ */
+    .faq-list { max-width: 760px; margin: 40px auto 0; }
+    .faq-item { border-bottom: 1px solid var(--border); padding: 22px 0; }
+    .faq-item h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .faq-item p { color: var(--muted); font-size: 15px; line-height: 1.7; }
+
+    /* CTA band */
+    .cta-band { text-align: center; padding: 90px 0; }
+    .cta-band h2 { font-size: clamp(26px, 3.5vw, 38px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 16px; }
+    .cta-band p { color: var(--muted); font-size: 17px; max-width: 560px; margin: 0 auto 32px; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 40px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text); font-size: 15px; }
+    .footer-logo:hover { text-decoration: none; }
+    .footer-logo img { width: 22px; height: 22px; }
+    .footer-links { display: flex; gap: 24px; list-style: none; flex-wrap: wrap; }
+    .footer-links a { color: var(--muted); font-size: 14px; }
+    .footer-links a:hover { color: var(--text); text-decoration: none; }
+    .footer-right { color: var(--muted); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .section { padding: 60px 0; }
+      .hero { padding: 70px 0 50px; }
+      .problem-grid, .def-grid { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 480px) {
+      .hero-cta { flex-direction: column; align-items: stretch; }
+      .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">
+      <img src="/memphant-icon.svg" alt="Memephant logo" />
+      Memephant
+    </a>
+    <a class="btn-nav" href="/download/">Download free →</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span class="pill-dot dot-green"></span> ChatGPT
+      <span class="pill-dot dot-amber"></span> Claude
+      <span class="pill-dot dot-purple"></span> Gemini
+      &nbsp;— one shared memory
+    </div>
+    <h1>AI project memory that <span>doesn't start from zero</span></h1>
+    <p class="hero-sub">
+      Every new AI chat forgets your project. Memephant gives your work persistent, local-first memory —
+      so ChatGPT, Claude, and Gemini pick up where you left off instead of asking you to explain everything again.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="/download/">↓ Download free</a>
+      <a class="btn btn-outline" href="/">See how it works</a>
+    </div>
+    <p class="hero-note">Free during early access · Windows, macOS &amp; Linux · No account needed</p>
+
+    <div class="flow">
+      <span class="flow-chip"><span class="tag">Without memory:</span> re-explain every chat</span>
+      <span class="flow-chip"><span class="tag">With Memephant:</span> paste once, keep building</span>
+    </div>
+  </div>
+</section>
+
+<!-- Why AI loses project memory -->
+<section class="section section--alt">
+  <div class="container">
+    <div class="section-eyebrow">The problem</div>
+    <h2 class="section-heading">Every new AI chat starts from zero</h2>
+    <p class="section-sub">
+      ChatGPT forgets. Claude forgets. Gemini forgets. AI tools keep only their own limited context, and it
+      disappears the moment you open a new chat, switch tools, or come back a few days later.
+    </p>
+
+    <div class="problem-grid">
+      <div class="problem-card problem-card--bad">
+        <h3>Re-explaining, every time</h3>
+        <p>
+          You describe your stack, goals, and constraints again. You paste old chat logs and hope nothing
+          important is missing. The further a project runs, the more time you lose just getting the AI back up to speed.
+        </p>
+      </div>
+      <div class="problem-card problem-card--good">
+        <h3>One memory that travels</h3>
+        <p>
+          Your project is stored once and stays current. Each AI gets a clean handoff in the right shape, so
+          the session starts warm — whether it's a fresh chat in the same tool or a <a href="/claude-to-chatgpt-project-handoff/">Claude to ChatGPT handoff</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- What AI project memory means -->
+<section class="section">
+  <div class="container">
+    <div class="section-eyebrow">What it actually means</div>
+    <h2 class="section-heading">What "AI project memory" really is</h2>
+    <p class="section-sub">
+      It isn't a smarter chatbot or a bigger context window. It's a structured record of your project that
+      lives with you and that any AI can read on demand.
+    </p>
+
+    <div class="def-grid">
+      <div class="def-card">
+        <div class="def-icon">🧠</div>
+        <h3>Structured project memory</h3>
+        <p>Goals, key decisions, important files, and next steps — captured once in a clear, inspectable structure rather than buried in chat history.</p>
+      </div>
+      <div class="def-card">
+        <div class="def-icon">🛂</div>
+        <h3>Context Passport exports</h3>
+        <p>Copy a Context Passport: a handoff shaped for the AI you're about to use, so it gets the right context in the right form instead of a raw transcript dump.</p>
+      </div>
+      <div class="def-card">
+        <div class="def-icon">🏠</div>
+        <h3>Local-first by default</h3>
+        <p>Your memory lives on your device in plain files. It moves only when you choose to move it. <a href="/local-first/">More on the local-first model →</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How Memephant works -->
+<section class="section section--alt">
+  <div class="container">
+    <div class="section-eyebrow">How Memephant works</div>
+    <h2 class="section-heading">Persistent memory in a simple loop</h2>
+    <p class="section-sub">Store your project once, then keep every AI oriented around the same approved memory.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Capture the project once</h3>
+          <p>
+            Add what the project is about, your goals, key decisions, and next steps. Scan a local folder to
+            auto-discover important files and your tech stack, so the memory stays grounded in reality.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Export a Context Passport</h3>
+          <p>
+            Pick your AI — ChatGPT, Claude, Gemini, and more — and copy a handoff shaped for it. Known API keys,
+            tokens, and local paths are redacted before the handoff where possible, and you review every export before sharing it.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Paste, work, and keep memory current</h3>
+          <p>
+            Paste it at the start of a chat and get straight to work. Paste the AI's reply back into Memephant and
+            it shows a diff before anything changes — so your project memory carries forward to the next session and the next tool.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section">
+  <div class="container" style="text-align:center;">
+    <div class="section-eyebrow">FAQ</div>
+    <h2 class="section-heading">AI project memory questions</h2>
+    <div class="faq-list" style="text-align:left;">
+      <div class="faq-item">
+        <h3>What is AI project memory?</h3>
+        <p>AI project memory is a persistent record of a project — its goals, decisions, stack, and next steps — that you can give to any AI tool so it understands the work without you re-explaining it. The AI chat itself stays stateless; the memory lives with you and travels between tools.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Why do AI tools forget my project between sessions?</h3>
+        <p>ChatGPT, Claude, and Gemini each keep only their own limited, separate context. Start a new chat, switch tools, or come back days later and that context is gone, so you have to describe your project from scratch again.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How does Memephant give my projects persistent memory?</h3>
+        <p>You store each project once in Memephant. When you open an AI tool, you copy a Context Passport — a handoff shaped for that platform — and paste it at the start of a chat. Paste the AI's reply back and Memephant shows a diff before updating, so your project memory stays current.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Where is my project memory stored?</h3>
+        <p>Memephant is local-first: your project memory lives on your device in plain files by default. Cloud backup is optional and opt-in, and no account is needed to create projects or generate handoffs.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Which AI tools does it work with?</h3>
+        <p>Memephant generates handoffs shaped for ChatGPT, Claude, Perplexity, Gemini, Codex, Grok, and local LLMs. You copy and paste each handoff yourself, so it works with any tool that accepts pasted text.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-band section--alt">
+  <div class="container">
+    <h2>Give your projects a memory that lasts</h2>
+    <p>Stop re-explaining your work to every AI. Store it once in Memephant and hand clean context to whichever tool you open next.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="/download/">↓ Download free</a>
+      <a class="btn btn-outline" href="https://github.com/krisninnis/memphant" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+    <p class="hero-note">Free during early access · No account needed · Works on Windows, macOS &amp; Linux</p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a class="footer-logo" href="/">
+        <img src="/memphant-icon.svg" alt="" />
+        Memephant
+      </a>
+      <ul class="footer-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/download/">Download</a></li>
+        <li><a href="/claude-to-chatgpt-project-handoff/">Claude → ChatGPT</a></li>
+        <li><a href="/local-first/">Local-First</a></li>
+        <li><a href="https://github.com/krisninnis/memphant" target="_blank" rel="noopener">GitHub</a></li>
+        <li><a href="/privacy/">Privacy</a></li>
+      </ul>
+      <div class="footer-right">Built by <a href="https://github.com/krisninnis" target="_blank" rel="noopener">Kris Ninnis</a></div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
