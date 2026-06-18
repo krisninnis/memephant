@@ -9,12 +9,12 @@ import type {
   Platform,
   ExportMode,
   GitCommit,
-  Decision,
 } from '../types/memphant-types';
 import { getPlatformConfig } from './platformRegistry';
 import { isMemphantPlaceholderValue } from './memphantPlaceholders';
 import { getWorkflowModeExportBlock } from './workflowModes';
 import { formatGameContextMarkdown } from './gameContextFormatter';
+import { buildProjectRealityCheck } from './projectRealityCheck';
 
 const STANDARD_PATTERNS = [
   // OpenAI
@@ -453,18 +453,6 @@ function compactList(
   return cleanItems.map((item) => `${indent}- ${truncateText(item, 180)}`).join('\n');
 }
 
-const QUICK_START_FALLBACK_TASKS = {
-  aiTooling: 'Help me continue improving onboarding, export flow, and cross-AI continuity.',
-  crm: 'Help me design the follow-up reminder flow for this CRM.',
-  gameDev: 'Help me continue gameplay, progression, and UX design.',
-  generic: 'Help me continue from the current project state. Ask before assuming missing details.',
-} as const;
-
-type QuickStartProjectCategory = keyof typeof QUICK_START_FALLBACK_TASKS;
-
-const GENERIC_QUICK_START_CURRENT_STATE =
-  'The project does not yet have a reliable saved current state. Use the summary, goals, rules, and task below; ask before assuming missing details.';
-
 const QUICK_START_EXTRA_PLACEHOLDER_PATTERNS = [
   /add a brief description/i,
   /what was built, fixed, or decided/i,
@@ -472,29 +460,6 @@ const QUICK_START_EXTRA_PLACEHOLDER_PATTERNS = [
   /only include genuinely/i,
   /not done, not future/i,
 ];
-
-function isGenericSummary(value: string | undefined | null): boolean {
-  const clean = value?.trim() ?? '';
-  if (clean.length < 24) return true;
-
-  return [
-    /\bis a project\b/i,
-    /add a brief description/i,
-    /what it does and who it'?s for/i,
-    /\(no summary yet\)/i,
-  ].some((pattern) => pattern.test(clean));
-}
-
-function isGenericTask(value: string | undefined | null): boolean {
-  const clean = value?.trim() ?? '';
-  if (clean.length < 12) return true;
-
-  return [
-    /help me continue from the current state/i,
-    /\(not set\)/i,
-    /\(none\)/i,
-  ].some((pattern) => pattern.test(clean));
-}
 
 function isQuickStartPlaceholder(value: string | undefined | null): boolean {
   const clean = value?.trim() ?? '';
@@ -506,69 +471,8 @@ function isQuickStartPlaceholder(value: string | undefined | null): boolean {
   );
 }
 
-function getProjectCategoryText(project: ProjectMemory): string {
-  const maybeTags = (project as ProjectMemory & { tags?: unknown }).tags;
-  const tags = Array.isArray(maybeTags)
-    ? maybeTags.filter((tag): tag is string => typeof tag === 'string')
-    : [];
-
-  return [
-    project.name,
-    project.summary,
-    project.currentState,
-    ...project.goals,
-    ...tags,
-  ].filter(Boolean).join(' ').toLowerCase();
-}
-
-function getQuickStartProjectCategory(project: ProjectMemory): QuickStartProjectCategory {
-  const text = getProjectCategoryText(project);
-
-  if (/\b(memephant|ai tooling|ai handoff|handoff export|cross-ai|memory vault|context passport)\b/i.test(text)) {
-    return 'aiTooling';
-  }
-
-  if (/\b(crm|customer relationship|leads?|follow-?ups?|deal status|pipeline)\b/i.test(text)) {
-    return 'crm';
-  }
-
-  if (/\b(game|gameplay|progression|level design|player|quest|unity|godot|unreal)\b/i.test(text)) {
-    return 'gameDev';
-  }
-
-  return 'generic';
-}
-
-function getQuickStartSummary(project: ProjectMemory): string {
-  if (isGenericSummary(project.summary)) {
-    return `${project.name.trim()} — summary not yet written.`;
-  }
-
-  return project.summary.trim();
-}
-
-function getQuickStartTask(project: ProjectMemory, task?: string): string {
-  if (isGenericTask(task)) {
-    return QUICK_START_FALLBACK_TASKS[getQuickStartProjectCategory(project)];
-  }
-
-  return task!.trim();
-}
-
-function getQuickStartCurrentState(project: ProjectMemory): string {
-  if (!isQuickStartPlaceholder(project.currentState) && project.currentState.trim().length >= 12) {
-    return project.currentState;
-  }
-
-  return GENERIC_QUICK_START_CURRENT_STATE;
-}
-
 function filterQuickStartStrings(items: string[]): string[] {
   return items.map((item) => item.trim()).filter((item) => !isQuickStartPlaceholder(item));
-}
-
-function filterQuickStartDecisions(decisions: Decision[]): Decision[] {
-  return decisions.filter((decision) => !isQuickStartPlaceholder(decision.decision));
 }
 
 function condensedFrontalLobeBlock(block?: string): string | null {
@@ -595,47 +499,97 @@ function condensedFrontalLobeBlock(block?: string): string | null {
 function formatQuickStart(
   project: ProjectMemory,
   task?: string,
-  frontalLobeBlock?: string,
 ): string {
   const lines: string[] = [];
-  const workingStyle = condensedFrontalLobeBlock(frontalLobeBlock);
-  const summary = getQuickStartSummary(project);
-  const immediateTask = getQuickStartTask(project, task);
-  const currentState = getQuickStartCurrentState(project);
+  const reality = buildProjectRealityCheck(project, task);
   const goals = filterQuickStartStrings(project.goals);
   const rules = filterQuickStartStrings(project.rules);
-  filterQuickStartStrings(project.nextSteps);
-  filterQuickStartDecisions(project.decisions);
 
   lines.push(`# Quick Start Export: ${sanitize(project.name)}`);
   lines.push('');
   lines.push('Fresh Chat Optimized');
   lines.push('');
   lines.push('## Project Summary');
-  lines.push(truncateText(summary, 600));
+  lines.push(truncateText(reality.bestSummary, 700));
   lines.push('');
-  lines.push('## Current State');
-  lines.push(truncateText(currentState, 500));
-  lines.push('');
-  lines.push('## Immediate Task');
-  lines.push(truncateText(immediateTask, 600));
-  lines.push('');
-  lines.push('## Goals');
-  lines.push(compactList(goals, 4));
-  lines.push('');
-  lines.push('## Important Rules');
-  lines.push(compactList(rules, 5, '', 'Ask before assuming missing details.'));
+  lines.push('## Project Reality Check');
+  lines.push(
+    reality.maturity === 'Not confidently detected'
+      ? 'Memephant cannot confidently infer project maturity from the currently stored evidence.'
+      : reality.staleFields.length > 0
+        ? 'This project appears more mature than the maintained summary suggests.'
+        : `Stored evidence indicates ${reality.maturity.toLowerCase()}; this should not be treated as a blank project.`,
+  );
 
-  if (workingStyle) {
+  if (reality.detectedSignals.length > 0) {
     lines.push('');
-    lines.push('## AI Working Style');
-    lines.push(workingStyle);
+    lines.push('Detected signals:');
+    lines.push(compactList(reality.detectedSignals, 12));
+  }
+
+  if (reality.staleFields.length > 0) {
+    lines.push('');
+    lines.push('Current project fields may be stale:');
+    lines.push(compactList(reality.staleFields, 3));
+    lines.push('');
+    lines.push('Recommended next step: Update the saved summary/current state, then continue from the active task below.');
   }
 
   lines.push('');
-  lines.push('Please use this lightweight context to start the chat. Ask before assuming missing details.');
+  lines.push('## Current State');
+  lines.push(truncateText(reality.bestCurrentState, 700));
+  lines.push('');
+  lines.push('## Active Task');
+  lines.push(truncateText(reality.activeTask, 700));
+  lines.push('');
+  lines.push('## Goals');
+  lines.push(compactList(goals, 5, '', 'No specific project goals are recorded.'));
+  lines.push('');
+  lines.push('## Recent Progress');
+  lines.push(compactList(reality.recentProgress, 5, '', 'No meaningful recent progress is recorded.'));
+  lines.push('');
+  lines.push('## Key Decisions');
+  lines.push(compactList(reality.keyDecisions, 4, '', 'No durable decisions are recorded.'));
+  lines.push('');
+  lines.push('## Next Steps');
+  lines.push(compactList(reality.nextSteps, 5, '', 'No specific next steps are recorded.'));
+  lines.push('');
+  lines.push('## Important Files & Areas');
+  lines.push(compactList(
+    reality.importantAreas,
+    10,
+    '',
+    'No grouped file areas were found. Use the full Context Passport for raw file details.',
+  ));
+  lines.push('');
+  lines.push('## Rules');
+  lines.push(compactList(rules, 5, '', 'Ask before assuming missing details.'));
 
   return lines.join('\n');
+}
+
+function appendQuickStartWorkingStyle(base: string, frontalLobeBlock?: string): string {
+  const workingStyle = condensedFrontalLobeBlock(frontalLobeBlock);
+  if (!workingStyle || /^## AI Working Style\s*$/m.test(base)) return base;
+  return `${base}\n\n## AI Working Style\n${workingStyle}`;
+}
+
+function appendQuickStartSafeNotes(base: string): string {
+  return [
+    base,
+    '',
+    '## Safe Export Notes',
+    '- Review this lightweight handoff before sharing it with another tool.',
+    '- Common secret patterns and known local folder paths are redacted where detected.',
+    '- Project reality statements are deterministic inferences from stored metadata, not verified runtime facts.',
+    '- Ask before assuming details that are missing or marked stale.',
+  ].join('\n');
+}
+
+function redactQuickStartLocalPaths(project: ProjectMemory, text: string): string {
+  return redactProjectLinkedFolderPath(project, text)
+    .replace(/\b[A-Za-z]:[\\/][^\s"'<>]+/g, '[local-path]')
+    .replace(/\/(?:Users|home|private|Volumes)\/[^\s"'<>]+/gi, '[local-path]');
 }
 
 function formatForGrok(project: ProjectMemory, task?: string): string {
@@ -1272,7 +1226,14 @@ export function formatForPlatform(
   recentActivity?: string,
   frontalLobeBlock?: string,
 ): string {
-  if (mode === 'quick') return appendFrontalLobe(appendGameContext(appendWorkflowMode(formatQuickStart(project, task), project), project), frontalLobeBlock);
+  if (mode === 'quick') {
+    const projectContext = appendGameContext(
+      appendWorkflowMode(formatQuickStart(project, task), project),
+      project,
+    );
+    const withWorkingStyle = appendQuickStartWorkingStyle(projectContext, frontalLobeBlock);
+    return redactQuickStartLocalPaths(project, appendQuickStartSafeNotes(withWorkingStyle));
+  }
   if (mode === 'delta') return appendFrontalLobe(appendGameContext(appendWorkflowMode(formatDelta(project, task), project), project), frontalLobeBlock);
   if (mode === 'specialist') return appendFrontalLobe(appendGameContext(appendWorkflowMode(formatSpecialist(project, task), project), project), frontalLobeBlock);
   if (mode === 'smart') return appendFrontalLobe(

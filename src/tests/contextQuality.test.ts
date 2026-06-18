@@ -31,6 +31,8 @@ describe('contextQuality', () => {
 
   it('suppresses repetitive low-signal changelog entries', () => {
     expect(isNoisyChangelogSummary('Copied project context for Claude.')).toBe(true);
+    expect(isNoisyChangelogSummary('Copied passport')).toBe(true);
+    expect(isNoisyChangelogSummary('Generated export')).toBe(true);
 
     const changes = filterPublicChangelog([
       {

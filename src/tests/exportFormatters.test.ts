@@ -564,22 +564,59 @@ describe('smart mode', () => {
 describe('quick mode', () => {
   const launchPadFallbackSummary =
     'LaunchPad CRM is a simple CRM for freelancers, solo founders, and small service businesses to track leads, follow-ups, customer notes, and deal status without needing a heavy CRM like Salesforce or HubSpot.';
-  const aiToolingFallbackTask =
-    'Help me continue improving onboarding, export flow, and cross-AI continuity.';
-  const crmFallbackTask =
-    'Help me design the follow-up reminder flow for this CRM.';
-  const gameFallbackTask =
-    'Help me continue gameplay, progression, and UX design.';
-  const genericFallbackTask =
-    'Help me continue from the current project state. Ask before assuming missing details.';
+  const unknownActiveTask =
+    'Active task is not clearly recorded. Ask the user what they want to work on next before editing files.';
   const placeholderCurrentState =
     'Write 1-2 sentences describing what is true right now after this session. What was built, fixed, or decided?';
-  const memephantCurrentState =
-    'Memephant Desktop is live as a local-first cross-AI project handoff app. Recent work improved Memory Vault, Quick Start exports, export reliability, and fresh ChatGPT handoff compatibility.';
-  const launchPadCurrentState =
-    'LaunchPad CRM is at the early MVP design stage, focused on lead tracking, follow-up reminders, notes, and deal status.';
-  const genericCurrentState =
-    'The project does not yet have a reliable saved current state. Use the summary, goals, rules, and task below; ask before assuming missing details.';
+
+  function makeMatureLeadClaw(overrides: Partial<ProjectMemory> = {}): ProjectMemory {
+    return makeProject({
+      name: 'leadclaw',
+      summary: 'leadclaw — summary not yet written.',
+      currentState: 'Just getting started — defining scope and goals.',
+      detectedStack: ['Next.js', 'React', 'Supabase', 'Stripe', 'Resend'],
+      importantAssets: [
+        'src/app/api/stripe/checkout/route.ts',
+        'src/lib/supabase/auth.ts',
+        'src/app/api/outreach/send/route.ts',
+        'src/app/lead-finder/page.tsx',
+        'src/app/landing-builder/page.tsx',
+        'src/app/sales-workspace/page.tsx',
+        'src/app/website-audit/page.tsx',
+        'src/app/ai-visibility/page.tsx',
+        'src/tests/outreach.test.ts',
+        '.github/workflows/deploy.yml',
+        'src/lib/pecr/classification.ts',
+      ],
+      scanInfo: {
+        scannedAt: '2026-06-18T10:00:00.000Z',
+        repoUrl: 'https://github.com/example/leadclaw',
+        keyFilesFound: ['next.config.ts', 'src/app/page.tsx'],
+      },
+      goals: ['Ship the LeadClaw workspace'],
+      nextSteps: [],
+      inProgress: undefined,
+      openQuestion: undefined,
+      recentProgressNote: 'Copied project context for ChatGPT. Generated export. Shipped outreach campaign scheduling.',
+      changelog: [
+        {
+          timestamp: '2026-06-18T10:00:00.000Z',
+          field: 'general',
+          action: 'added',
+          summary: 'Copied passport',
+          source: 'app',
+        },
+        {
+          timestamp: '2026-06-17T10:00:00.000Z',
+          field: 'general',
+          action: 'updated',
+          summary: 'Added PECR classification to outreach leads',
+          source: 'user',
+        },
+      ],
+      ...overrides,
+    });
+  }
 
   it('creates a compact fresh-chat handoff under the safe size threshold', () => {
     const project = makeProject({
@@ -604,7 +641,73 @@ describe('quick mode', () => {
     expect(output).not.toContain('RECENT ACTIVITY SHOULD NOT APPEAR');
   });
 
-  it('replaces generic placeholder summaries with a neutral project-specific line in Quick Start Export', () => {
+  it('adds a Project Reality Check for a mature project with stale fields', () => {
+    const output = formatForPlatform(makeMatureLeadClaw(), 'chatgpt', undefined, 'quick');
+
+    expect(output).toContain('## Project Reality Check');
+    expect(output).toContain('This project appears more mature than the maintained summary suggests.');
+    expect(output).toContain('Next.js/React application files or stack metadata are present.');
+    expect(output).toContain('Stripe/billing files or routes are present.');
+    expect(output).toContain('Outreach/email files, routes, or stack metadata are present.');
+    expect(output).toContain('Tests and deployment workflows are present.');
+    expect(output).toContain('Project Summary is missing or appears stale.');
+    expect(output).toContain('Current State is missing or appears stale.');
+  });
+
+  it('replaces stale mature-project summary and current state instead of presenting them as facts', () => {
+    const output = formatForPlatform(makeMatureLeadClaw(), 'chatgpt', undefined, 'quick');
+
+    expect(output).not.toContain('leadclaw — summary not yet written.');
+    expect(output).not.toContain('Just getting started — defining scope and goals.');
+    expect(output).toContain('leadclaw appears to be an active');
+    expect(output).toContain('Stored file signals show work across');
+  });
+
+  it('uses the unknown Active Task fallback when no task is recorded', () => {
+    const output = formatForPlatform(makeMatureLeadClaw(), 'chatgpt', undefined, 'quick');
+
+    expect(output).toContain('## Active Task');
+    expect(output).toContain(unknownActiveTask);
+    expect(output).not.toContain('Help me continue from the current project state.');
+  });
+
+  it('keeps AI Working Style after project context', () => {
+    const output = formatForPlatform(
+      makeMatureLeadClaw(),
+      'chatgpt',
+      undefined,
+      'quick',
+      undefined,
+      undefined,
+      '# AI Working Style\nAnswer Style: Balanced Builder\nTone: Direct',
+    );
+
+    expect(output.indexOf('## AI Working Style')).toBeGreaterThan(output.indexOf('## Important Files & Areas'));
+    expect(output.indexOf('## AI Working Style')).toBeGreaterThan(output.indexOf('## Rules'));
+  });
+
+  it('filters copy/export noise while preserving meaningful product progress', () => {
+    const output = formatForPlatform(makeMatureLeadClaw(), 'chatgpt', undefined, 'quick');
+
+    expect(output).not.toContain('Copied project context for ChatGPT');
+    expect(output).not.toContain('Generated export');
+    expect(output).not.toContain('Copied passport');
+    expect(output).toContain('Shipped outreach campaign scheduling.');
+    expect(output).toContain('Added PECR classification to outreach leads');
+  });
+
+  it('groups important files into product areas without dumping a raw file list', () => {
+    const output = formatForPlatform(makeMatureLeadClaw(), 'chatgpt', undefined, 'quick');
+
+    expect(output).toContain('- Billing: src/app/api/stripe/checkout/route.ts');
+    expect(output).toContain('- Auth and data: src/lib/supabase/auth.ts');
+    expect(output).toContain('- Outreach: src/app/api/outreach/send/route.ts');
+    expect(output).toContain('- Lead Finder: src/app/lead-finder/page.tsx');
+    expect(output).toContain('- Tests: src/tests/outreach.test.ts');
+    expect(output).toContain('- Deployment: .github/workflows/deploy.yml');
+  });
+
+  it('replaces generic placeholder summaries with a marked project-specific summary', () => {
     const output = formatForPlatform(
       makeProject({
         name: 'Notebook Cleaner',
@@ -615,7 +718,8 @@ describe('quick mode', () => {
       'quick',
     );
 
-    expect(output).toContain('Notebook Cleaner \u2014 summary not yet written.');
+    expect(output).toContain('Notebook Cleaner appears to be an active project.');
+    expect(output).toContain('Project Summary is missing or appears stale.');
     expect(output).not.toContain('Add a brief description');
     // Must never describe this project using another project's sample text.
     expect(output).not.toContain('LaunchPad CRM');
@@ -634,7 +738,7 @@ describe('quick mode', () => {
     );
 
     const summarySection = output.split('## Project Summary')[1]?.split('## Current State')[0] ?? '';
-    expect(summarySection).toContain('Roblox practice \u2014 summary not yet written.');
+    expect(summarySection).toContain('Roblox practice appears to be an active project.');
     expect(summarySection).not.toContain('LaunchPad');
     expect(summarySection).not.toContain('CRM');
   });
@@ -651,155 +755,9 @@ describe('quick mode', () => {
       'quick',
     );
 
-    expect(output).toContain(genericCurrentState);
+    expect(output).toContain('The saved Current State appears stale; update it before making broad changes.');
     expect(output).not.toContain('Write 1-2 sentences');
     expect(output).not.toContain('What was built, fixed, or decided');
-  });
-
-  it('does not use the Memephant currentState fallback for projects mentioning Context Passport', () => {
-    const output = formatForPlatform(
-      makeProject({
-        name: 'Context Passport Review Tool',
-        summary: 'A helper for reviewing exported project context before sharing it.',
-        currentState: placeholderCurrentState,
-      }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
-
-    expect(output).toContain(genericCurrentState);
-    expect(output).not.toContain(memephantCurrentState);
-  });
-
-  it('uses the neutral currentState fallback for LaunchPad CRM when no reliable currentState exists', () => {
-    const output = formatForPlatform(
-      makeProject({
-        name: 'LaunchPad CRM',
-        currentState: '',
-      }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
-
-    expect(output).toContain(genericCurrentState);
-    expect(output).not.toContain(launchPadCurrentState);
-  });
-
-  it('does not leak LaunchPad CRM currentState text into Roblox game Quick Start exports', () => {
-    const output = formatForPlatform(
-      makeProject({
-        name: 'Roblox NPC Quest',
-        summary: 'A Roblox game prototype with NPC quests, player rewards, and Luau systems.',
-        currentState: placeholderCurrentState,
-      }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
-
-    expect(output).toContain(genericCurrentState);
-    expect(output).not.toContain(launchPadCurrentState);
-  });
-
-  it('uses no hardcoded named-project currentState fallback in Quick Start output', () => {
-    const projects = [
-      makeProject({
-        name: 'memephant-desktop',
-        summary: 'Local-first AI memory and handoff tooling for cross-AI continuity.',
-        currentState: placeholderCurrentState,
-      }),
-      makeProject({
-        name: 'LaunchPad CRM',
-        currentState: placeholderCurrentState,
-      }),
-      makeProject({
-        name: 'Roblox NPC Quest',
-        summary: 'A Roblox game prototype with NPC quests, player rewards, and Luau systems.',
-        currentState: placeholderCurrentState,
-      }),
-    ];
-
-    const outputs = projects.map((project) => formatForPlatform(project, 'chatgpt', undefined, 'quick'));
-
-    for (const output of outputs) {
-      expect(output).toContain(genericCurrentState);
-      expect(output).not.toContain(memephantCurrentState);
-      expect(output).not.toContain(launchPadCurrentState);
-    }
-  });
-
-  it('uses the CRM fallback task for LaunchPad CRM', () => {
-    const output = formatForPlatform(
-      makeProject({ name: 'LaunchPad CRM' }),
-      'chatgpt',
-      'Help me continue from the current state.',
-      'quick',
-    );
-
-    expect(output).toContain(crmFallbackTask);
-    expect(output).not.toContain('Help me continue from the current state.');
-  });
-
-  it('uses the AI-tooling fallback task for Memephant', () => {
-    const output = formatForPlatform(
-      makeProject({
-        name: 'memephant-desktop',
-        summary: 'Local-first AI memory and handoff tooling for cross-AI continuity.',
-      }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
-
-    expect(output).toContain(aiToolingFallbackTask);
-    expect(output).not.toContain(crmFallbackTask);
-  });
-
-  it('uses the game/dev fallback task for game projects', () => {
-    const output = formatForPlatform(
-      makeProject({
-        name: 'Dungeon Runner',
-        summary: 'A browser game with progression, quests, and player upgrades.',
-      }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
-
-    expect(output).toContain(gameFallbackTask);
-  });
-
-  it('does not leak CRM fallback tasks into unrelated projects', () => {
-    const output = formatForPlatform(
-      makeProject({
-        name: 'InvoicePilot',
-        summary: 'A lightweight invoicing workflow for designers.',
-        goals: ['Improve payment reminders'],
-      }),
-      'chatgpt',
-      undefined,
-      'quick',
-    );
-
-    expect(output).toContain(genericFallbackTask);
-    expect(output).not.toContain(crmFallbackTask);
-  });
-
-  it('keeps a safe generic fallback for uncategorised projects', () => {
-    const output = formatForPlatform(
-      makeProject({
-        name: 'Notebook Cleaner',
-        summary: 'Organises scattered research notes into a calmer review queue.',
-        goals: ['Improve capture flow'],
-      }),
-      'chatgpt',
-      '',
-      'quick',
-    );
-
-    expect(output).toContain(genericFallbackTask);
   });
 
   it('preserves non-placeholder custom summaries', () => {
@@ -827,7 +785,7 @@ describe('quick mode', () => {
     );
 
     expect(output).toContain(task);
-    expect(output).not.toContain(crmFallbackTask);
+    expect(output).not.toContain(unknownActiveTask);
   });
 
   it('filters placeholder goals and rules while preserving real items', () => {
@@ -925,6 +883,13 @@ describe('quick mode', () => {
     expect(output).not.toContain('memphant_update');
     expect(output).not.toContain('"schemaVersion"');
     expect(output).not.toContain('```json');
+  });
+
+  it('does not add the Quick Start reality check to Full Context exports', () => {
+    const output = formatForPlatform(makeMatureLeadClaw(), 'chatgpt', undefined, 'full');
+
+    expect(output).not.toContain('## Project Reality Check');
+    expect(output).toContain('Just getting started — defining scope and goals.');
   });
 
   it('does not emit duplicate sections', () => {
